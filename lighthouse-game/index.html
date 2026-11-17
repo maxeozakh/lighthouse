@@ -26907,9 +26907,9 @@ const Sound = (() => {
     songAt = d => Math.pow(Math.max(0, Math.min(1, (EARSHOT - d) / (EARSHOT - TOO_NEAR))), 2.4),
     DAY = 90, // seconds from one sunrise to the next
     lut = new Uint8Array(256);
-  // the days: clock counts them from the first sunrise and never goes back. What is shown is a bare number, and not a small one:
-  // three years and something were gone before any of this began
-  const FIRST = 1307 + ((Math.random() * 7) | 0); // (much the same each time: within a week, about where the wide spread it once had was centred)
+  // the days: clock counts them from the first sunrise and never goes back. What is shown is a bare number, and it begins at the
+  // same one every time: 1898, which can be read as a count of days or as the year
+  const FIRST = 1898;
   let clock = 0.03, dark = -1;
   // the old man's hours. At dusk he goes in and in the morning he comes out: but one night in seven or so he does not go in,
   // and stands out there till morning; and as often, having gone in, he does not come out for the whole of the day after.
