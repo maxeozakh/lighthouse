@@ -20,9 +20,10 @@ const face = (family, file, style) =>
   `@font-face { font-family: '${family}'; font-style: ${style || 'normal'}; font-weight: 400; src: url(data:font/woff2;base64,${fs.readFileSync(path.join(here, 'fonts', file)).toString('base64')}) format('woff2'); }`;
 const fonts = [face('Redaction', 'redaction-50-latin-400-normal.woff2'), face('Redaction', 'redaction-50-latin-400-italic.woff2', 'italic')].join('\n  ');
 
-// the two things a thumb presses to turn the view: an arrow that sets off upward and bends away to its side, a quarter of a
-// turn, which is what one press gives. Drawn once, to the right; the left one is the same, mirrored
-const bend = side => `<svg class="bend${side < 0 ? ' left' : ''}" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 21C4 11.5 8.5 7.5 20 7.5M15.8 3.3L20 7.5l-4.2 4.2"/></svg>`;
+// the two things a thumb presses to turn the view: a stone arrow each, made and drawn as the level is (icons.js), a pixel of it
+// shown as big as a pixel of the picture
+const icons = require('./icons.js')(repo),
+  bend = side => `<img class="bend" src="${side < 0 ? icons.left : icons.right}" width="${icons.size}" height="${icons.size}" alt="" draggable="false">`;
 
 const html = `<!doctype html>
 <html lang="en">
@@ -61,11 +62,10 @@ const html = `<!doctype html>
   #hud .thumbs span { white-space: nowrap; }
   body.touch .tap { pointer-events: auto; padding: 8px 2px; color: #d9dad4; border-bottom: 1px dotted #8b8c87; }
   body.touch #pad { display: flex; position: fixed; left: 0; right: 0; box-sizing: border-box; align-items: center; justify-content: space-between; pointer-events: none; }
-  #pad button { pointer-events: auto; display: grid; place-items: center; width: 52px; height: 52px; margin: 0; padding: 0; border-radius: 50%; border: 1px solid #5c5d59; background: rgba(0, 0, 0, 0.4); color: #d9dad4; }
-  #pad button:active { background: #2b2c2a; }
-  .bend { width: 30px; height: 30px; fill: none; stroke: currentColor; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; pointer-events: none; }
-  .bend.left { transform: scaleX(-1); }
-  #hud .bend { width: 1.2em; height: 1.2em; margin: 0 0.12em; vertical-align: -0.2em; stroke-width: 2; color: #d9dad4; }
+  #pad button { pointer-events: auto; display: grid; place-items: center; width: calc(var(--dab, 2) * ${icons.size}px + 12px); height: calc(var(--dab, 2) * ${icons.size}px + 12px); margin: 0; padding: 0; border: 0; background: none; }
+  .bend { width: calc(var(--dab, 2) * ${icons.size}px); height: calc(var(--dab, 2) * ${icons.size}px); image-rendering: pixelated; pointer-events: none; }
+  #pad button:active .bend { transform: translateY(calc(var(--dab, 2) * 1px)); filter: brightness(0.62); }
+  #hud .bend { width: ${icons.size}px; height: ${icons.size}px; margin: -6px 1px; vertical-align: middle; }
   #stick { position: fixed; width: 96px; height: 96px; margin: -48px 0 0 -48px; border-radius: 50%; border: 1px solid rgba(217, 218, 212, 0.3); pointer-events: none; }
   #stick i { position: absolute; left: 50%; top: 50%; width: 30px; height: 30px; margin: -15px 0 0 -15px; border-radius: 50%; background: rgba(217, 218, 212, 0.35); }
   /* the end: the count where it stopped, and nothing else */

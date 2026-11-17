@@ -72,11 +72,15 @@
     $('hud').style.fontSize = Math.max(13, Math.round(h / 58)) + 'px';
     if (TOUCH) {
       // the two that turn the view: in a row under the picture where there is room for one, or else one at either side of it
+      // (they are drawn in pixels as big as the picture's own, as near as a thumb can do with)
+      document.body.style.setProperty('--dab', Math.min(3, Math.max(2, Math.round(h / ROWS))));
       const pad = $('pad'),
-        under = innerHeight - (y + h) - $('hud').offsetHeight - 12;
-      pad.style.top = (under >= 64 ? y + h : Math.round(innerHeight * 0.14)) + 'px';
-      pad.style.height = (under >= 64 ? Math.min(under, 92) : 92) + 'px';
-      pad.style.padding = '0 ' + (under >= 64 ? Math.round(innerWidth * 0.06) : Math.max(8, Math.round((x - 52) / 2))) + 'px'; // (at a side: in the middle of the black beside the picture)
+        big = $('turnL').offsetWidth,
+        under = innerHeight - (y + h) - $('hud').offsetHeight - 12,
+        fits = under >= big + 8;
+      pad.style.top = (fits ? y + h : Math.round(innerHeight * 0.14)) + 'px';
+      pad.style.height = (fits ? Math.min(under, big + 36) : big + 36) + 'px';
+      pad.style.padding = '0 ' + (fits ? Math.round(innerWidth * 0.05) : Math.max(4, Math.round((x - big) / 2))) + 'px'; // (at a side: in the middle of the black beside the picture)
     }
   }
 
