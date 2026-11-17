@@ -9,7 +9,7 @@
 //   Sound.volume({ all, music, rest })       0..1 each: how loud he has all of it, the music (the drone and the glass tones) and
 //                            everything that is not the music (they can be given before there is anything to hear)
 //   index.html?quiet: no sound at all. index.html?deaf: all of it runs, with the ears stopped (for trying when things begin)
-//   Sound.test({ secs, only })       renders it without playing it and measures how loud each second is (for checking levels)
+//   Sound.test({ secs, only, vol })  renders it without playing it and measures how loud each second is (for checking levels)
 const Sound = (() => {
   const rnd = (a, b) => a + Math.random() * (b - a);
 
@@ -82,8 +82,8 @@ const Sound = (() => {
       music = gain(1, master),
       amb = gain(1, world), // the place
       fx = gain(1, world), // what he and they do in it
-      tune = gain(1, music); // the music: the drone and the glass tones (hushed when the place is: duck())
-    // a big hollow room for the horn and the voice to ring in, and one like it for the music
+      tune = gain(1, music); // the music: the drone, the glass tones, and the horn, which goes with them (hushed when the place is: duck())
+    // a big hollow room for the gulls and the voices to ring in, and one like it for the music and the horn
     const verb = ctx.createConvolver(),
       verbM = ctx.createConvolver(),
       wet = gain(0.5, amb);
@@ -146,14 +146,14 @@ const Sound = (() => {
       g.gain.linearRampToValueAtTime(0, when + len);
       for (const [m, k] of [[1, 1], [1.004, 0.8], [2.01, 0.25], [3, 0.08]]) lfo(4.5, f * m * 0.004, osc('sine', f * m, gain(k, g), when, end).frequency, when, end);
     };
-    // the fog signal: one long blast with a grunt at the end of it
+    // the fog signal: one long blast with a grunt at the end of it. (It is counted with the music: as loud as he has that)
     const horn = (when, level) => {
       level = level || 0.25;
       const len = 3,
-        g = gain(0, amb),
+        g = gain(0, tune),
         f = filter('lowpass', 300, 1.2, g),
         end = when + len + 0.5;
-      g.connect(verb);
+      g.connect(verbM);
       g.gain.setValueAtTime(0, when);
       g.gain.linearRampToValueAtTime(level, when + 0.18);
       g.gain.setValueAtTime(level, when + len - 0.5);
@@ -510,6 +510,7 @@ const Sound = (() => {
       ctx = new OfflineAudioContext(2, sr * secs, sr),
       t = make(ctx),
       only = o.only;
+    if (o.vol) t.vol(Object.assign({ all: 1, music: 1, rest: 1 }, o.vol));
     if (only) t.hush();
     else t.rise(0);
     if (!only) t.set({ sea: 0.5 });

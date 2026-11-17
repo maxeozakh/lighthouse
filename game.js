@@ -101,12 +101,12 @@
     paint();
   }
   // the ledger: laid over the picture by Esc (under a thumb, by pressing its name in the row of hints) and put away the same
-  // way. In it, how loud he has it: all of it, the music, and what is not the music, each in so many steps (STEPS: all of them
+  // way. In it, how loud he has it: all of it, the music (the horn is of it), and what is not the music, each in so many steps (STEPS: all of them
   // is as loud as it was made); two things to tick, his ears stopped and the row of hints kept whole (keep(), above); and who
   // made what. What he sets the browser keeps (VOLS). While it is open he stands where he is, and the days go by as they do
   const VOLS = 'wickie.sound',
     STEPS = 10,
-    vol = { all: STEPS, music: STEPS, rest: STEPS },
+    vol = { all: STEPS, music: 7, rest: STEPS }, // (the music, and the horn with it, a little under the rest until he says otherwise)
     lines = [...document.querySelectorAll('#menu .vol')], // (the three of them, and under them the two to tick)
     ticked = c => (c === 'keep' ? always : Sound.deaf()),
     tick = c => (c === 'keep' ? keep(!always) : ears());

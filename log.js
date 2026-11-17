@@ -181,6 +181,7 @@ const FIRST = 1898,
         'Its steps of loudness and its ticks are cut of the same stone as the things a thumb presses.',
         'The view comes round a little slower when it is turned.',
         'It is called lighthouse now.',
+        'The horn is counted with the music, and is as loud as you have that. The music begins at seven of its ten steps.',
         'And who made what.',
         'A link to the game is shown with a picture where it is posted, and the tab has the tower and its beams for a mark.'
       ]
