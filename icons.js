@@ -124,7 +124,7 @@ function png(w, h, rgba) {
   return Buffer.concat([Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]), chunk('IHDR', hd), chunk('IDAT', zlib.deflateSync(raw, { level: 9 })), chunk('IEND', Buffer.alloc(0))]);
 }
 
-const tools = repo => [require(path.join(repo, 'index.js')).load(), require('../fast-render.js').load(repo)];
+const tools = repo => [require(path.join(repo, 'index.js')).load(), require('./fast-render.js').load(repo)];
 
 module.exports = repo => {
   const right = draw(...tools(repo), ART),

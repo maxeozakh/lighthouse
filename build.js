@@ -9,7 +9,7 @@ const args = process.argv.slice(2),
   out = path.join(here, 'index.html'),
   studio = require(path.join(repo, 'index.js'));
 
-const renderer = require('../fast-render.js').source(repo);
+const renderer = require('./fast-render.js').source(repo);
 const level = fs.readFileSync(path.join(here, 'level.js'), 'utf8');
 const game = fs.readFileSync(path.join(here, 'game.js'), 'utf8');
 const sound = fs.readFileSync(path.join(here, 'sound.js'), 'utf8');

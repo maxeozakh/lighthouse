@@ -9,7 +9,7 @@ const path = require('path'),
   },
   repo = path.resolve(opt('repo', '/tmp/ink-studio')),
   lib = require(path.join(repo, 'index.js')).load(),
-  R = require('../fast-render.js').load(repo),
+  R = require('./fast-render.js').load(repo),
   PNG = require(path.join(repo, 'cli', 'png.js'));
 let t0 = Date.now();
 const scene = require('./level.js')(lib),
