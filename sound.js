@@ -5,7 +5,7 @@
 //                            key, click or tap, so every one of those calls this again
 //   Sound.wake()             the rest (the drone, the glass tones, the fog signal), which wait until he does something
 //   Sound.set({ sea, song, horn, mutter })   0..1 each: how near the water he is, how near her, the engine house, the old man
-//   Sound.step() .scream() .duck(level) .mute()
+//   Sound.step() .strike() .scream() .duck(level) .mute()
 //   Sound.volume({ all, music, rest })       0..1 each: how loud he has all of it, the music (the drone and the glass tones) and
 //                            everything that is not the music (they can be given before there is anything to hear)
 //   index.html?quiet: no sound at all. index.html?deaf: all of it runs, with the ears stopped (for trying when things begin)
@@ -338,6 +338,25 @@ const Sound = (() => {
       g.gain.setValueAtTime(0.32, when);
       g.gain.exponentialRampToValueAtTime(0.001, when + 0.08);
     };
+    // a match: the rasp of its head along the box, and then the breath of it taking
+    const strike = when => {
+      when = when || now();
+      const g = gain(0, fx),
+        f = gain(0, fx),
+        rasp = ctx.createBufferSource(),
+        take = ctx.createBufferSource();
+      rasp.buffer = take.buffer = white;
+      rasp.connect(filter('bandpass', rnd(3600, 4400), 1.1, g));
+      rasp.start(when, Math.random() * 3.5, 0.16);
+      g.gain.setValueAtTime(0.0001, when);
+      g.gain.exponentialRampToValueAtTime(0.05, when + 0.02);
+      g.gain.exponentialRampToValueAtTime(0.001, when + 0.13);
+      take.connect(filter('bandpass', 1500, 0.5, f));
+      take.start(when + 0.07, Math.random() * 3, 0.6);
+      f.gain.setValueAtTime(0.0001, when + 0.07);
+      f.gain.exponentialRampToValueAtTime(0.03, when + 0.13);
+      f.gain.exponentialRampToValueAtTime(0.0005, when + 0.6);
+    };
     // what she does at the last: a shriek driven hard, and then the water closing over
     const scream = when => {
       when = when || now();
@@ -380,6 +399,7 @@ const Sound = (() => {
       sing,
       mutter,
       step,
+      strike,
       scream,
       // all of it comes up out of nothing over a few seconds, rather than starting
       open: when => {
@@ -498,6 +518,7 @@ const Sound = (() => {
     if (!only || only === 'tones') t.bow(8, 293.66, 9), t.bow(10, 293.66 * 16 / 15, 7, 0.018);
     if (!only || only === 'song') t.set({ song: o.song !== undefined ? o.song : only ? 1 : 0.4 }), t.sing(only ? 1 : 14, o.phrase);
     if (!only || only === 'steps') for (let k = 0; k < 8; k++) t.step(0.5 + k * 0.3);
+    if (only === 'strike') t.strike(1);
     if (!only || only === 'mutter') {
       t.set({ mutter: o.mutter !== undefined ? o.mutter : only ? 1 : 0.5 });
       for (let at = only ? 0.5 : 11, end = only ? secs - 2 : 13; at < end; ) at += t.mutter(at);
@@ -533,6 +554,7 @@ const Sound = (() => {
       if (g) g.set(o);
     },
     step: () => g && g.step(),
+    strike: () => g && g.strike(),
     scream: () => g && g.scream(),
     duck: (v, tc) => g && g.duck(v, tc),
     volume: o => {

@@ -415,6 +415,10 @@
     }
     hours(dt);
     W.anim.update(dt, t);
+    if (pl.flare) {
+      pl.flare = false; // (his match has taken)
+      Sound.strike();
+    }
     G.sea(t); // the swell comes on
     // the camera: turns a quarter at a time, and follows a little behind
     yaw += (yawTo - yaw) * (1 - Math.exp(-dt * 7));

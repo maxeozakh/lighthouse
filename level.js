@@ -908,6 +908,12 @@ module.exports = ({ makeBuilder, makeSculpt, KIT: K }) => ({
     B.stick(HAND[0], HAND[1] - 0.025, HAND[2] + 0.09, B.norm([0, -0.15, 1]), 0.028, 0.009, B.P[25], 3, { nd: true });
     B.iso(HAND[0], HAND[1] - 0.033, HAND[2] + 0.14, 0.014, B.P[37], 3, { em: true, nd: true });
     for (let k = 0; k < PUFFS; k++) B.iso(SPAWN[0], SPY + PARK, SPAWN[1], 0.05, B.P[k % 2 ? 17 : 52], 0, { nd: true });
+    // and the match he lights it with: its flame, and the light of that on his face and hands (both of the light's white, and
+    // kept under his feet as the smoke is, each at a depth of its own)
+    const FLAME = PARK - 0.05,
+      SHINE = PARK - 0.1;
+    B.iso(SPAWN[0], SPY + FLAME, SPAWN[1], 0.03, B.P[37], 0, { em: true, nd: true });
+    B.iso(SPAWN[0], SPY + SHINE, SPAWN[1], 0.2, B.P[36], 0, { em: true, nd: true });
     // dead brush: bare twigs standing out of the turf all over the rock, moving a little in the wind (he goes through them)
     for (let k = 0, made = 0; k < 1400 && made < 170; k++) {
       const x = east((B.R() * 2 - 1) * IX),
@@ -985,7 +991,7 @@ module.exports = ({ makeBuilder, makeSculpt, KIT: K }) => ({
       },
       // (cig: how long he has been at his smoke, in seconds, 0 when he has none; lit: how much of it there is to see; raise: how
       // far his hand is up to his mouth; wisp: how long since the last of its smoke came off it)
-      pl = { x: SPAWN[0], z: SPAWN[1], y: height(SPAWN[0], SPAWN[1]), face: 0.6, go: 0, phase: 0, speed: 0, cig: 0, pull: 0, pulls: 0, was: 0, out: 0, lit: 0, raise: 0, wisp: 0 },
+      pl = { x: SPAWN[0], z: SPAWN[1], y: height(SPAWN[0], SPAWN[1]), face: 0.6, go: 0, phase: 0, speed: 0, cig: 0, pull: 0, pulls: 0, was: 0, out: 0, lit: 0, raise: 0, wisp: 0, strike: 0, cup: 0, fire: false, flare: false, murk: 0 },
       SY = pl.y,
       turnTo = (a, b, k) => {
         let d = (b - a) % TAU;
@@ -1052,7 +1058,7 @@ module.exports = ({ makeBuilder, makeSculpt, KIT: K }) => ({
       smoke = () => {
         if (pl.cig) pl.cig = 0;
         else if (pl.go < 0.3) {
-          pl.cig = 1e-3;
+          pl.cig = pl.strike = 1e-3; // (he has it to light first: fag())
           pl.pull = pl.pulls = 0;
         }
         return pl.cig > 0;
@@ -1139,6 +1145,7 @@ module.exports = ({ makeBuilder, makeSculpt, KIT: K }) => ({
       ],
       pack = c => c[0] + c[1] * 256 + c[2] * 65536,
       night = (n, lit = Math.min(1, n * 8)) => {
+        pl.murk = n; // (how dark it is: a match shows for more in the dark)
         for (const l of lamps) W.data[l.i * 16 + 3] = l.a * lit * (l.day + (l.night - l.day) * n);
         for (const g of glass) {
           W.data[g.i * 16 + 7] = pack([0, 1, 2].map(j => Math.round(g.off[j] + (g.on[j] - g.off[j]) * lit)));
@@ -1253,11 +1260,16 @@ module.exports = ({ makeBuilder, makeSculpt, KIT: K }) => ({
     // his smoke: the dabs of the cigarette (they ride his hand) and of what comes off it, found by where they were put
     const cig = [],
       puffs = [];
-    let ember = -1;
+    let ember = -1,
+      flame = -1,
+      shine = -1;
     for (let i = 0; i < W.count; i++) {
       const o = i * 16,
-        c = W.data[o + 7];
-      if (Math.abs(W.data[o + 1] - (SPY + PARK)) < 1e-4 && Math.abs(W.data[o] - SPAWN[0]) < 1e-3 && Math.abs(W.data[o + 2] - SPAWN[1]) < 1e-3) puffs.push({ o, age: 1, life: 1, gone: true });
+        c = W.data[o + 7],
+        kept = at => Math.abs(W.data[o + 1] - (SPY + at)) < 1e-4 && Math.abs(W.data[o] - SPAWN[0]) < 1e-3 && Math.abs(W.data[o + 2] - SPAWN[1]) < 1e-3;
+      if (kept(PARK)) puffs.push({ o, age: 1, life: 1, gone: true });
+      else if (kept(FLAME)) flame = o;
+      else if (kept(SHINE)) shine = o;
       else if ((c === pack(B.P[25]) || c === pack(B.P[37])) && Math.abs(W.data[o] - HAND[0]) < 0.02 && Math.abs(W.data[o + 1] - HAND[1]) < 0.08 && W.data[o + 2] > HAND[2] + 0.05 && W.data[o + 2] < HAND[2] + 0.2) {
         cig.push(i);
         if (c === pack(B.P[37])) ember = i;
@@ -1300,18 +1312,38 @@ module.exports = ({ makeBuilder, makeSculpt, KIT: K }) => ({
       DOWN = 0.8,
       REST = 3.6,
       LASTS = 6, // pulls, and it is done
+      // lighting it: the match takes this long after he has begun (STRUCK), burns this long (BURNS), and by LIGHT he is done
+      STRUCK = 0.95,
+      BURNS = 1,
+      LIGHT = 2.5,
       // his arm, up at his mouth: the arm from the shoulder, the fore from the elbow, and the cigarette turned in the hand so
       // that it is at his lips and its lit end out ahead of him (degrees; found by trying, with the hand beside his chin)
       ARM = [-60, -65, 25],
       FORE = [-100, 26, 0],
       HELD = [123, 36, -179],
+      // (his other arm, up with the match: the same, the other way round)
+      CUP = [ARM[0], -ARM[1], -ARM[2]],
+      CUPPED = [FORE[0], -FORE[1], -FORE[2]],
+      // a dab that is put where it is wanted every time: so big, and so much of it
+      put = (o, at, s, a) => {
+        W.data[o] = at[0];
+        W.data[o + 1] = at[1];
+        W.data[o + 2] = at[2];
+        W.data[o + 4] = W.data[o + 8] = W.data[o + 10] = s * s;
+        W.data[o + 3] = a;
+      },
       // a place given in his own measure (to his right, up, the way he faces), on the rock
       from = (lx, ly, lz) => {
         const sn = Math.sin(pl.face),
           cs = Math.cos(pl.face);
         return [pl.x + lx * cs + lz * sn, pl.y + ly, pl.z - lx * sn + lz * cs];
       },
-      // He lights it and it is in his hand at his side, a thread of smoke coming off the end. Every so often the hand comes
+      // First he lights it. The cigarette goes to his mouth, his other hand comes up beside it with a match: that flares as it
+      // takes and then burns small, its light on his face; the end of the cigarette catches; the match is shaken out, with a
+      // little smoke of its own, and that hand goes down. He is then at his first pull, the cigarette already at his mouth.
+      // (pl.strike: how long he has been at lighting it, 0 once it is lit; pl.flare is put up as the match takes, for the
+      // page, which has a sound for it)
+      // Lit, it is in his hand at his side, a thread of smoke coming off the end. Every so often the hand comes
       // up to his mouth, the end glows for as long as he pulls at it, the hand goes down again and he lets the smoke out ahead
       // of him: as much of it as he drew, a short pull a wisp and a long one a cloud. After so many pulls (LASTS) it is
       // finished. Going anywhere, he has dropped it (step()). pl.cig is how long this pull has been going, pl.pull how long he
@@ -1320,9 +1352,27 @@ module.exports = ({ makeBuilder, makeSculpt, KIT: K }) => ({
         let up = 0,
           glow = 0,
           u = -1,
-          L = 0;
-        if (!pl.cig) pl.pull = pl.pulls = 0;
-        else {
+          L = 0,
+          left = 0, // how far up his other hand is, with the match
+          fire = 0, // the match's flame: 1 as it flares
+          burn = pl.cig ? 1 : 0; // how far the cigarette's end has caught
+        if (!pl.cig) pl.pull = pl.pulls = pl.strike = 0;
+        else if (pl.strike) {
+          const was = pl.strike,
+            s = (pl.strike += dt),
+            b = s - STRUCK; // since the match took
+          up = sm(s / 0.55);
+          left = sm((s - 0.2) / 0.6) * (1 - sm((b - BURNS) / 0.45));
+          if (was < STRUCK && s >= STRUCK) pl.flare = true;
+          fire = b < 0 || b > BURNS ? 0 : b < 0.14 ? 1 : 0.42 + 0.06 * Math.sin(b * 43) + 0.05 * Math.sin(b * 71);
+          burn = sm((b - 0.3) / 0.4);
+          glow = burn * (1 - sm((b - BURNS + 0.1) / 0.5)); // (he draws on it to light it, and it glows as he does)
+          if (was < STRUCK + BURNS && s >= STRUCK + BURNS) for (let k = 0; k < 2; k++) puff(from(0.035, 1.2, 0.28), [(Math.random() - 0.5) * 0.1, 0.34 + k * 0.1, (Math.random() - 0.5) * 0.1], 0.02, 0.085, 0.32, 1.5);
+          if (s >= LIGHT) {
+            pl.strike = 0;
+            pl.cig = UP; // into his first pull, the hand where it is
+          }
+        } else {
           pl.cig += dt;
           if (pl.pull && pl.cig > UP + pl.pull + DOWN + REST) {
             pl.pull = 0;
@@ -1344,15 +1394,30 @@ module.exports = ({ makeBuilder, makeSculpt, KIT: K }) => ({
         }
         pl.raise += (up - pl.raise) * Math.min(1, dt * 12);
         pl.lit += ((pl.cig ? 1 : 0) - pl.lit) * Math.min(1, dt * 9);
+        pl.cup += (left - pl.cup) * Math.min(1, dt * 12);
         const r = pl.raise,
-          mix = (a, b) => [0, 1, 2].map(j => a[j] * (1 - r) + b[j] * r);
+          c = pl.cup,
+          mix = (a, b, k) => [0, 1, 2].map(j => a[j] * (1 - k) + b[j] * k);
         if (r > 0.002) {
-          p.pose.plarmR = { rot: mix(p.pose.plarmR.rot, ARM) };
-          p.pose.plforeR = { rot: mix(p.pose.plforeR.rot, FORE) };
+          p.pose.plarmR = { rot: mix(p.pose.plarmR.rot, ARM, r) };
+          p.pose.plforeR = { rot: mix(p.pose.plforeR.rot, FORE, r) };
           p.pose.plhead.rot[0] += 5 * r;
         }
+        if (c > 0.002) {
+          p.pose.plarmL = { rot: mix(p.pose.plarmL.rot, CUP, c) };
+          p.pose.plforeL = { rot: mix(p.pose.plforeL.rot, CUPPED, c) };
+          p.pose.plhead.rot[0] += 7 * c; // (he bends his head to it)
+        }
         p.pose.plcig = { rot: [HELD[0] * r, HELD[1] * r, HELD[2] * r] };
-        for (const i of cig) W.data[i * 16 + 3] = (i === ember ? 1 + 2 * glow : 3) * (pl.lit < 0.02 ? 0 : pl.lit);
+        for (const i of cig) W.data[i * 16 + 3] = (i === ember ? (1 + 2 * glow) * burn : 3) * (pl.lit < 0.02 ? 0 : pl.lit);
+        if (fire > 0) {
+          put(flame, from(0.035, 1.185 + 0.01 * fire, 0.275), 0.011 + 0.021 * fire, 3);
+          put(shine, from(0.02, 1.2, 0.2), 0.1 + 0.17 * fire, (0.14 + 0.24 * fire) * (0.5 + 0.5 * pl.murk));
+          pl.fire = true;
+        } else if (pl.fire) {
+          W.data[flame + 3] = W.data[shine + 3] = 0;
+          pl.fire = false;
+        }
         if (u >= 0) {
           // the thread off its end, wherever the hand has it; and what he lets out, a little after the hand is down
           const tip = from(0.29 + (0.04 - 0.29) * r, 0.5 + (1.2 - 0.5) * r, 0.18 + (0.25 - 0.18) * r),
