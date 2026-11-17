@@ -25688,9 +25688,10 @@ module.exports = ({ makeBuilder, makeSculpt, KIT: K }) => ({
       S.box([cx - hl - 0.2, YS + 0.02, cz + SDOOR[0]], [0.2, 0.05, 0.5], PLANK, { res: 0.12 });
       // a plank left lying on the ground before it
       S.box([cx - hl - 1.5, height(cx - hl - 1.5, cz + 1.5) + 0.04, cz + 1.5], [0.75, 0.03, 0.1], { r: [29, 30, 30] }, { res: 0.11, ax: B.frame(1.15, 0, 0) });
-      // a chair left out by the corner of that gable, on the other side from the door: a round seat on four splayed legs, a
-      // hooped back with three sticks in it, turned a little toward the door. (Its sticks are stouter than a chair's are:
-      // drawn true they would be thinner than the picture can show)
+      // a chair left out by the corner of that gable, on the other side from the door, turned a little toward the door. A
+      // bow-back: a thin round seat on four slender splayed legs with stretchers low between them, and a back that is one
+      // rod bent into a tall bow (taller than the legs, as wide as the seat, widest above where it springs from the seat
+      // and coming in again to meet it), with five thin sticks fanning up into it. All of it leans back a little
       {
         const px = cx - hl - 0.45,
           pz = cz - hw + 0.28,
@@ -25698,19 +25699,33 @@ module.exports = ({ makeBuilder, makeSculpt, KIT: K }) => ({
           turn = Math.PI - 0.4, // which way it faces: out from the wall
           f = [Math.cos(turn), Math.sin(turn)],
           at = (u, y, v) => [px + v * f[0] - u * f[1], py + y, pz + v * f[1] + u * f[0]], // (u across it, v the way it faces)
-          CHAIR = { r: [32, 33, 26, 27] }, // dark wood: it stands against the palest wall the shed has
-          SEAT = 0.37,
-          hoop = u => SEAT + 0.43 * Math.sqrt(Math.max(0, 1 - (u / 0.19) ** 2)), // how high its back is, across it
-          lean = y => -0.17 - 0.16 * (y - SEAT); // and how far back, at a height
-        S.ball(at(0, SEAT, 0), [0.21, 0.04, 0.21], CHAIR, { res: 0.06 });
-        for (const [u, v] of [[-1, -1], [1, -1], [-1, 1], [1, 1]]) S.tube([at(u * 0.13, SEAT, v * 0.13), at(u * 0.2, 0, v * 0.2)], 0.03, 0.026, CHAIR, { res: 0.05 });
-        const arc = [];
-        for (let k = 0; k <= 10; k++) {
-          const u = -0.19 * Math.cos((k / 10) * Math.PI);
-          arc.push(at(u, hoop(u), lean(hoop(u))));
+          SEAT = 0.34,
+          TOP = SEAT + 0.45, // the top of the bow
+          BR = 0.185, // the bow's round: its radius
+          FOOT = 0.13, // where the bow meets the seat, from the middle
+          lean = y => -0.15 - 0.2 * (y - SEAT), // how far back the back is, at a height
+          back = (u, y) => at(u, y, lean(y)),
+          bowY = u => TOP - BR * (1 - Math.sqrt(Math.max(0, 1 - (u / BR) ** 2))), // how high the bow is over a place across it
+          bow = [back(-FOOT, SEAT)],
+          // its rods are thinner than a solid can be made here (a solid's dabs would close the back up into one dark
+          // shape): each is a row of thin dabs laid end to end along it, the way the brush's twigs are made
+          rod = (p, q, w, col) => {
+            const d = [q[0] - p[0], q[1] - p[1], q[2] - p[2]],
+              len = Math.hypot(d[0], d[1], d[2]),
+              n = Math.max(1, Math.ceil(len / 0.12));
+            for (let i = 0; i < n; i++) B.stick(p[0] + (d[0] * (i + 0.5)) / n, p[1] + (d[1] * (i + 0.5)) / n, p[2] + (d[2] * (i + 0.5)) / n, B.norm(d), len / n / 3.2, w, B.P[col], 3);
+          };
+        for (let k = -7; k <= 7; k++) {
+          const ph = ((k / 7) * 125 * Math.PI) / 180; // (round from the top, and past the widest on each side)
+          bow.push(back(BR * Math.sin(ph), TOP - BR * (1 - Math.cos(ph))));
         }
-        S.tube(arc, 0.028, 0.028, CHAIR, { res: 0.05 });
-        for (const u of [-0.095, 0, 0.095]) S.tube([at(u, SEAT, -0.17), at(u, hoop(u), lean(hoop(u)))], 0.02, 0.02, CHAIR, { res: 0.045 });
+        bow.push(back(FOOT, SEAT));
+        B.disc(...at(0, SEAT, 0), [0, 1, 0], 0.105, 0.013, B.P[26], 3); // the seat: one thin round dab
+        for (let k = 1; k < bow.length; k++) rod(bow[k - 1], bow[k], 0.017, 32);
+        for (let k = -2; k <= 2; k++) rod(back(k * 0.045, SEAT), back(k * 0.077, bowY(k * 0.077)), 0.008, 33);
+        for (const [u, v] of [[-1, -1], [1, -1], [-1, 1], [1, 1]]) rod(at(u * 0.12, SEAT, v * 0.12), at(u * 0.19, 0, v * 0.19), 0.017, 32);
+        for (const u of [-0.163, 0.163]) rod(at(u, 0.13, -0.163), at(u, 0.13, 0.163), 0.01, 33);
+        rod(at(-0.163, 0.13, 0), at(0.163, 0.13, 0), 0.01, 33);
         ROUND.push([px, pz, 0.26]);
       }
     }
