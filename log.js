@@ -163,7 +163,7 @@ const FIRST = 1898,
       name: 'A smoke',
       did: [
         '<b>C</b>, standing still: he lights a cigarette. It hangs in his hand with a thread of smoke off it; every few seconds the hand comes up, the end glows, and he lets the smoke out ahead of him.',
-        'He lights it with a match: both hands up at his mouth, the flare of it on his face, the end catching, the match shaken out. Then the first pull.',
+        'He lights it with a match. The cigarette goes to his mouth; his other hand goes into his coat for a match, strikes it down his thigh, and brings the flame up to it. The end catches, the match is shaken out, and then the first pull.',
         'No two pulls are alike: a quick one, then a long one. He lets out as much smoke as he drew.',
         'Six pulls and it is done. Going anywhere, or <b>C</b> again, and he has dropped it.',
         'The lit end keeps its white after dark.',
