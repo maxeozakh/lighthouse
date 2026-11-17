@@ -171,13 +171,13 @@ const FIRST = 1898,
     },
     {
       day: '18 Nov 2026',
-      at: '00:10',
+      at: '00:01',
       name: 'The ledger',
       did: [
         '<b>Esc</b> lays a ledger over the picture; under a thumb, its name is there to be pressed in the row of hints.',
         'In it, how loud you have it: all of it, the music, and the wind, sea and voices, each by itself. The browser keeps what you set.',
         'And who made what.',
-        'A link to the game is shown with a picture where it is posted, and the tab has the lantern for a mark.'
+        'A link to the game is shown with a picture where it is posted, and the tab has the tower and its beams for a mark.'
       ]
     }
   ];

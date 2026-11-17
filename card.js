@@ -1,10 +1,9 @@
 // The pictures that go with a link to the game: what is shown where the link is posted (card.png, 1200x630), and the mark in a
-// browser's tab and on a phone's home screen (icon.png 64x64, touch.png 192x192: the lantern, lit). All three are the level at
-// night, drawn by the game's own renderer and graded as the page grades it, a point of the picture shown some whole number of
-// pixels across.
+// browser's tab and on a phone's home screen (icon.png 64x64, touch.png 192x192: the tower at night, its beams out). The card
+// is the level at night, drawn by the game's own renderer and graded as the page grades it, a point of the picture shown three
+// pixels across; the mark is too small for that, and is set down by hand (mark()).
 //   node card.js [--repo path/to/ink-studio] [--to prefix]     -> card.png, icon.png, touch.png beside this file (or prefix + name)
 //   [--t s] the moment (where the beam is)   [--zoom k --lift y --toward k --side d] the card's view
-//   [--it s --izoom k --ilift y] the same for the mark
 // build.js does not run this (it takes a few seconds, and the pictures change only when the look of the level does): run it by
 // hand and commit what it writes.
 const path = require('path'),
@@ -85,8 +84,49 @@ const k = num('toward', 0.35),
   aim = [G.pl.x + (tx - G.pl.x) * k + side * Math.cos(YAW), G.pl.y + num('lift', 3.2), G.pl.z + (tz - G.pl.z) * k - side * Math.sin(YAW)];
 write('card.png', draw(num('t', 11.6), aim, num('zoom', 0.4), 400, 210, 3, 0.5));
 
-// the mark: the lantern and the gallery under it, 32 points across
-const top = [tx, G.height(tx, tz) + num('ilift', 12.3), tz],
-  small = draw(num('it', 9.5), top, num('izoom', 3), 32, 32, 1, 0);
+// the mark: the tower at night with its two beams out, 32 points across. The level drawn that small is a grey smear, so this
+// one is set down point by point, in the picture's greys: the beams broken up at their edges as the renderer breaks up what
+// is thin, and everything in it two points wide at the least, so that it still reads at half the size (a browser's tab)
+function mark() {
+  const N = 32,
+    NIGHT = 10,
+    g = new Uint8Array(N * N).fill(NIGHT),
+    set = (x, y, v) => x >= 0 && x < N && y >= 0 && y < N && (g[y * N + x] = v),
+    row = (y, x0, x1, v) => {
+      for (let x = x0; x <= x1; x++) set(x, y, v);
+    },
+    BAYER = [[0, 8, 2, 10], [12, 4, 14, 6], [3, 11, 1, 9], [15, 7, 13, 5]],
+    CX = 16, // the middle of the tower (between its two middle points)
+    CY = 9, // and of the lamp
+    TILT = -0.3; // the beams are seen a little from above: the one to the right goes up the picture, the other down
+  // the beams: widening as they go, brightest along the middle and near the lamp
+  for (let y = 0; y < N; y++)
+    for (let x = 0; x < N; x++) {
+      const dx = x + 0.5 - CX,
+        far = Math.abs(dx),
+        off = Math.abs(y + 0.5 - (CY + TILT * dx)) / (1.1 + far * 0.3);
+      if (far < 2 || off > 1) continue;
+      // (whole along its middle, and fainter the further out; broken up toward its edges)
+      if (off < 0.42) set(x, y, Math.round(206 - far * 5.5));
+      else if (1.25 - off - far / 40 > (BAYER[y & 3][x & 3] + 0.5) / 16) set(x, y, Math.round(150 - far * 3.5));
+    }
+  // the rock under it, and the sea either side
+  row(31, 0, 31, 30), row(30, 0, 31, 30), row(29, 3, 28, 44), row(28, 7, 24, 44), row(30, 2, 29, 44), row(31, 0, 31, 44);
+  // the tower: wider at the foot, its near side in the light and the other in its own shade; two small windows
+  for (let y = 14; y <= 28; y++) {
+    const half = 3 + Math.floor((y - 14) / 5);
+    row(y, CX - half, CX + half - 1, 190);
+    row(y, CX + half - 2, CX + half - 1, 120);
+  }
+  row(18, CX - 1, CX, 40), row(19, CX - 1, CX, 40), row(24, CX - 1, CX, 40), row(25, CX - 1, CX, 40);
+  // the gallery, the lantern lit, and its cap
+  row(13, CX - 5, CX + 4, 96), row(12, CX - 5, CX + 4, 60);
+  for (let y = 7; y <= 11; y++) row(y, CX - 3, CX + 2, 244);
+  row(6, CX - 4, CX + 3, 78), row(5, CX - 3, CX + 2, 78), row(4, CX - 2, CX + 1, 78), row(3, CX - 1, CX, 78);
+  const rgb = new Uint8Array(N * N * 3);
+  for (let i = 0; i < N * N; i++) rgb[i * 3] = rgb[i * 3 + 1] = rgb[i * 3 + 2] = g[i];
+  return { w: N, h: N, rgb };
+}
+const small = mark();
 write('icon.png', times(small, 2));
 write('touch.png', times(small, 6));

@@ -41,13 +41,14 @@ const face = (family, file, style) =>
 const fonts = [face('Redaction', 'redaction-50-latin-400-normal.woff2'), face('Redaction', 'redaction-50-latin-400-italic.woff2', 'italic')].join('\n  ');
 
 // what a link to the page is shown with where it is posted, and the mark in a browser's tab (the pictures: card.js). Where it is
-// posted wants whole addresses, so the page has to be told where it lives
+// posted wants whole addresses, so the page has to be told where it lives. (A browser keeps a mark it has once fetched: the
+// number after its name is put up when the mark is changed, so that the new one is fetched)
 const SITE = 'https://mxz.sh/lighthouse/',
   head = (title, about, page = '') => `<meta name="description" content="${about}">
 <meta name="theme-color" content="#000000">
 <link rel="canonical" href="${SITE}${page}">
-<link rel="icon" type="image/png" href="icon.png">
-<link rel="apple-touch-icon" href="touch.png">
+<link rel="icon" type="image/png" href="icon.png?2">
+<link rel="apple-touch-icon" href="touch.png?2">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="wickie">
 <meta property="og:title" content="${title}">
