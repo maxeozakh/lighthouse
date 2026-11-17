@@ -26227,12 +26227,22 @@ module.exports = ({ makeBuilder, makeSculpt, KIT: K }) => ({
     B.stick(HAND[0], HAND[1] - 0.025, HAND[2] + 0.09, B.norm([0, -0.15, 1]), 0.028, 0.009, B.P[25], 3, { nd: true });
     B.iso(HAND[0], HAND[1] - 0.033, HAND[2] + 0.14, 0.014, B.P[37], 3, { em: true, nd: true });
     for (let k = 0; k < PUFFS; k++) B.iso(SPAWN[0], SPY + PARK, SPAWN[1], 0.05, B.P[k % 2 ? 17 : 52], 0, { nd: true });
-    // and the match he lights it with, in his other hand, where that hangs: the stick of it, its flame at the end, and the
-    // light of that on whatever it is near (both of the light's white). They ride that hand as the cigarette does the other
-    const MATCH = [SPAWN[0] - 0.29, SPY + 0.54, SPAWN[1] + 0.035];
-    B.stick(MATCH[0], MATCH[1] - 0.02, MATCH[2] + 0.085, B.norm([0, -0.15, 1]), 0.018, 0.006, B.P[25], 3, { nd: true });
-    B.iso(MATCH[0], MATCH[1] - 0.026, MATCH[2] + 0.125, 0.03, B.P[37], 0, { em: true, nd: true });
-    B.iso(MATCH[0], MATCH[1] - 0.026, MATCH[2] + 0.125, 0.2, B.P[36], 0, { em: true, nd: true });
+    // and what he lights it with. A match, in the same hand (a little to the inside of where the cigarette is held): the
+    // stick of it, its flame at the end, and the light of that on whatever it is near (both of the light's white). The box
+    // they come in, in his other hand. And the cigarette again, at his lips, where it is while both his hands are at the
+    // match: this one rides his head. (Each is found again by where it was put)
+    const LHAND = [SPAWN[0] - 0.29, SPY + 0.54, SPAWN[1] + 0.035],
+      MATCH = [HAND[0] - 0.03, HAND[1] - 0.02, HAND[2] + 0.085],
+      TIP = [HAND[0] - 0.03, HAND[1] - 0.026, HAND[2] + 0.125],
+      BOX = [LHAND[0], LHAND[1] - 0.02, LHAND[2] + 0.07],
+      LIPS = [SPAWN[0] + 0.001, SPY + 1.21, SPAWN[1] + 0.23],
+      END = [SPAWN[0] + 0.001, SPY + 1.207, SPAWN[1] + 0.285];
+    B.stick(...MATCH, B.norm([0, -0.15, 1]), 0.018, 0.006, B.P[25], 3, { nd: true });
+    B.iso(...TIP, 0.03, B.P[37], 0, { em: true, nd: true });
+    B.iso(...TIP, 0.2, B.P[36], 0, { em: true, nd: true });
+    B.iso(...BOX, 0.03, B.P[29], 3, { nd: true });
+    B.stick(...LIPS, B.norm([END[0] - LIPS[0], END[1] - LIPS[1], END[2] - LIPS[2]]), 0.028, 0.009, B.P[25], 3, { nd: true });
+    B.iso(...END, 0.014, B.P[37], 3, { em: true, nd: true });
     // dead brush: bare twigs standing out of the turf all over the rock, moving a little in the wind (he goes through them)
     for (let k = 0, made = 0; k < 1400 && made < 170; k++) {
       const x = east((B.R() * 2 - 1) * IX),
@@ -26310,7 +26320,7 @@ module.exports = ({ makeBuilder, makeSculpt, KIT: K }) => ({
       },
       // (cig: how long he has been at his smoke, in seconds, 0 when he has none; lit: how much of it there is to see; raise: how
       // far his hand is up to his mouth; wisp: how long since the last of its smoke came off it)
-      pl = { x: SPAWN[0], z: SPAWN[1], y: height(SPAWN[0], SPAWN[1]), face: 0.6, go: 0, phase: 0, speed: 0, cig: 0, pull: 0, pulls: 0, was: 0, out: 0, lit: 0, raise: 0, wisp: 0, strike: 0, cup: 0, aim: null, look: [0, 0], jig: 0, flare: false, murk: 0, smoked: 0 },
+      pl = { x: SPAWN[0], z: SPAWN[1], y: height(SPAWN[0], SPAWN[1]), face: 0.6, go: 0, phase: 0, speed: 0, cig: 0, pull: 0, pulls: 0, was: 0, out: 0, lit: 0, raise: 0, wisp: 0, strike: 0, cup: 0, busy: 0, plan: null, dud: false, aimL: null, aimR: null, look: [0, 0], lips: 0, jigL: 0, jigR: 0, flare: false, murk: 0, smoked: 0 },
       SY = pl.y,
       turnTo = (a, b, k) => {
         let d = (b - a) % TAU;
@@ -26578,24 +26588,32 @@ module.exports = ({ makeBuilder, makeSculpt, KIT: K }) => ({
       };
     // his smoke: the dabs of the cigarette (they ride his hand) and of what comes off it, found by where they were put
     const cig = [],
+      lip = [],
       match = [],
       puffs = [];
     let ember = -1,
+      lit = -1, // (the end of the one at his lips)
+      box = -1,
       flame = -1,
       shine = -1;
     for (let i = 0; i < W.count; i++) {
       const o = i * 16,
         c = W.data[o + 7],
         is = n => c === pack(B.P[n]),
-        held = H => Math.abs(W.data[o] - H[0]) < 0.02 && Math.abs(W.data[o + 1] - H[1]) < 0.08 && W.data[o + 2] > H[2] + 0.05 && W.data[o + 2] < H[2] + 0.2; // (just ahead of a hand)
+        held = H => Math.abs(W.data[o] - H[0]) < 0.02 && Math.abs(W.data[o + 1] - H[1]) < 0.08 && W.data[o + 2] > H[2] + 0.05 && W.data[o + 2] < H[2] + 0.2, // (just ahead of a hand)
+        put = q => Math.abs(W.data[o] - q[0]) < 2e-3 && Math.abs(W.data[o + 1] - q[1]) < 2e-3 && Math.abs(W.data[o + 2] - q[2]) < 2e-3; // (where it was put)
       if (Math.abs(W.data[o + 1] - (SPY + PARK)) < 1e-4 && Math.abs(W.data[o] - SPAWN[0]) < 1e-3 && Math.abs(W.data[o + 2] - SPAWN[1]) < 1e-3) puffs.push({ o, age: 1, life: 1, gone: true });
       else if ((is(25) || is(37)) && held(HAND)) {
         cig.push(i);
         if (is(37)) ember = i;
-      } else if ((is(25) || is(36) || is(37)) && held(MATCH)) {
+      } else if ((is(25) && put(MATCH)) || ((is(36) || is(37)) && put(TIP))) {
         match.push(i);
         if (is(37)) flame = o;
         else if (is(36)) shine = o;
+      } else if (is(29) && put(BOX)) box = i;
+      else if ((is(25) && put(LIPS)) || (is(37) && put(END))) {
+        lip.push(i);
+        if (is(37)) lit = i;
       }
     }
     // a dab of smoke let go at a place (x, y, z), going (vx, vy, vz): it grows from s0 to s1 across and thins from a to nothing
@@ -26635,41 +26653,62 @@ module.exports = ({ makeBuilder, makeSculpt, KIT: K }) => ({
       DOWN = 0.8,
       REST = 3.6,
       LASTS = 6, // pulls, and it is done
-      // lighting it, in seconds from when he begins: the cigarette is at his mouth (PUT), the match takes (STRUCK) and burns
-      // so long (BURNS), the end of the cigarette begins to catch (CATCH), and he is done (LIGHT)
-      PUT = 0.55,
-      STRUCK = 1.75,
-      BURNS = 1.35,
-      CATCH = 2.55,
-      LIGHT = 3.8,
-      // what his other arm does meanwhile, a place at a time: when it is there, the arm from the shoulder, the fore from the
-      // elbow, and the match turned in the hand (degrees). Into the pocket of his coat and about in it; out, with a match;
-      // down his thigh with it, which lights it; up to the cigarette's end and held there; a little off, to be shaken out
-      LEFT = [
-        [1.0, [15, 36, -3], [-44, 0, 0], [0, 0, 0]],
-        [1.38, [17, 38, -3], [-50, 0, 0], [0, 0, 0]],
-        [1.62, [1, 20, -5], [-51, 0, 0], [0, 0, 0]],
-        [STRUCK, [9, 10, -2], [0, 0, 0], [0, 0, 0]],
-        [1.88, [6, 10, -2], [-8, 0, 0], [0, 0, 0]],
-        [2.36, [-60, 65, -25], [-100, -26, 0], [123, -36, 179]],
-        [STRUCK + BURNS, [-60, 65, -25], [-100, -26, 0], [123, -36, 179]],
-        [STRUCK + BURNS + 0.3, [-48, 40, -25], [-84, -20, 0], [123, -36, 179]]
-      ],
-      mix = (a, b, k) => [0, 1, 2].map(j => a[j] * (1 - k) + b[j] * k),
-      // where that arm is, so long after he began
-      reach = s => {
-        let k = 0;
-        while (k < LEFT.length - 2 && s > LEFT[k + 1][0]) k++;
-        const a = LEFT[k],
-          b = LEFT[k + 1],
-          f = sm((s - a[0]) / (b[0] - a[0]));
-        return [1, 2, 3].map(j => mix(a[j], b[j], f));
-      },
       // his arm, up at his mouth: the arm from the shoulder, the fore from the elbow, and the cigarette turned in the hand so
       // that it is at his lips and its lit end out ahead of him (degrees; found by trying, with the hand beside his chin)
       ARM = [-60, -65, 25],
       FORE = [-100, 26, 0],
       HELD = [123, 36, -179],
+      // lighting it. The cigarette is at his mouth so long after he begins (PUT), and is let go of there; the first match is
+      // struck at STRIKE; a match that takes burns so long (BURNS), and the cigarette's end begins to catch so long after it
+      // took (CATCH); one that does not take is out in GUTTER, and the next is struck so long after the first (AGAIN)
+      PUT = 0.55,
+      STRIKE = 2.07,
+      BURNS = 1.5,
+      CATCH = 0.8,
+      GUTTER = 0.5,
+      AGAIN = 1.55,
+      // where his arms are at it (degrees: the arm from the shoulder, the fore from the elbow, and for the right the match
+      // turned in the hand). The left: in the pocket of his coat, and about in it; before his chest, with the box; up beside
+      // the flame, to keep the wind off it. The right: at the box, the match's head on it; struck, away from him; the flame
+      // at the cigarette's end; off to the side, to be shaken out; and at his mouth again, to take the cigarette
+      POCKET = [[15, 36, -3], [-44, 0, 0]],
+      RUMMAGE = [[17, 38, -3], [-50, 0, 0]],
+      BOXED = [[-15, 62, -22], [-73, -8, 0]],
+      SHIELD = [[-54, 54, -27], [-74, -3, 0]],
+      ATBOX = [[-42, -54, 0], [-54, -11, 0], [0, 0, 0]],
+      STRUCK = [[-19, -22, 5], [-54, -4, 0], [0, 0, 0]],
+      LIGHTS = [[-60, -50, 5], [-66, -2, 0], [17, 9, 14]],
+      SHAKEN = [[-30, -19, 21], [-65, -6, 0], [0, 0, 0]],
+      MOUTH = [ARM, FORE, [0, 0, 0]],
+      mix = (a, b, k) => [0, 1, 2].map(j => a[j] * (1 - k) + b[j] * k),
+      // what he does and when: where each arm is to be at each time (L, R); when the match that lights it is struck (S), when
+      // that is out (OUT), and when he is done (LIGHT). dud: the first match does not take, and he has to strike another
+      plan = dud => {
+        const S = STRIKE + (dud ? AGAIN : 0),
+          OUT = S + BURNS,
+          R = [[PUT + 0.07, ...MOUTH], [1.2, ...ATBOX], [STRIKE - 0.12, ...ATBOX], [STRIKE, ...STRUCK]];
+        if (dud) R.push([STRIKE + 0.8, ...STRUCK], [STRIKE + 1.12, ...ATBOX], [S - 0.12, ...ATBOX], [S, ...STRUCK]);
+        R.push([S + 0.15, ...STRUCK], [S + 0.6, ...LIGHTS], [OUT, ...LIGHTS], [OUT + 0.3, ...SHAKEN], [OUT + 0.5, ...SHAKEN], [OUT + 0.95, ...MOUTH]);
+        return {
+          dud,
+          S,
+          OUT,
+          LIGHT: OUT + 1.05,
+          L: [[0.95, ...POCKET], [1.3, ...RUMMAGE], [1.65, ...BOXED], [S + 0.15, ...BOXED], [S + 0.6, ...SHIELD], [OUT + 0.1, ...SHIELD], [OUT + 0.6, ...POCKET], [OUT + 0.85, ...RUMMAGE]],
+          R
+        };
+      },
+      // where an arm is, so long after he began
+      reach = (keys, s) => {
+        let k = 0;
+        while (k < keys.length - 2 && s > keys[k + 1][0]) k++;
+        const a = keys[k],
+          b = keys[k + 1],
+          f = sm((s - a[0]) / (b[0] - a[0]));
+        return a.slice(1).map((v, j) => mix(v, b[j + 1], f));
+      },
+      // (all of it between a and b, and none outside)
+      win = (x, a, b, e = 0.08) => sm((x - a) / e) * (1 - sm((x - b) / e)),
       // a dab made so big, and so much of it to be seen
       dab = (o, s, a) => {
         W.data[o + 4] = W.data[o + 8] = W.data[o + 10] = s * s;
@@ -26681,13 +26720,17 @@ module.exports = ({ makeBuilder, makeSculpt, KIT: K }) => ({
           cs = Math.cos(pl.face);
         return [pl.x + lx * cs + lz * sn, pl.y + ly, pl.z - lx * sn + lz * cs];
       },
-      // First he lights it. The cigarette goes to his mouth, and his hand stays on it. His other hand goes into his coat for a
-      // match and comes out with one; he strikes it down his thigh, where it flares as it takes, and brings it up, burning
-      // small, to the cigarette: its light is on his coat and then on his face. The end of the cigarette catches; the match
-      // is shaken out, with a little smoke of its own, and that hand goes down. He is then at his first pull, the cigarette
-      // already at his mouth. (pl.strike: how long he has been at lighting it, 0 once it is lit; pl.flare is put up as the
-      // match is struck, for the page, which has a sound for it; pl.aim is where his other arm is to be, pl.cup how far it has
-      // left his side, pl.look how his head is bent to what he is doing, pl.jig the hand's shaking)
+      // First he lights it, and it takes both his hands. The cigarette goes to his lips and stays there. His left hand goes
+      // into his coat and comes out with the box; the right takes a match from it and strikes it, away from him, before his
+      // chest: it flares as it takes, and burns small. He brings it up to the cigarette's end, the left hand beside it to keep
+      // the wind off, his head bent to it, the light of it on his face. The end catches; the match is shaken out, with a
+      // little smoke of its own, and dropped; the box goes back in his coat; his right hand takes the cigarette from his
+      // lips, and he is at his first pull. Sometimes the wind has the first match before it has properly taken, and he must
+      // strike another.
+      // (pl.strike: how long he has been at lighting it, 0 once it is lit; pl.plan what he is to do and when (plan());
+      // pl.flare is put up as a match is struck, for the page, which has a sound for it; pl.aimL and pl.aimR are where his
+      // arms are to be, pl.cup and pl.busy how far each is given over to this; pl.look how his head is bent to what he is
+      // doing; pl.jigL and pl.jigR the hands' shaking)
       // Lit, it is in his hand at his side, a thread of smoke coming off the end. Every so often the hand comes
       // up to his mouth, the end glows for as long as he pulls at it, the hand goes down again and he lets the smoke out ahead
       // of him: as much of it as he drew, a short pull a wisp and a long one a cloud. After so many pulls (LASTS) it is
@@ -26698,31 +26741,50 @@ module.exports = ({ makeBuilder, makeSculpt, KIT: K }) => ({
           glow = 0,
           u = -1,
           L = 0,
-          left = 0, // how far from his side his other hand is, at the match
-          wood = 0, // is the match in that hand
+          left = 0, // how far each of his arms is given over to the lighting of it
+          right = 0,
+          lips = 0, // is the cigarette at his lips, and not in his hand
+          wood = 0, // is there a match in his hand
+          card = 0, // and the box in the other
           fire = 0, // the match's flame: 1 as it flares
           burn = pl.cig ? 1 : 0; // how far the cigarette's end has caught
         if (!pl.cig) pl.pull = pl.pulls = pl.strike = 0;
         else if (pl.strike) {
-          const was = pl.strike,
+          if (pl.strike <= 1e-3) pl.plan = plan((pl.dud = !pl.dud && Math.random() < 0.3)); // (never two bad ones running)
+          const q = pl.plan,
+            was = pl.strike,
             s = (pl.strike += dt),
-            b = s - STRUCK; // since the match took
-          const pocket = sm((s - PUT + 0.05) / 0.4) * (1 - sm((s - 1.55) / 0.3)), // (he looks to his pocket, and then to the match)
-            cupped = sm((s - STRUCK - 0.15) / 0.4) * (1 - sm((b - BURNS - 0.05) / 0.4));
+            on = t => was < t && s >= t, // (it has just come to t)
+            b = s - q.S, // since the match that lights it was struck
+            d = q.dud ? s - STRIKE : -1, // since the one that does not take was
+            j = () => (Math.random() - 0.5) * 0.1;
           up = sm(s / PUT);
-          left = sm((s - PUT + 0.05) / 0.45) * (1 - sm((s - LIGHT + 0.5) / 0.45));
-          wood = s > 1.42 && s < LIGHT - 0.4 ? 1 : 0;
-          pl.aim = reach(s);
-          pl.look = [9 * pocket + 7 * cupped, 16 * pocket];
-          // (the hand is busy in the pocket; and at the last it shakes the match out)
-          pl.jig = 7 * Math.sin(s * 23) * sm((s - 1.0) / 0.1) * (1 - sm((s - 1.3) / 0.1)) + 12 * Math.sin((b - BURNS) * 42) * sm((b - BURNS + 0.08) / 0.08) * (1 - sm((b - BURNS - 0.2) / 0.15));
-          if (was < STRUCK - 0.1 && s >= STRUCK - 0.1) pl.flare = true; // (as it is drawn down his thigh: the rasp of it first)
-          fire = b < 0 || b > BURNS ? 0 : b < 0.14 ? 1 : 0.42 + 0.06 * Math.sin(b * 43) + 0.05 * Math.sin(b * 71);
-          burn = sm((s - CATCH) / 0.4);
-          if (was < CATCH && s >= CATCH) pl.smoked++; // (one more of them: it is counted as it catches, whatever he does with it after)
+          left = sm((s - 0.5) / 0.45) * (1 - sm((s - q.OUT - 0.8) / 0.4));
+          right = s >= PUT + 0.05 ? 1 : 0;
+          lips = s >= PUT + 0.05 && s < q.LIGHT - 0.1 ? 1 : 0;
+          card = s > 1.32 && s < q.OUT + 0.6 ? 1 : 0;
+          wood = s > 1.8 && s < q.OUT + 0.45 && !(d > 0.85 && d < 1.3) ? 1 : 0;
+          pl.aimL = reach(q.L, s);
+          pl.aimR = reach(q.R, s);
+          // (he looks to his pocket; to his hands; to the flame at the cigarette; and up, when the wind has had the match)
+          pl.look = [8 * win(s, 0.5, 1.4, 0.3) + 12 * win(s, 1.4, q.S + 0.2, 0.3) + 7 * win(b, 0.2, BURNS, 0.4) - 9 * win(d, GUTTER, 0.95, 0.15), -14 * win(s, 0.5, 1.4, 0.3)];
+          // (the left hand is busy in the pocket; the right takes a match from the box, and at the last shakes it out)
+          pl.jigL = 7 * Math.sin(s * 23) * win(s, 1.0, 1.3);
+          pl.jigR = 5 * Math.sin(s * 31) * (win(s, 1.62, 1.8) + win(d, 1.14, 1.3)) + 12 * Math.sin((b - BURNS) * 42) * win(b - BURNS, 0.03, 0.42);
+          if (on(STRIKE - 0.1) || (q.dud && on(q.S - 0.1))) pl.flare = true; // (the rasp of it first)
+          if (b >= 0) fire = b > BURNS + 0.05 ? 0 : b < 0.14 ? 1 : 0.42 + 0.06 * Math.sin(b * 43) + 0.05 * Math.sin(b * 71);
+          else if (d >= 0 && d < GUTTER) fire = d < 0.12 ? 1 : Math.max(0.03, (0.36 + 0.14 * Math.sin(d * 67)) * (1 - (d - 0.12) / (GUTTER - 0.12)));
+          if (q.dud && on(STRIKE + GUTTER)) puff(from(0.13, 0.9, 0.36), [WIND[0] * 2 + j(), 0.3, WIND[2] * 2 + j()], 0.02, 0.09, 0.34, 1.4);
+          burn = sm((b - CATCH) / 0.4);
+          if (on(q.S + CATCH)) pl.smoked++; // (one more of them: it is counted as it catches, whatever he does with it after)
           glow = burn * (1 - sm((b - BURNS + 0.1) / 0.5)); // (he draws on it to light it, and it glows as he does)
-          if (was < STRUCK + BURNS && s >= STRUCK + BURNS) for (let k = 0; k < 2; k++) puff(from(0.035, 1.2, 0.28), [(Math.random() - 0.5) * 0.1, 0.34 + k * 0.1, (Math.random() - 0.5) * 0.1], 0.02, 0.085, 0.32, 1.5);
-          if (s >= LIGHT) {
+          if (on(q.OUT + 0.05)) for (let k = 0; k < 2; k++) puff(from(0.02, 1.13, 0.31), [j(), 0.34 + k * 0.1, j()], 0.02, 0.085, 0.32, 1.5);
+          // (and once it has caught, the thread off its end, at his lips)
+          if (burn > 0.5 && (pl.wisp += dt) > 0.45) {
+            pl.wisp = 0;
+            puff(from(0, 1.16, 0.3), [j(), 0.3 + j(), j()], 0.022, 0.07, 0.3, 2.2);
+          }
+          if (s >= q.LIGHT) {
             pl.strike = 0;
             pl.cig = UP; // into his first pull, the hand where it is
           }
@@ -26746,27 +26808,41 @@ module.exports = ({ makeBuilder, makeSculpt, KIT: K }) => ({
             glow = sm((u - UP) / Math.min(0.7, 0.6 * L)) * (1 - sm((u - UP - L + 0.1) / 0.45));
           }
         }
+        // (dropped, it goes out where it was: at his lips, if that is where he had it)
+        if (pl.cig) pl.lips = lips;
+        else lips = pl.lips;
         pl.raise += (up - pl.raise) * Math.min(1, dt * 12);
         pl.lit += ((pl.cig ? 1 : 0) - pl.lit) * Math.min(1, dt * 9);
         pl.cup += (left - pl.cup) * Math.min(1, dt * 12);
+        pl.busy += (right - pl.busy) * Math.min(1, dt * 12);
         const r = pl.raise,
-          c = pl.cup;
+          c = pl.cup,
+          k = pl.busy,
+          a = pl.lit < 0.02 ? 0 : pl.lit;
         if (r > 0.002) {
           p.pose.plarmR = { rot: mix(p.pose.plarmR.rot, ARM, r) };
           p.pose.plforeR = { rot: mix(p.pose.plforeR.rot, FORE, r) };
           p.pose.plhead.rot[0] += 5 * r;
         }
+        if (k > 0.002) {
+          const [arm, fore] = pl.aimR;
+          p.pose.plarmR = { rot: mix(p.pose.plarmR.rot, arm, k) };
+          p.pose.plforeR = { rot: mix(p.pose.plforeR.rot, [fore[0] + pl.jigR, fore[1], fore[2]], k) };
+        }
         if (c > 0.002) {
-          const [arm, fore] = pl.aim;
+          const [arm, fore] = pl.aimL;
           p.pose.plarmL = { rot: mix(p.pose.plarmL.rot, arm, c) };
-          p.pose.plforeL = { rot: mix(p.pose.plforeL.rot, [fore[0] + pl.jig, fore[1], fore[2]], c) };
+          p.pose.plforeL = { rot: mix(p.pose.plforeL.rot, [fore[0] + pl.jigL, fore[1], fore[2]], c) };
           p.pose.plhead.rot[0] += pl.look[0] * c;
           p.pose.plhead.rot[1] += pl.look[1] * c;
         }
-        p.pose.plmatch = { rot: c > 0.002 ? pl.aim[2] : [0, 0, 0] };
+        p.pose.plmatch = { rot: k > 0.002 ? pl.aimR[2] : [0, 0, 0] };
         p.pose.plcig = { rot: [HELD[0] * r, HELD[1] * r, HELD[2] * r] };
-        for (const i of cig) W.data[i * 16 + 3] = (i === ember ? (1 + 2 * glow) * burn : 3) * (pl.lit < 0.02 ? 0 : pl.lit);
+        p.pose.plbox = p.pose.pllip = { rot: [0, 0, 0] };
+        for (const i of cig) W.data[i * 16 + 3] = (i === ember ? (1 + 2 * glow) * burn : 3) * a * (1 - lips);
+        for (const i of lip) W.data[i * 16 + 3] = (i === lit ? (1 + 2 * glow) * burn : 3) * a * lips;
         for (const i of match) W.data[i * 16 + 3] = wood * 3;
+        W.data[box * 16 + 3] = card * 3;
         dab(flame, 0.011 + 0.021 * fire, fire > 0 ? 3 : 0);
         dab(shine, 0.1 + 0.17 * fire, fire > 0 ? (0.14 + 0.24 * fire) * (0.5 + 0.5 * pl.murk) : 0);
         if (u >= 0) {
@@ -26794,7 +26870,9 @@ module.exports = ({ makeBuilder, makeSculpt, KIT: K }) => ({
       parts: {
         ...man('pl', SPAWN[0], SY, SPAWN[1]),
         plcig: { ids: cig, pivot: HAND, parent: 'plforeR' },
-        plmatch: { ids: match, pivot: MATCH, parent: 'plforeL' },
+        plmatch: { ids: match, pivot: HAND, parent: 'plforeR' },
+        plbox: { ids: [box], pivot: LHAND, parent: 'plforeL' },
+        pllip: { ids: lip, pivot: [SPAWN[0], SY + 1.1, SPAWN[1]], parent: 'plhead' },
         ...man('om', OLDMAN[0], WY, OLDMAN[1]),
         mm: { ids: tags.mm, pivot: mp(0, 0, 0) },
         mmtop: { ids: tags.mmtop, pivot: mp(0, 0.2, 0), parent: 'mm' }, // all of her above the scales: it turns at the hips
