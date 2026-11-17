@@ -455,8 +455,8 @@
       Sound.strike();
     }
     G.sea(t); // the swell comes on
-    // the camera: turns a quarter at a time, and follows a little behind
-    yaw += (yawTo - yaw) * (1 - Math.exp(-dt * 7));
+    // the camera: turns a quarter at a time (and not in a hurry), and follows a little behind
+    yaw += (yawTo - yaw) * (1 - Math.exp(-dt * 5.6));
     zoom += (Math.min(2.8, zoomTo * close) - zoom) * (1 - Math.exp(-dt * (t < 6 ? 0.9 : mode === 'play' ? 8 : 3)));
     const k = 1 - Math.exp(-dt * 6);
     for (let i = 0; i < 3; i++) cam[i] += (look[i] - cam[i]) * k;

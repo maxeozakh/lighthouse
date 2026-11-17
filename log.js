@@ -179,6 +179,7 @@ const FIRST = 1898,
         'In it, how loud you have it: all of it, the music, and the wind, sea and voices, each by itself. The browser keeps what you set.',
         'Two things to tick there: your ears stopped, and the row of controls kept in sight for good (it goes out, a part at a time, as you learn it; ticked, all of it is put back and stays).',
         'Its steps of loudness and its ticks are cut of the same stone as the things a thumb presses.',
+        'The view comes round a little slower when it is turned.',
         'And who made what.',
         'A link to the game is shown with a picture where it is posted, and the tab has the tower and its beams for a mark.'
       ]
