@@ -45,12 +45,16 @@ const html = `<!doctype html>
   #hud b { color: #d9dad4; font-weight: normal; }
   /* each thing the row says is told apart from the next by a dot. Once he has done a thing, the row stops saying it: it goes
      out, and then the room it took is closed up slowly, so the rest of the row draws together over it and does not jump
-     (game.js gives it the width it has, to close from, and takes it away at the end). What stops his ears stays: it is how
-     he unstops them. (A part going out is cut off at its edges as it narrows: the room above and below it is for the two
-     bent arrows, which stand taller than the words) */
+     (game.js gives it the width it has, to close from, and takes it away at the end). When it is the last of the row that
+     goes, the dot before it goes the same way (.end: its width is --dot, which game.js measures; .bare is how it measures).
+     Under a thumb what stops his ears stays: there it is the thing pressed, to stop them and to unstop them. (A part going
+     out is cut off at its edges as it narrows: the room above and below it is for the two bent arrows, which stand taller
+     than the words) */
   #hud .keys > span:not(:last-child)::after, #hud .thumbs > span:not(:last-child)::after { content: '\\00a0·\\00a0'; color: #8b8c87; }
   #hud [data-h] { display: inline-block; white-space: nowrap; }
   #hud .known { overflow: hidden; vertical-align: top; padding: 6px 0; margin: -6px 0; opacity: 0; transition: opacity 0.6s ease, width 1.4s ease-in-out 0.45s; }
+  #hud .keys > span.end::after, #hud .thumbs > span.end::after { display: inline-block; overflow: hidden; vertical-align: top; width: var(--dot); opacity: 0; transition: opacity 0.6s ease, width 1.4s ease-in-out 0.45s; }
+  #hud .keys > span.bare::after, #hud .thumbs > span.bare::after { display: none; }
   #fps { position: fixed; right: calc(12px + env(safe-area-inset-right)); top: calc(10px + env(safe-area-inset-top)); color: #5c5d59; font: 11px ui-monospace, Menlo, monospace; }
   /* it opens out of black, and quickly */
   #veil { position: fixed; inset: 0; background: #000; transition: opacity 0.7s ease; pointer-events: none; }
@@ -86,7 +90,7 @@ const html = `<!doctype html>
 <div id="ui">
   <div id="day"></div>
 </div>
-<div id="hud"><span class="keys"><span data-h="roam"><b>WASD</b> or arrows roam the rock</span><span data-h="soft"><b>Shift</b> tread soft</span><span data-h="look"><b>Q</b> / <b>E</b> look about ye</span><span data-h="zoom">wheel peer close</span><span><b>M</b> <span class="snd">stop yer ears</span></span></span><span class="thumbs"><span data-h="roam"><b>drag</b> roam the rock</span><span data-h="soft"><b>drag a little</b> tread soft</span><span data-h="look">${bend(-1)}${bend(1)} look about ye</span><span data-h="zoom"><b>pinch</b> peer close</span><span class="snd tap">stop yer ears</span></span></div>
+<div id="hud"><span class="keys"><span data-h="roam"><b>WASD</b> or arrows roam the rock</span><span data-h="soft"><b>Shift</b> tread soft</span><span data-h="look"><b>Q</b> / <b>E</b> look about ye</span><span data-h="zoom">wheel peer close</span><span data-h="ears"><b>M</b> <span class="snd">stop yer ears</span></span></span><span class="thumbs"><span data-h="roam"><b>drag</b> roam the rock</span><span data-h="soft"><b>drag a little</b> tread soft</span><span data-h="look">${bend(-1)}${bend(1)} look about ye</span><span data-h="zoom"><b>pinch</b> peer close</span><span class="snd tap">stop yer ears</span></span></div>
 <div id="pad"><button id="turnL" aria-label="look about ye, to the left">${bend(-1)}</button><button id="turnR" aria-label="look about ye, to the right">${bend(1)}</button></div>
 <div id="stick"><i></i></div>
 <div id="fps"></div>

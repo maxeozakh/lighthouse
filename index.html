@@ -19,12 +19,16 @@
   #hud b { color: #d9dad4; font-weight: normal; }
   /* each thing the row says is told apart from the next by a dot. Once he has done a thing, the row stops saying it: it goes
      out, and then the room it took is closed up slowly, so the rest of the row draws together over it and does not jump
-     (game.js gives it the width it has, to close from, and takes it away at the end). What stops his ears stays: it is how
-     he unstops them. (A part going out is cut off at its edges as it narrows: the room above and below it is for the two
-     bent arrows, which stand taller than the words) */
+     (game.js gives it the width it has, to close from, and takes it away at the end). When it is the last of the row that
+     goes, the dot before it goes the same way (.end: its width is --dot, which game.js measures; .bare is how it measures).
+     Under a thumb what stops his ears stays: there it is the thing pressed, to stop them and to unstop them. (A part going
+     out is cut off at its edges as it narrows: the room above and below it is for the two bent arrows, which stand taller
+     than the words) */
   #hud .keys > span:not(:last-child)::after, #hud .thumbs > span:not(:last-child)::after { content: '\00a0·\00a0'; color: #8b8c87; }
   #hud [data-h] { display: inline-block; white-space: nowrap; }
   #hud .known { overflow: hidden; vertical-align: top; padding: 6px 0; margin: -6px 0; opacity: 0; transition: opacity 0.6s ease, width 1.4s ease-in-out 0.45s; }
+  #hud .keys > span.end::after, #hud .thumbs > span.end::after { display: inline-block; overflow: hidden; vertical-align: top; width: var(--dot); opacity: 0; transition: opacity 0.6s ease, width 1.4s ease-in-out 0.45s; }
+  #hud .keys > span.bare::after, #hud .thumbs > span.bare::after { display: none; }
   #fps { position: fixed; right: calc(12px + env(safe-area-inset-right)); top: calc(10px + env(safe-area-inset-top)); color: #5c5d59; font: 11px ui-monospace, Menlo, monospace; }
   /* it opens out of black, and quickly */
   #veil { position: fixed; inset: 0; background: #000; transition: opacity 0.7s ease; pointer-events: none; }
@@ -60,7 +64,7 @@
 <div id="ui">
   <div id="day"></div>
 </div>
-<div id="hud"><span class="keys"><span data-h="roam"><b>WASD</b> or arrows roam the rock</span><span data-h="soft"><b>Shift</b> tread soft</span><span data-h="look"><b>Q</b> / <b>E</b> look about ye</span><span data-h="zoom">wheel peer close</span><span><b>M</b> <span class="snd">stop yer ears</span></span></span><span class="thumbs"><span data-h="roam"><b>drag</b> roam the rock</span><span data-h="soft"><b>drag a little</b> tread soft</span><span data-h="look"><img class="bend" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABgAAAAYCAYAAADgdz34AAAApUlEQVR42u2V6wnAIAyE3cMB3MD/DuIiLuIgTuFUlhMCqa2p9gGlNHAUA3dffECV+nyllErOuTwWTmohWJMuhxNA0qXwGGPx3tfvHgz9YcheOGStrRDea3W4m174jLoQHno2nGsDCCFMBzvnxgEEkQKNMTCuzLgX+LgXg4oXTS+Gm9DrDUWQYUA7nbTtdvopAJXWup73YwCpfsA7Abf/NwBQf722FvYbCRRuRVuTAAAAAElFTkSuQmCC" width="24" height="24" alt="" draggable="false"><img class="bend" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABgAAAAYCAYAAADgdz34AAAAqElEQVR42u2T0Q2AIAwF3YMB2IB/BmERFmEQpmAqzDNpUrEileiPNnkxIfUOpC7LZ6uUUnPOdRpCkeCUabgULlBLAEgpiVCshxC2p1pCILwsBRDAnXO7tSHJFbyXIckdcCvhsmGB914tijEeBbQDBA0IvnfTVq21XYEIlwSAnzXTFFEvTVZ3griAn6J3XyennBfgXowxup9LI7hVv2CoHhfwehT+16u1AnwsCRR8lNaoAAAAAElFTkSuQmCC" width="24" height="24" alt="" draggable="false"> look about ye</span><span data-h="zoom"><b>pinch</b> peer close</span><span class="snd tap">stop yer ears</span></span></div>
+<div id="hud"><span class="keys"><span data-h="roam"><b>WASD</b> or arrows roam the rock</span><span data-h="soft"><b>Shift</b> tread soft</span><span data-h="look"><b>Q</b> / <b>E</b> look about ye</span><span data-h="zoom">wheel peer close</span><span data-h="ears"><b>M</b> <span class="snd">stop yer ears</span></span></span><span class="thumbs"><span data-h="roam"><b>drag</b> roam the rock</span><span data-h="soft"><b>drag a little</b> tread soft</span><span data-h="look"><img class="bend" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABgAAAAYCAYAAADgdz34AAAApUlEQVR42u2V6wnAIAyE3cMB3MD/DuIiLuIgTuFUlhMCqa2p9gGlNHAUA3dffECV+nyllErOuTwWTmohWJMuhxNA0qXwGGPx3tfvHgz9YcheOGStrRDea3W4m174jLoQHno2nGsDCCFMBzvnxgEEkQKNMTCuzLgX+LgXg4oXTS+Gm9DrDUWQYUA7nbTtdvopAJXWup73YwCpfsA7Abf/NwBQf722FvYbCRRuRVuTAAAAAElFTkSuQmCC" width="24" height="24" alt="" draggable="false"><img class="bend" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABgAAAAYCAYAAADgdz34AAAAqElEQVR42u2T0Q2AIAwF3YMB2IB/BmERFmEQpmAqzDNpUrEileiPNnkxIfUOpC7LZ6uUUnPOdRpCkeCUabgULlBLAEgpiVCshxC2p1pCILwsBRDAnXO7tSHJFbyXIckdcCvhsmGB914tijEeBbQDBA0IvnfTVq21XYEIlwSAnzXTFFEvTVZ3griAn6J3XyennBfgXowxup9LI7hVv2CoHhfwehT+16u1AnwsCRR8lNaoAAAAAElFTkSuQmCC" width="24" height="24" alt="" draggable="false"> look about ye</span><span data-h="zoom"><b>pinch</b> peer close</span><span class="snd tap">stop yer ears</span></span></div>
 <div id="pad"><button id="turnL" aria-label="look about ye, to the left"><img class="bend" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABgAAAAYCAYAAADgdz34AAAApUlEQVR42u2V6wnAIAyE3cMB3MD/DuIiLuIgTuFUlhMCqa2p9gGlNHAUA3dffECV+nyllErOuTwWTmohWJMuhxNA0qXwGGPx3tfvHgz9YcheOGStrRDea3W4m174jLoQHno2nGsDCCFMBzvnxgEEkQKNMTCuzLgX+LgXg4oXTS+Gm9DrDUWQYUA7nbTtdvopAJXWup73YwCpfsA7Abf/NwBQf722FvYbCRRuRVuTAAAAAElFTkSuQmCC" width="24" height="24" alt="" draggable="false"></button><button id="turnR" aria-label="look about ye, to the right"><img class="bend" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABgAAAAYCAYAAADgdz34AAAAqElEQVR42u2T0Q2AIAwF3YMB2IB/BmERFmEQpmAqzDNpUrEileiPNnkxIfUOpC7LZ6uUUnPOdRpCkeCUabgULlBLAEgpiVCshxC2p1pCILwsBRDAnXO7tSHJFbyXIckdcCvhsmGB914tijEeBbQDBA0IvnfTVq21XYEIlwSAnzXTFFEvTVZ3griAn6J3XyennBfgXowxup9LI7hVv2CoHhfwehT+16u1AnwsCRR8lNaoAAAAAElFTkSuQmCC" width="24" height="24" alt="" draggable="false"></button></div>
 <div id="stick"><i></i></div>
 <div id="fps"></div>
@@ -27101,6 +27105,23 @@ const Sound = (() => {
           el.remove();
           continue;
         }
+        // when it is the last of the row that is left, the dot that stood before it (it is the end of the part before) has
+        // nothing to tell apart any more, and closes with it
+        const gone = s => s && s.classList.contains('known');
+        let next = el.nextElementSibling,
+          prev = el.previousElementSibling;
+        while (gone(next)) next = next.nextElementSibling;
+        while (gone(prev)) prev = prev.previousElementSibling;
+        if (!next && prev) {
+          const whole = prev.getBoundingClientRect().width;
+          prev.classList.add('bare');
+          const dot = whole - prev.getBoundingClientRect().width;
+          prev.classList.remove('bare');
+          prev.style.setProperty('--dot', dot + 'px');
+          prev.classList.add('end');
+          void prev.offsetWidth;
+          prev.style.setProperty('--dot', '0px');
+        }
         el.style.width = el.getBoundingClientRect().width + 'px';
         el.classList.add('known');
         void el.offsetWidth; // (the width it starts from has to be taken in before the one it goes to is given)
@@ -27386,7 +27407,10 @@ const Sound = (() => {
     // (whatever he does first brings in what is not weather: all but stopping his ears)
     if (c === 'KeyM') Sound.start();
     else Sound.wake();
-    if (c === 'KeyM' && once) ears();
+    if (c === 'KeyM' && once) {
+      learn('ears'); // (the row stops saying it as it was: what it says is not changed as it goes out)
+      ears();
+    }
     if (mode === 'play' && once) {
       if (c === 'KeyQ') yawTo += Math.PI / 2;
       else if (c === 'KeyE') yawTo -= Math.PI / 2;
@@ -27435,7 +27459,7 @@ const Sound = (() => {
   }
   function ears() {
     const label = Sound.mute() ? 'unstop yer ears' : 'stop yer ears';
-    for (const el of document.querySelectorAll('.snd')) el.textContent = label;
+    for (const el of document.querySelectorAll('.snd')) if (!el.closest('.known')) el.textContent = label;
   }
   document.addEventListener('pointerdown', ev => {
     if (ev.target.closest && ev.target.closest('.tap')) Sound.start();

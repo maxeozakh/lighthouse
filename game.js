@@ -45,6 +45,23 @@
           el.remove();
           continue;
         }
+        // when it is the last of the row that is left, the dot that stood before it (it is the end of the part before) has
+        // nothing to tell apart any more, and closes with it
+        const gone = s => s && s.classList.contains('known');
+        let next = el.nextElementSibling,
+          prev = el.previousElementSibling;
+        while (gone(next)) next = next.nextElementSibling;
+        while (gone(prev)) prev = prev.previousElementSibling;
+        if (!next && prev) {
+          const whole = prev.getBoundingClientRect().width;
+          prev.classList.add('bare');
+          const dot = whole - prev.getBoundingClientRect().width;
+          prev.classList.remove('bare');
+          prev.style.setProperty('--dot', dot + 'px');
+          prev.classList.add('end');
+          void prev.offsetWidth;
+          prev.style.setProperty('--dot', '0px');
+        }
         el.style.width = el.getBoundingClientRect().width + 'px';
         el.classList.add('known');
         void el.offsetWidth; // (the width it starts from has to be taken in before the one it goes to is given)
@@ -330,7 +347,10 @@
     // (whatever he does first brings in what is not weather: all but stopping his ears)
     if (c === 'KeyM') Sound.start();
     else Sound.wake();
-    if (c === 'KeyM' && once) ears();
+    if (c === 'KeyM' && once) {
+      learn('ears'); // (the row stops saying it as it was: what it says is not changed as it goes out)
+      ears();
+    }
     if (mode === 'play' && once) {
       if (c === 'KeyQ') yawTo += Math.PI / 2;
       else if (c === 'KeyE') yawTo -= Math.PI / 2;
@@ -379,7 +399,7 @@
   }
   function ears() {
     const label = Sound.mute() ? 'unstop yer ears' : 'stop yer ears';
-    for (const el of document.querySelectorAll('.snd')) el.textContent = label;
+    for (const el of document.querySelectorAll('.snd')) if (!el.closest('.known')) el.textContent = label;
   }
   document.addEventListener('pointerdown', ev => {
     if (ev.target.closest && ev.target.closest('.tap')) Sound.start();
