@@ -29,11 +29,16 @@
   // 'play': he runs about. 'dead': she has him, and that is the end of it: the count of his days is all that is left on the screen
   let mode = 'play', deadT = 0, heard = 0, strides = 0;
   // the row of hints says a thing until he has done it: then that part of it goes out, and the room it took closes up slowly
-  // (from the width it has to none: the page's styles say how long that takes), so the rest of the row draws together
-  const learnt = new Set(),
+  // (from the width it has to none: the page's styles say how long that takes), so the rest of the row draws together.
+  // What he has done the browser keeps (KNOWN), so that he is not told it again the next time he comes
+  const KNOWN = 'wickie.known',
+    learnt = new Set(),
     learn = h => {
       if (learnt.has(h)) return;
       learnt.add(h);
+      try {
+        localStorage.setItem(KNOWN, [...learnt].join(' '));
+      } catch (e) {} // (a browser that keeps nothing: he is told again next time, and that is all)
       for (const el of document.querySelectorAll('#hud [data-h="' + h + '"]')) {
         // (the row that is not shown, keys' or thumbs', has nothing to close)
         if (!el.getClientRects().length) {
@@ -49,6 +54,14 @@
         setTimeout(() => el.remove(), 8000);
       }
     };
+  // what was kept from another time is not in the row at all: it is taken out before anything is shown, with no going out
+  try {
+    for (const h of (localStorage.getItem(KNOWN) || '').split(' ')) {
+      if (!h) continue;
+      learnt.add(h);
+      for (const el of document.querySelectorAll('#hud [data-h="' + h + '"]')) el.remove();
+    }
+  } catch (e) {}
   let softAt = 0; // when a thumb began sending him softly (0: it is not)
   const mem = { deaths: 0 },
     // the old man talks to himself. How much of it is heard: none from six paces, all of it at his elbow
