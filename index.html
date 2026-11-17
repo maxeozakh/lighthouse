@@ -27409,12 +27409,12 @@ const Sound = (() => {
       }
     }
     // what is heard depends on where he stands: the sea at its edge, her song near her, the horn by its engine house, the old man's
-    // muttering by his door (and, fainter, through it when he is indoors)
+    // muttering by his door (but not once he is through it: he is up the tower then, and nothing of him is heard down here)
     if (t - heard > 0.15) {
       heard = t;
       const d = far('mer'),
         e = Math.hypot(pl.x - G.places.engine[0], pl.z - G.places.engine[1]);
-      Sound.set({ sea: 1 - Math.max(0, Math.min(1, G.inside(pl.x, pl.z) / 0.4)), song: mode === 'dead' && deadT >= 1.8 ? 0 : songAt(d), mutter: mode === 'play' ? mutterAt(far('wake')) * (G.npc.wake.here ? 1 : 0.4) : 0, horn: 1 / (1 + (e * e) / 90) });
+      Sound.set({ sea: 1 - Math.max(0, Math.min(1, G.inside(pl.x, pl.z) / 0.4)), song: mode === 'dead' && deadT >= 1.8 ? 0 : songAt(d), mutter: mode === 'play' ? (G.npc.wake.here ? mutterAt(far('wake')) : 0) : 0, horn: 1 / (1 + (e * e) / 90) });
     }
     hours(dt);
     W.anim.update(dt, t);
