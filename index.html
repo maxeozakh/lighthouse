@@ -25851,35 +25851,43 @@ module.exports = ({ makeBuilder, makeSculpt, KIT: K }) => ({
     ROUND.push([GOODS[0] + 0.15, GOODS[1] + 0.05, 0.62], [GOODS[0] + 0.7, GOODS[1] + 0.55, 0.5]);
 
     // ---------------------------------------------------------------- people
-    // a figure standing at (x, z), facing south. tag(part) names the solids for a rig, or gives nothing for one that only stands
-    const figure = (x, z, o) => {
-      const y = height(x, z),
-        g = part => ({ res: 0.06, tag: o.tag ? o.tag + (o.one ? '' : part) : undefined }), // one: the whole of him under one name
-        gh = { res: 0.06, tag: o.tag ? o.tag + (o.head ? 'head' : '') : undefined }, // head: but his head under its own, so it can turn by itself
-        at = (dx, dy, dz) => [x + dx, y + dy, z + dz],
-        COAT = { r: o.coat },
-        LEGS = { r: [42, 43, 44, 45] },
-        SKIN = { r: [38, 39, 40, 41] };
-      for (const sx of [-1, 1]) {
-        const side = sx < 0 ? 'legL' : 'legR',
-          arm = sx < 0 ? 'armL' : 'armR';
-        S.tube([at(sx * 0.1, 0.56, 0), at(sx * 0.11, 0.1, 0)], 0.095, 0.08, LEGS, g(side));
-        S.ball(at(sx * 0.11, 0.06, 0.04), [0.085, 0.06, 0.14], { r: [42, 42, 43] }, g(side));
-        S.tube([at(sx * 0.25, 1.0, 0), at(sx * 0.29, 0.6, 0.03)], 0.075, 0.065, COAT, g(arm));
-        S.ball(at(sx * 0.29, 0.54, 0.03), 0.065, SKIN, g(arm));
-      }
-      S.ball(at(0, 0.8, 0), [0.22, 0.32, 0.15], COAT, g(''));
-      S.ball(at(0, 1.25, 0.01), [0.14, 0.155, 0.15], SKIN, gh);
-      if (o.beard) S.ball(at(0, 1.14, 0.09), [0.13, 0.14, 0.1], { r: [49, 50, 51] }, gh); // the old man's beard
-      else S.ball(at(0, 1.2, 0.135), [0.085, 0.025, 0.03], { r: [42, 43] }, gh); // the young man's moustache
-      // a cap with a peak
-      S.ball(at(0, 1.37, -0.01), [0.16, 0.075, 0.165], { r: [42, 43, 44] }, gh);
-      S.ball(at(0, 1.34, 0.14), [0.11, 0.02, 0.07], { r: [42, 42, 43] }, gh);
-      if (o.pipe) S.tube([at(0.03, 1.17, 0.16), at(0.08, 1.13, 0.3)], 0.018, 0.03, { r: [42, 43] }, gh);
-    };
+    // a figure standing at (x, z), facing south, made in the parts a rig moves (o.tag + the part's name): a body (chest,
+    // shoulders, and the belly and hips the coat comes down over), a head, and limbs that are each in two, with a knee or an
+    // elbow between: leg and shin (the boot is the shin's), arm and fore (the hand is the fore's). o.stout: how much more
+    // there is of him at the middle than of a young man
+    const KNEE = 0.33, // how high the knee is, and the elbow
+      ELBOW = 0.79,
+      figure = (x, z, o) => {
+        const y = height(x, z),
+          g = part => ({ res: 0.06, tag: o.tag + part }),
+          at = (dx, dy, dz) => [x + dx, y + dy, z + dz],
+          st = o.stout || 0,
+          COAT = { r: o.coat },
+          LEGS = { r: [42, 43, 44, 45] },
+          SKIN = { r: [38, 39, 40, 41] };
+        for (const [sx, sd] of [[-1, 'L'], [1, 'R']]) {
+          S.tube([at(sx * 0.1, 0.58, 0), at(sx * 0.105, KNEE, 0.012)], 0.1, 0.086, LEGS, g('leg' + sd));
+          S.tube([at(sx * 0.105, KNEE, 0.012), at(sx * 0.11, 0.1, 0)], 0.084, 0.072, LEGS, g('shin' + sd));
+          S.ball(at(sx * 0.11, 0.06, 0.04), [0.085, 0.06, 0.14], { r: [42, 42, 43] }, g('shin' + sd));
+          S.tube([at(sx * 0.25, 1.0, 0), at(sx * 0.275, ELBOW, -0.005)], 0.075, 0.067, COAT, g('arm' + sd));
+          S.tube([at(sx * 0.275, ELBOW, -0.005), at(sx * 0.29, 0.61, 0.03)], 0.065, 0.057, COAT, g('fore' + sd));
+          S.ball(at(sx * 0.29, 0.54, 0.035), 0.063, SKIN, g('fore' + sd));
+        }
+        S.ball(at(0, 0.93, 0), [0.212 + st * 0.4, 0.2, 0.148 + st * 0.5], COAT, g('body')); // the chest
+        S.tube([at(-0.185, 1.03, 0), at(0.185, 1.03, 0)], 0.086, 0.086, COAT, g('body')); // across the shoulders
+        S.ball(at(0, 0.7, st * 0.4), [0.174 + st, 0.21, 0.13 + st * 1.2], COAT, g('body')); // the belly and the hips
+        S.ball(at(0, 1.25, 0.01), [0.14, 0.155, 0.15], SKIN, g('head'));
+        if (o.beard) S.ball(at(0, 1.14, 0.09), [0.13, 0.14, 0.1], { r: [49, 50, 51] }, g('head')); // the old man's beard
+        else S.ball(at(0, 1.2, 0.135), [0.085, 0.025, 0.03], { r: [42, 43] }, g('head')); // the young man's moustache
+        // a cap with a peak
+        S.ball(at(0, 1.37, -0.01), [0.16, 0.075, 0.165], { r: [42, 43, 44] }, g('head'));
+        S.ball(at(0, 1.34, 0.14), [0.11, 0.02, 0.07], { r: [42, 42, 43] }, g('head'));
+        if (o.pipe) S.tube([at(0.03, 1.17, 0.16), at(0.08, 1.13, 0.3)], 0.018, 0.03, { r: [42, 43] }, g('head'));
+        // what he stands on: his own shadow
+        S.ball(at(0, 0.015, 0), [0.2 + st, 0.01, 0.2 + st], { r: [7] }, { res: 0.1, tag: o.tag, ghost: true });
+      };
     figure(SPAWN[0], SPAWN[1], { tag: 'pl', coat: [45, 46, 47, 48, 48] });
-    S.ball([SPAWN[0], height(SPAWN[0], SPAWN[1]) + 0.015, SPAWN[1]], [0.2, 0.01, 0.2], { r: [7] }, { res: 0.1, tag: 'pl', ghost: true }); // what he stands on: his own shadow
-    figure(WAKE[0], WAKE[1], { tag: 'wk', one: true, head: true, coat: [42, 42, 43, 44], beard: true, pipe: true });
+    figure(WAKE[0], WAKE[1], { tag: 'wk', stout: 0.045, coat: [42, 42, 43, 44], beard: true, pipe: true });
     const wakeAt = [WAKE[0], WAKE[1], 0.35]; // what stops you where he stands: it goes where he goes
     ROUND.push(wakeAt);
 
@@ -26385,30 +26393,60 @@ module.exports = ({ makeBuilder, makeSculpt, KIT: K }) => ({
       BODY = 0.55, // the most her shoulders turn, either way (her hands stay where they are: more than this and they would not)
       REACH = 2.1, // and the most her head does, shoulders and neck together: well over her shoulder
       BEHIND = 2.75, // further round than this he is at her back
-      hip = (sx, dy) => [SPAWN[0] + sx, SY + dy, SPAWN[1]];
+      // a man's rig, for the figure named n standing at (ox, oy, oz): his body turns at the hips and carries his head and
+      // his arms; his legs hang from what carries the body (so a man leaning does not lean his legs); a shin hangs from its
+      // leg at the knee, a fore from its arm at the elbow
+      man = (n, ox, oy, oz) => {
+        const parts = {
+          [n]: { ids: tags[n], pivot: [ox, oy, oz] },
+          [n + 'body']: { ids: tags[n + 'body'], pivot: [ox, oy + 0.58, oz], parent: n },
+          [n + 'head']: { ids: tags[n + 'head'], pivot: [ox, oy + 1.1, oz], parent: n + 'body' }
+        };
+        for (const [sx, sd] of [[-1, 'L'], [1, 'R']]) {
+          parts[n + 'leg' + sd] = { ids: tags[n + 'leg' + sd], pivot: [ox + sx * 0.1, oy + 0.58, oz], parent: n };
+          parts[n + 'shin' + sd] = { ids: tags[n + 'shin' + sd], pivot: [ox + sx * 0.105, oy + KNEE, oz + 0.012], parent: n + 'leg' + sd };
+          parts[n + 'arm' + sd] = { ids: tags[n + 'arm' + sd], pivot: [ox + sx * 0.25, oy + 1.0, oz], parent: n + 'body' };
+          parts[n + 'fore' + sd] = { ids: tags[n + 'fore' + sd], pivot: [ox + sx * 0.275, oy + ELBOW, oz - 0.005], parent: n + 'arm' + sd };
+        }
+        return parts;
+      },
+      // how a man named n goes, at ph of his stride, as much as go (0 standing, 1 going). All in degrees. Each leg swings from
+      // the hip (A) and its knee bends as it is brought forward (K, and K0 always); the arm of that side swings the other way
+      // (arm), its elbow a little bent always (el0), more as he goes (el), most when it is forward (el1). The body leans the
+      // way he goes (lean, and stoop always), its shoulders turn against his hips (twist) and it rocks over the foot that is
+      // down (roll); the head stays up and looks where he goes (and look: round to one side). limp: how much less one leg does
+      stride = (p, n, ph, go, o) => {
+        const s = Math.sin(ph),
+          c = Math.cos(ph),
+          lean = o.stoop + go * o.lean;
+        for (const [sg, sd] of [[1, 'L'], [-1, 'R']]) {
+          const part = sd === 'R' ? 1 - o.limp : 1,
+            fwd = Math.max(0, -sg * c), // (most in the middle of its being brought forward)
+            reach = Math.max(0, sg * s); // (most when the arm of this side is all the way forward)
+          p.pose[n + 'leg' + sd] = { rot: [go * part * (sg * s * o.A - 0.3 * o.K * fwd), 0, 0] };
+          p.pose[n + 'shin' + sd] = { rot: [go * part * (o.K0 + o.K * fwd), 0, 0] };
+          p.pose[n + 'arm' + sd] = { rot: [-go * sg * s * o.arm, 0, 0] };
+          p.pose[n + 'fore' + sd] = { rot: [-(o.el0 + go * (o.el + o.el1 * reach)), 0, 0] };
+        }
+        p.pose[n + 'body'] = { rot: [lean, go * o.twist * s, go * o.roll * s], stretch: o.breath };
+        p.pose[n + 'head'] = { rot: [-0.75 * lean, (o.look || 0) - 0.8 * go * o.twist * s, -0.6 * go * o.roll * s] };
+      };
     K.puppet(W, {
       parts: {
-        pl: { ids: tags.pl, pivot: [SPAWN[0], SY, SPAWN[1]] },
-        legL: { ids: tags.pllegL, pivot: hip(-0.1, 0.58), parent: 'pl' },
-        legR: { ids: tags.pllegR, pivot: hip(0.1, 0.58), parent: 'pl' },
-        armL: { ids: tags.plarmL, pivot: hip(-0.25, 1.0), parent: 'pl' },
-        armR: { ids: tags.plarmR, pivot: hip(0.25, 1.0), parent: 'pl' },
-        wk: { ids: tags.wk, pivot: [WAKE[0], height(WAKE[0], WAKE[1]), WAKE[1]] },
-        wkhead: { ids: tags.wkhead, pivot: [WAKE[0], height(WAKE[0], WAKE[1]) + 1.1, WAKE[1]], parent: 'wk' },
+        ...man('pl', SPAWN[0], SY, SPAWN[1]),
+        ...man('wk', WAKE[0], WY, WAKE[1]),
         mm: { ids: tags.mm, pivot: mp(0, 0, 0) },
         mmtop: { ids: tags.mmtop, pivot: mp(0, 0.2, 0), parent: 'mm' }, // all of her above the scales: it turns at the hips
         mmhead: { ids: tags.mmhead, pivot: mp(0.02, 0.77, -LEAN * 0.6), parent: 'mmtop' },
         mmtail: { ids: tags.mmtail, pivot: TAIL, parent: 'mm' }
       },
       pose(t, dt, p) {
-        const sw = Math.sin(pl.phase) * pl.go,
-          k = Math.min(1, pl.speed / 4.2),
-          bob = 0.045 * Math.abs(Math.cos(pl.phase)) * pl.go * k;
-        p.pose.pl = { pos: [pl.x - SPAWN[0], pl.y - SY + bob, pl.z - SPAWN[1]], rot: [0, (pl.face * 180) / Math.PI, 0], stretch: 1 + 0.012 * Math.sin(t * 1.6) * (1 - pl.go) };
-        p.pose.legL = { rot: [sw * (22 + 26 * k), 0, 0] };
-        p.pose.legR = { rot: [-sw * (22 + 26 * k), 0, 0] };
-        p.pose.armL = { rot: [-sw * (18 + 30 * k), 0, 0] };
-        p.pose.armR = { rot: [sw * (18 + 30 * k), 0, 0] };
+        // the young man: he walks upright with his arms swinging low, and runs leaning into it, knees up and elbows bent. He
+        // is highest as one leg passes the other
+        const k = Math.min(1, pl.speed / 4.2),
+          bob = (0.012 + 0.036 * k) * Math.abs(Math.cos(pl.phase)) * pl.go;
+        p.pose.pl = { pos: [pl.x - SPAWN[0], pl.y - SY + bob, pl.z - SPAWN[1]], rot: [0, (pl.face * 180) / Math.PI, 0] };
+        stride(p, 'pl', pl.phase, pl.go, { A: 20 + 20 * k, K0: 4, K: 24 + 44 * k, arm: 16 + 22 * k, el0: 8, el: 4 + 38 * k, el1: 8 + 14 * k, stoop: 0, lean: 2 + 9 * k, twist: 4 + 5 * k, roll: 1.5, limp: 0, breath: 1 + 0.012 * Math.sin(t * 1.6) * (1 - pl.go) });
         // neither of them turns about to watch him: the old man stands as he stood and only his head follows whoever comes near
         keep(dt);
         const wk = npc.wake,
@@ -26417,13 +26455,13 @@ module.exports = ({ makeBuilder, makeSculpt, KIT: K }) => ({
           ease = Math.min(1, dt * 4);
         wk.look += ((Math.hypot(pl.x - wk.x, pl.z - wk.z) < 6 ? glance(wk, wk.face, 1.25) : 0) - wk.look) * ease;
         // (when he is nowhere he is put a long way under the rock)
-        // (he is all of a piece and has no stride to show: going to his door he rocks from one foot to the other, as a stiff man does)
+        // the old man: stooped, standing or going, his elbows a little bent. Going to his door he takes short steps and rocks
+        // from one foot to the other, as a stiff man does; and one leg is stiffer than the other
         p.pose.wk = {
-          pos: wk.here ? [wk.x - WAKE[0], height(wk.x, wk.z) - WY + 0.035 * Math.abs(Math.sin(wk.phase)) * wk.gait, wk.z - WAKE[1]] : [0, -60, 0],
-          rot: [0, wk.face * deg, 6 * Math.sin(wk.phase) * wk.gait],
-          stretch: 1 + 0.012 * Math.sin(t * 1.3)
+          pos: wk.here ? [wk.x - WAKE[0], height(wk.x, wk.z) - WY + 0.02 * Math.abs(Math.cos(wk.phase)) * wk.gait, wk.z - WAKE[1]] : [0, -60, 0],
+          rot: [0, wk.face * deg, 0]
         };
-        p.pose.wkhead = { rot: [0, wk.look * deg, 0] };
+        stride(p, 'wk', wk.phase, wk.gait, { A: 15, K0: 5, K: 20, arm: 9, el0: 14, el: 4, el1: 4, stoop: 7, lean: 2, twist: 3, roll: 4, limp: 0.5, look: wk.look * deg, breath: 1 + 0.012 * Math.sin(t * 1.3) });
         // nor does she, and her tail keeps its own slow time. But she watches him come: with nobody near she looks a little
         // aside, as she was made (AWAY); from SEES off her head begins to come round to him, and is on him by the time he is at
         // HAS. Her shoulders come a part of the way with it (TWIST of what her head has turned from where it rests, and no
