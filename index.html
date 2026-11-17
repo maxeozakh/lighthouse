@@ -27985,9 +27985,10 @@ const Sound = (() => {
       pl.flare = false; // (his match has taken)
       Sound.strike();
     }
-    // how many he has smoked: a bare number under the count of days, and not there until he has lit the first
-    if (pl.smoked && $('cigs').textContent !== String(pl.smoked)) {
-      $('cigs').textContent = pl.smoked;
+    // how many he has smoked: a bare number under the count of days, and not there until he has lit the first. It does
+    // not begin at nothing, any more than the days do: he had smoked as many as that before he came
+    if (pl.smoked && $('cigs').textContent !== String(FIRST + pl.smoked)) {
+      $('cigs').textContent = FIRST + pl.smoked;
       $('cigs').classList.add('on');
     }
     G.sea(t); // the swell comes on
