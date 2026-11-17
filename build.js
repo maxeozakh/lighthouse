@@ -1,5 +1,6 @@
 // Packs the ink-studio toolkit, its software renderer, the level and the game into one self-contained page.
 //   node build.js [--repo path/to/shapeshift-labs-ink-studio]     -> index.html beside this file
+// and, beside that, the log of what has been done to it (log.js) as a page in the same type: changelog.html
 const fs = require('fs'),
   path = require('path');
 const args = process.argv.slice(2),
@@ -114,5 +115,10 @@ ${safe(game)}
 </body>
 </html>
 `;
+// the log, in the same type
+const logOut = path.join(here, 'changelog.html'),
+  log = require('./log.js')(fonts);
+fs.writeFileSync(logOut, log);
+console.log('wrote', logOut, (log.length / 1024).toFixed(0) + ' KB');
 fs.writeFileSync(out, html);
 console.log('wrote', out, (html.length / 1024).toFixed(0) + ' KB');
