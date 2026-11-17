@@ -1,6 +1,7 @@
 // The log: what was done to the rock, from the first evening on, as a page of its own (changelog.html) in the game's type and
 // greys. build.js writes it beside index.html.
-//   require('./log.js')(fonts)  -> the page, fonts being the @font-face rules the game's page has
+//   require('./log.js')(fonts, head)  -> the page, fonts being the @font-face rules the game's page has and head what else
+//   goes in its head (what a link to it is shown with)
 // Each entry: when (the hour it was done, Central European Time, on the day at the top of its run), what it is called, and what
 // changed. They are kept oldest first and shown newest first, and are numbered as the game numbers its days: from 1898.
 const FIRST = 1898,
@@ -170,12 +171,13 @@ const FIRST = 1898,
     }
   ];
 
-module.exports = fonts => `<!doctype html>
+module.exports = (fonts, head = '') => `<!doctype html>
 <html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>wickie · the log</title>
+${head}
 <!-- Type: Redaction, copyright 2019 MCKL Inc., used under the SIL Open Font License 1.1 (https://scripts.sil.org/OFL); its text is in licenses.txt, beside this page. -->
 <style>
   ${fonts}

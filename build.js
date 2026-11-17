@@ -40,6 +40,30 @@ const face = (family, file, style) =>
   `@font-face { font-family: '${family}'; font-style: ${style || 'normal'}; font-weight: 400; src: url(data:font/woff2;base64,${fs.readFileSync(path.join(here, 'fonts', file)).toString('base64')}) format('woff2'); }`;
 const fonts = [face('Redaction', 'redaction-50-latin-400-normal.woff2'), face('Redaction', 'redaction-50-latin-400-italic.woff2', 'italic')].join('\n  ');
 
+// what a link to the page is shown with where it is posted, and the mark in a browser's tab (the pictures: card.js). Where it is
+// posted wants whole addresses, so the page has to be told where it lives
+const SITE = 'https://mxz.sh/lighthouse/',
+  head = (title, about, page = '') => `<meta name="description" content="${about}">
+<meta name="theme-color" content="#000000">
+<link rel="canonical" href="${SITE}${page}">
+<link rel="icon" type="image/png" href="icon.png">
+<link rel="apple-touch-icon" href="touch.png">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="wickie">
+<meta property="og:title" content="${title}">
+<meta property="og:description" content="${about}">
+<meta property="og:url" content="${SITE}${page}">
+<meta property="og:image" content="${SITE}card.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="A lighthouse on a rock in the sea at night, its beam turning.">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="${title}">
+<meta name="twitter:description" content="${about}">
+<meta name="twitter:image" content="${SITE}card.png">
+<meta name="twitter:image:alt" content="A lighthouse on a rock in the sea at night, its beam turning.">`;
+for (const f of ['card.png', 'icon.png', 'touch.png']) if (!fs.existsSync(path.join(here, f))) throw new Error(f + ' is not here: node card.js');
+
 // the two things a thumb presses to turn the view: a stone arrow each, made and drawn as the level is (icons.js), a pixel of it
 // shown as big as a pixel of the picture
 const icons = require('./icons.js')(repo),
@@ -51,6 +75,7 @@ const html = `<!doctype html>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
 <title>wickie</title>
+${head('wickie', 'A rock in the sea, a light, two keepers, and something pale out at the east point. A small game in black and white.')}
 <!-- Type: Redaction, copyright 2019 MCKL Inc., used under the SIL Open Font License 1.1 (https://scripts.sil.org/OFL); its text is in licenses.txt, beside this page. -->
 <!--
 This page contains ink-studio (https://github.com/siliconjungle/shapeshift-labs-ink-studio) and a renderer made from its own, used under this licence:
@@ -143,7 +168,7 @@ fs.writeFileSync(path.join(here, 'licenses.txt'), licences + '\n');
 console.log('wrote', path.join(here, 'licenses.txt'), (licences.length / 1024).toFixed(0) + ' KB');
 // the log, in the same type
 const logOut = path.join(here, 'changelog.html'),
-  log = require('./log.js')(fonts);
+  log = require('./log.js')(fonts, head('wickie · the log', 'What has been done to the rock, the latest of it first.', 'changelog.html'));
 fs.writeFileSync(logOut, log);
 console.log('wrote', logOut, (log.length / 1024).toFixed(0) + ' KB');
 fs.writeFileSync(out, html);
