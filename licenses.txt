@@ -1,4 +1,4 @@
-wickie is built with the two things below. Their licences, in full.
+lighthouse is built with the two things below. Their licences, in full.
 
 ==============================================================================
 

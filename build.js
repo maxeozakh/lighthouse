@@ -22,7 +22,7 @@ const mit = fs.readFileSync(path.join(repo, 'LICENSE'), 'utf8').trim();
 if (!/^MIT License/.test(mit) || /--/.test(mit)) throw new Error('the toolkit\'s licence is not the one expected: read ' + path.join(repo, 'LICENSE'));
 const rule = '='.repeat(78),
   licences = [
-    'wickie is built with the two things below. Their licences, in full.',
+    'lighthouse is built with the two things below. Their licences, in full.',
     rule,
     'ink-studio, a toolkit for making and drawing scenes (the page contains it, and a renderer made from its own)',
     'https://github.com/siliconjungle/shapeshift-labs-ink-studio',
@@ -50,7 +50,7 @@ const SITE = 'https://mxz.sh/lighthouse/',
 <link rel="icon" type="image/png" href="icon.png?2">
 <link rel="apple-touch-icon" href="touch.png?2">
 <meta property="og:type" content="website">
-<meta property="og:site_name" content="wickie">
+<meta property="og:site_name" content="lighthouse">
 <meta property="og:title" content="${title}">
 <meta property="og:description" content="${about}">
 <meta property="og:url" content="${SITE}${page}">
@@ -75,8 +75,8 @@ const html = `<!doctype html>
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
-<title>wickie</title>
-${head('wickie', 'A rock in the sea, a light, two keepers, and something pale out at the east point. A small game in black and white.')}
+<title>lighthouse</title>
+${head('lighthouse', 'A rock in the sea, a light, two keepers, and something pale out at the east point. A small game in black and white.')}
 <!-- Type: Redaction, copyright 2019 MCKL Inc., used under the SIL Open Font License 1.1 (https://scripts.sil.org/OFL); its text is in licenses.txt, beside this page. -->
 <!--
 This page contains ink-studio (https://github.com/siliconjungle/shapeshift-labs-ink-studio) and a renderer made from its own, used under this licence:
@@ -214,7 +214,7 @@ fs.writeFileSync(path.join(here, 'licenses.txt'), licences + '\n');
 console.log('wrote', path.join(here, 'licenses.txt'), (licences.length / 1024).toFixed(0) + ' KB');
 // the log, in the same type
 const logOut = path.join(here, 'changelog.html'),
-  log = require('./log.js')(fonts, head('wickie · the log', 'What has been done to the rock, the latest of it first.', 'changelog.html'));
+  log = require('./log.js')(fonts, head('lighthouse · the log', 'What has been done to the rock, the latest of it first.', 'changelog.html'));
 fs.writeFileSync(logOut, log);
 console.log('wrote', logOut, (log.length / 1024).toFixed(0) + ' KB');
 fs.writeFileSync(out, html);

@@ -180,6 +180,7 @@ const FIRST = 1898,
         'Two things to tick there: your ears stopped, and the row of controls kept in sight for good (it goes out, a part at a time, as you learn it; ticked, all of it is put back and stays).',
         'Its steps of loudness and its ticks are cut of the same stone as the things a thumb presses.',
         'The view comes round a little slower when it is turned.',
+        'It is called lighthouse now.',
         'And who made what.',
         'A link to the game is shown with a picture where it is posted, and the tab has the tower and its beams for a mark.'
       ]
@@ -191,7 +192,7 @@ module.exports = (fonts, head = '') => `<!doctype html>
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>wickie · the log</title>
+<title>lighthouse · the log</title>
 ${head}
 <!-- Type: Redaction, copyright 2019 MCKL Inc., used under the SIL Open Font License 1.1 (https://scripts.sil.org/OFL); its text is in licenses.txt, beside this page. -->
 <style>
@@ -234,7 +235,7 @@ ${head}
 <body>
 <main>
 <header>
-<h1>wickie</h1>
+<h1>lighthouse</h1>
 <p>The log: what was done to the rock, the latest of it first. <a href="./">Back to the rock</a></p>
 </header>
 ${ENTRIES.map(
