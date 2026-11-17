@@ -7,8 +7,9 @@
 // The world it returns carries W.game: { pl, spawn, height(x, z), blocked(x, z), step(dt, mx, mz, walk), turn(x, z, dt), npc, places,
 // spots, stand(spot), night(n), grade(n, table), sea(t) } for the page to drive. npc.mer.scream (0..1) is hers to be given: at 1 she is up off her rock.
 // The old man keeps to his door; stand(spot) can put him at another of spots ([x, z, the way he faces]), which only shot.js does.
-// night(n), 0..1, lights the windows and brings up the beam (the darkening of the picture itself is done by the page, on what is
-// drawn). sea(t) is the water at that moment.
+// night(n, lit), n 0..1, lights the windows, and lit, 0..1, is how far the lamp is lit: by day it is out, and there is no beam
+// (left out, it is lit as soon as there is any night at all). The darkening of the picture itself is done by the page, on
+// what is drawn. sea(t) is the water at that moment.
 module.exports = ({ makeBuilder, makeSculpt, KIT: K }) => ({
   id: 'wickie',
   name: 'wickie',
@@ -1101,8 +1102,10 @@ module.exports = ({ makeBuilder, makeSculpt, KIT: K }) => ({
         wk.gait += (1 - wk.gait) * ease;
         wk.phase += dt * 5.2;
       },
-      // the lamps: every dab of the beam and of the lit windows, and how strong it is by day and by night
+      // the lamps: every dab of the beam and of the lamp itself, and how strong it is, lit, as the dusk begins and by night
       lamps = [],
+      // the glass of the lantern: white with the lamp lit behind it, and grey glass when it is not
+      glass = [],
       // and the panes of the windows somebody sits behind after dark: black glass by day, lamplight by night
       panes = [],
       WINDOWS = [
@@ -1113,8 +1116,12 @@ module.exports = ({ makeBuilder, makeSculpt, KIT: K }) => ({
         ...[[0, 2.9, 1.2, 0.25, 0.4, 1], [1.2, 4.7, 0, 1, 0.4, 0.25], [0, 6.3, 1.2, 0.25, 0.4, 1]].map(w => w.map((v, i) => v * BIG + (i === 1 ? Y0 : 0))) // and the three up the tower's stair
       ],
       pack = c => c[0] + c[1] * 256 + c[2] * 65536,
-      night = n => {
-        for (const l of lamps) W.data[l.i * 16 + 3] = l.a * (l.day + (l.night - l.day) * n);
+      night = (n, lit = Math.min(1, n * 8)) => {
+        for (const l of lamps) W.data[l.i * 16 + 3] = l.a * lit * (l.day + (l.night - l.day) * n);
+        for (const g of glass) {
+          W.data[g.i * 16 + 7] = pack([0, 1, 2].map(j => Math.round(g.off[j] + (g.on[j] - g.off[j]) * lit)));
+          W.data[g.i * 16 + 11] = lit > 0.25 ? g.f : g.f - 32; // (as with the panes: lit, the haze and the dark leave it alone)
+        }
         const k = sm((n - 0.3) / 0.4),
           a = B.P[31],
           b = B.P[36],
@@ -1275,6 +1282,8 @@ module.exports = ({ makeBuilder, makeSculpt, KIT: K }) => ({
       const o = i * 16,
         glows = (W.data[o + 11] & 32) !== 0;
       if (glows && Math.abs(W.data[o + 1] - BY) < 1e-4) lamps.push({ i, a: W.data[o + 3], day: 0.6, night: 1.5 });
+      else if (glows && (W.data[o + 7] === pack(B.P[36]) || W.data[o + 7] === pack(B.P[37])) && Math.hypot(W.data[o], W.data[o + 2]) < BIG && W.data[o + 1] > LY && W.data[o + 1] < LY + 1.6 * BIG)
+        glass.push({ i, f: W.data[o + 11], on: W.data[o + 7] === pack(B.P[37]) ? B.P[37] : B.P[36], off: W.data[o + 7] === pack(B.P[37]) ? B.P[23] : B.P[21] });
       else if (W.data[o + 7] === pack(B.P[31]) && WINDOWS.some(w => Math.abs(W.data[o] - w[0]) < w[3] && Math.abs(W.data[o + 1] - w[1]) < w[4] && Math.abs(W.data[o + 2] - w[2]) < w[5])) panes.push(i);
       else {
         const x = W.data[o],
@@ -1291,6 +1300,7 @@ module.exports = ({ makeBuilder, makeSculpt, KIT: K }) => ({
     night(0);
     sea(0);
     W.panes = panes.length;
+    W.glass = glass.length;
     W.blocks = BLOCKS;
     W.sea = [water.length, white.length];
     W.game = { pl, spawn: SPAWN, height, blocked, step, turn, npc, inside, spots: SPOTS, stand, home, night, grade, sea, places: { tower: TOWER, cottage: COT, engine: ENG, well: WELL, landing: [SLIP - 0.3, slipEnd - 1.2], boathouse: BOAT, shed: SHED, wake: WAKE, mermaid: MER } };

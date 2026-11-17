@@ -94,11 +94,18 @@
   // same one every time: 1898, which can be read as a count of days or as the year
   const FIRST = 1898;
   let clock = 0.03, dark = -1;
-  // the old man's hours. At dusk he goes in and in the morning he comes out: but one night in seven or so he does not go in,
-  // and stands out there till morning; and as often, having gone in, he does not come out for the whole of the day after.
-  // (duskAt, dawnAt: when in the day he does it, a little different each time)
-  const KEEPS = 0.85;
-  let indoors = false, late = false, duskAt = 0.54, dawnAt = 0.96;
+  // the old man's hours. Before the light begins to go he goes in, and in the morning he comes out: but one night in seven or
+  // so he does not go in, and stands out there till morning; and as often, having gone in, he does not come out for the
+  // whole of the day after. (duskAt, dawnAt: when in the day he does it, a little different each time)
+  // The light is his. By day it is out. It is lit a little after he has gone in for the night (LIGHTS: he has the stair to
+  // climb), which is as the dusk begins; in the morning it is put out, and a little after that (COMES) he comes out of his door.
+  // The night he does not go in, there is nobody up there, and it is not lit at all.
+  // (lamp: how far it is lit, 0..1, and shown, what the picture last had of it; tends: how long he has been in there, of a
+  // night; comes: how long till he comes out)
+  const KEEPS = 0.85,
+    LIGHTS = 4,
+    COMES = 4;
+  let indoors = false, late = false, duskAt = 0.435, dawnAt = 0.97, lamp = 0, shown = -1, tends = 0, comes = 0;
   const sm = s => (s <= 0 ? 0 : s >= 1 ? 1 : s * s * (3 - 2 * s)),
     // how far into night a moment of the day is: light for the first half of it, a dusk, the dark, and a dawn that ends as the day does
     nightAt = f => (f < 0.5 ? 0 : f < 0.62 ? sm((f - 0.5) / 0.12) : f < 0.9 ? 1 : 1 - sm((f - 0.9) / 0.1));
@@ -154,7 +161,7 @@
     W.anim.update(0, 0);
     yaw = yawTo = W.cam.yaw;
     cam = [G.pl.x, G.pl.y + 1.6, G.pl.z];
-    window.wickie = { W, G, keys, mem, die, wish, songAt, mutterAt, days: v => (v === undefined ? clock : (clock = v)), state: () => ({ mode, indoors, duskAt, dawnAt, touch: TOUCH, quality, soft, stick: !!stick, zoomTo, yawTo, held }) }; // for poking at from the console
+    window.wickie = { W, G, keys, mem, die, wish, hours, songAt, mutterAt, days: v => (v === undefined ? clock : (clock = v)), state: () => ({ mode, indoors, duskAt, dawnAt, lamp, late, touch: TOUCH, quality, soft, stick: !!stick, zoomTo, yawTo, held }) }; // for poking at from the console
   }
 
   // which way he is asked to go, across the ground, from the keys or from where the pointer is held.
@@ -276,6 +283,39 @@
     ctx.putImageData(img, 0, 0);
   }
 
+  // the days go by, whatever he is doing, until she has him: the count of them, the old man's hours, the lamp, and how dark it is
+  function hours(dt) {
+    if (mode !== 'dead') {
+      clock += dt / DAY;
+      const label = String(FIRST + Math.floor(clock));
+      if ($('day').textContent !== label) $('day').textContent = label;
+      const f = clock % 1,
+        nightly = f >= duskAt && f < dawnAt;
+      if (nightly !== late) {
+        late = nightly;
+        // (otherwise he stays as he is, in or out)
+        if (Math.random() < KEEPS) {
+          if (nightly) G.home((indoors = true));
+          else comes = COMES;
+        }
+        if (nightly) dawnAt = 0.955 + 0.03 * Math.random();
+        else duskAt = 0.42 + 0.03 * Math.random();
+      }
+      if (comes > 0 && (comes -= dt) <= 0) G.home((indoors = false));
+      // the lamp: lit once he has been through his door a while, of a night, and out as soon as the night is over
+      tends = late && !G.npc.wake.here ? tends + dt : 0;
+      const to = tends > LIGHTS ? 1 : 0;
+      lamp += Math.max(-dt * 0.7, Math.min(dt * 0.7, to - lamp));
+    }
+    const n = nightAt(clock % 1);
+    if (Math.abs(n - dark) > 0.004 || lamp !== shown) {
+      dark = n;
+      shown = lamp;
+      G.grade(n, lut);
+      G.night(n, lamp);
+    }
+  }
+
   function frame(now) {
     const dt = last ? Math.min(0.05, (now - last) / 1000) : 1 / 60,
       began = performance.now();
@@ -316,26 +356,7 @@
         e = Math.hypot(pl.x - G.places.engine[0], pl.z - G.places.engine[1]);
       Sound.set({ sea: 1 - Math.max(0, Math.min(1, G.inside(pl.x, pl.z) / 0.4)), song: mode === 'dead' && deadT >= 1.8 ? 0 : songAt(d), mutter: mode === 'play' ? mutterAt(far('wake')) * (G.npc.wake.here ? 1 : 0.4) : 0, horn: 1 / (1 + (e * e) / 90) });
     }
-    // the days go by, whatever he is doing, until she has him
-    if (mode !== 'dead') {
-      clock += dt / DAY;
-      const label = String(FIRST + Math.floor(clock));
-      if ($('day').textContent !== label) $('day').textContent = label;
-      const f = clock % 1,
-        nightly = f >= duskAt && f < dawnAt;
-      if (nightly !== late) {
-        late = nightly;
-        if (Math.random() < KEEPS) G.home((indoors = nightly)); // otherwise he stays as he is, in or out
-        if (nightly) dawnAt = 0.94 + 0.05 * Math.random();
-        else duskAt = 0.51 + 0.06 * Math.random();
-      }
-    }
-    const n = nightAt(clock % 1);
-    if (Math.abs(n - dark) > 0.004) {
-      dark = n;
-      G.grade(n, lut);
-      G.night(n);
-    }
+    hours(dt);
     W.anim.update(dt, t);
     G.sea(t); // the swell comes on
     // the camera: turns a quarter at a time, and follows a little behind
