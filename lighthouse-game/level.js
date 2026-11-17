@@ -289,6 +289,8 @@ module.exports = ({ makeBuilder, makeSculpt, KIT: K }) => ({
 
     // ---------------------------------------------------------------- buildings: walls and gables in one solid, a roof over them
     // marks: [side, u, y, half-width, half-height, colour]; side 'S' (the long south wall), 'N', 'E', 'W' (the gable ends), u along that wall
+    // hole(x, y, z): a distance, measured from the middle of its floor, to what is cut out of the walls; paint(x, y, z): a colour
+    // for a place on them, measured the same way; under: how far the walls go down below the floor
     const house = (c, y0, wallH, rise, o) => {
       o = o || {};
       const [cx, cz, hw, hd] = c,
@@ -307,7 +309,9 @@ module.exports = ({ makeBuilder, makeSculpt, KIT: K }) => ({
           tex: (x, y, z) => {
             const lx = x - cx,
               lz = z - cz,
-              ly = y - y0 - slope * (turn ? lz : lx);
+              ly = y - y0 - slope * (turn ? lz : lx),
+              own = o.paint && o.paint(lx, ly, lz);
+            if (own !== undefined && own !== false) return own;
             for (const [side, u, my, mw, mh, col] of marks) {
               const onWall = side === 'S' ? lz > hd - 0.12 : side === 'N' ? lz < -hd + 0.12 : side === 'E' ? lx > hw - 0.12 : lx < -hw + 0.12,
                 along = side === 'S' || side === 'N' ? lx : lz;
@@ -324,7 +328,7 @@ module.exports = ({ makeBuilder, makeSculpt, KIT: K }) => ({
         (x, y, z) => {
           const [a, q] = ac(x, z),
             v = y - slope * a;
-          return Math.max(Math.abs(a) - la, Math.abs(q) - lc, v - roofY(a, q) + 0.03, -v - 0.5);
+          return Math.max(Math.abs(a) - la, Math.abs(q) - lc, v - roofY(a, q) + 0.03, -v - (o.under === undefined ? 0.5 : o.under), o.hole ? -o.hole(x, y, z) : -9);
         },
         mat,
         { res: o.res || 0.2 }
@@ -417,18 +421,78 @@ module.exports = ({ makeBuilder, makeSculpt, KIT: K }) => ({
     S.tube([[WELL[0] + 0.5, YW + 1.25, WELL[1] - 0.3], [WELL[0] + 0.5, YW + 1.1, WELL[1] + 0.25]], 0.035, 0.03, IRON, { res: 0.08 });
     ROUND.push([WELL[0], WELL[1], 1.1]);
 
-    // the landing on the south shore: planks down to the water, and the dory hauled up beside them
-    let slipEnd = 9;
-    while (slipEnd < 20 && height(-4.2 - (slipEnd - 9) * 0.12, slipEnd) > 0.02) slipEnd += 0.1;
+    // the landing on the south shore. The boathouse stands over it, its gable to the sea: grey shingle walls, a dark roof, a wide
+    // doorway with no door in it and a boat in the dark inside. Its back sits on the slope and its front is up on short posts,
+    // and from the sill of the doorway a slip of timber goes down to the water
+    const BOAT = [-4.2, 9.3, 1.4, 1.9], // its middle, half its width, half its length
+      BDOOR = [0, 0.72, 1.58, 1.7], // the doorway: where across the gable, half its width, its height, how far in the dark goes
+      YB = height(BOAT[0], BOAT[1] - BOAT[3]) + 0.04, // its floor
+      SLIP = BOAT[0] + BDOOR[0], // the line the slip takes
+      SLIP0 = BOAT[1] + BOAT[3] + 0.3, // where it leaves the sill
+      SHINGLE = { r: [27, 28, 29, 30, 30, 22], mod: (x, y, z) => 0.5 * (hash(Math.floor(y * 4.2), 5) - 0.5) + 0.3 * (n3(x * 2.6, y * 2.6, z * 2.6) - 0.5) };
+    house(BOAT, YB, 1.85, 1.3, {
+      turn: true,
+      mat: SHINGLE,
+      roof: SLATE,
+      res: 0.15,
+      under: 0.07,
+      hole: (x, y, z) => Math.max(Math.abs(x - BDOOR[0]) - BDOOR[1], BOAT[3] - BDOOR[3] - z, y - BDOOR[2], 0.03 - y),
+      paint: (x, y, z) =>
+        Math.abs(x - BDOOR[0]) < BDOOR[1] + 0.05 && z > BOAT[3] - BDOOR[3] - 0.08 && z < BOAT[3] - 0.07 && y < BDOOR[2] + 0.05 ? (y < 0.1 ? 33 : 31) : y < 0.05 ? 27 : undefined
+    });
+    // the boat kept in it: her bow shows in the doorway
+    // (the lower half of a long round shape, cut off flat at the gunwale and dark inside it)
+    const KEPT = [SLIP, YB + 0.48, BOAT[1] + BOAT[3] - 1.2],
+      KH = [0.48, 0.44, 1.14];
+    sdfSolid(KEPT, [-KH[0], -KH[1], -KH[2]], [KH[0], 0.02, KH[2]], (x, y, z) => Math.max((Math.hypot(x / KH[0], y / KH[1], z / KH[2]) - 1) * KH[1], y), {
+      r: [21, 22, 22, 23],
+      tex: (x, y, z) => (y > KEPT[1] - 0.05 && Math.hypot((x - KEPT[0]) / KH[0], (z - KEPT[2]) / KH[2]) < 0.8 ? 27 : undefined)
+    }, { res: 0.1 });
+    // the posts it stands on, wherever the ground has fallen away under it
+    for (const dx of [-1, 1])
+      for (const dz of [1, 0.2, -0.6]) {
+        const x = BOAT[0] + dx * (BOAT[2] - 0.1),
+          z = BOAT[1] + dz * (BOAT[3] - 0.1),
+          y = height(x, z);
+        if (YB - y > 0.12) S.box([x, (y - 0.1 + YB - 0.06) / 2, z], [0.075, (YB - 0.06 - y + 0.1) / 2, 0.075], PLANK, { res: 0.075 });
+      }
+    S.box([SLIP, YB - 0.04, BOAT[1] + BOAT[3] + 0.15], [BDOOR[1] + 0.14, 0.05, 0.17], PLANK, { res: 0.12 }); // the sill
+    // the slip: two long timbers and planks across them. It leaves the sill in the air and comes to the ground a step or two down
+    let slipEnd = SLIP0;
+    while (slipEnd < 20 && height(SLIP, slipEnd) > 0.02) slipEnd += 0.1;
+    const SLIPS = 1.5, // how far it goes before it is on the ground
+      slipY = z => Math.max(0.02, height(SLIP, z), lerp(YB - 0.1, height(SLIP, SLIP0 + SLIPS), (z - SLIP0) / SLIPS));
     slipEnd += 0.9;
-    for (let z = 8.6; z < slipEnd; z += 0.42) {
-      const x = -4.2 - (z - 9) * 0.12;
-      S.box([x, Math.max(0.02, height(x, z)) + 0.07, z], [0.85, 0.05, 0.17], PLANK, { res: 0.17 });
+    for (let z = SLIP0; z < slipEnd; z += 0.42) S.box([SLIP, slipY(z) + 0.07, z], [0.8, 0.05, 0.17], PLANK, { res: 0.17 });
+    for (const dx of [-0.62, 0.62]) S.tube([[SLIP + dx, slipY(SLIP0 - 0.2) - 0.05, SLIP0 - 0.2], [SLIP + dx, slipY(SLIP0 + SLIPS) - 0.05, SLIP0 + SLIPS]], 0.06, 0.06, { r: [26, 27, 28] }, { res: 0.09 });
+    let slipDown = SLIP0; // where a man can step on to it
+    while (slipDown < slipEnd && slipY(slipDown) - height(SLIP, slipDown) > 0.09) slipDown += 0.1;
+    for (const dx of [-0.6, 0.6]) {
+      const y = height(SLIP + dx, SLIP0 + 0.1);
+      S.box([SLIP + dx, (y - 0.1 + slipY(SLIP0 + 0.1)) / 2, SLIP0 + 0.1], [0.07, (slipY(SLIP0 + 0.1) - y + 0.1) / 2, 0.07], PLANK, { res: 0.075 });
     }
+    BOXES.push([SLIP - 0.78, SLIP + 0.78, BOAT[1] + BOAT[3], slipDown]);
+    // the dory hauled up beside it
     const DORY = [-1.9, slipEnd - 2.5];
     S.ball([DORY[0], height(DORY[0], DORY[1]) + 0.22, DORY[1]], [0.52, 0.34, 1.3], { r: [31, 32, 33, 26, 27] }, { res: 0.16, ax: B.frame(0.5, 0, 0.12) });
     S.ball([DORY[0], height(DORY[0], DORY[1]) + 0.5, DORY[1]], [0.38, 0.08, 1.05], { r: [26, 27, 28] }, { res: 0.16, ax: B.frame(0.5, 0, 0.12) });
     ROUND.push([DORY[0] - 0.3, DORY[1] - 0.5, 0.65], [DORY[0] + 0.3, DORY[1] + 0.5, 0.65]);
+    // what the tender left on the stones the other side of the slip: a case with a keg on it, two barrels, a sack of meal, a box
+    const GOODS = [SLIP - 2.2, slipEnd - 3.3],
+      gy = (dx, dz) => height(GOODS[0] + dx, GOODS[1] + dz),
+      CASE = { r: [27, 28, 29, 30], mod: (x, y, z) => 0.5 * (hash(Math.floor(y * 9), Math.floor(x * 2 + z * 2)) - 0.5) },
+      cask = (dx, dz, r, h, up) =>
+        S.lathe([GOODS[0] + dx, gy(dx, dz) + (up || 0) - 0.03, GOODS[1] + dz], h, t => r * (0.84 + 0.2 * Math.sin(t * Math.PI)), {
+          r: [26, 27, 28, 29],
+          tex: (x, y, z) => { const v = (y - gy(dx, dz) - (up || 0) + 0.03) / h; return Math.abs(v - 0.22) < 0.06 || Math.abs(v - 0.78) < 0.06 ? 32 : undefined; }
+        }, { res: 0.085 });
+    S.box([GOODS[0], gy(0, 0) + 0.2, GOODS[1]], [0.33, 0.23, 0.26], CASE, { res: 0.11, ax: B.frame(0.3, 0, 0) });
+    cask(-0.05, 0, 0.15, 0.3, 0.43);
+    cask(0.62, -0.12, 0.2, 0.52);
+    cask(-0.12, 0.62, 0.16, 0.36);
+    S.ball([GOODS[0] + 0.6, gy(0.6, 0.5) + 0.2, GOODS[1] + 0.5], [0.2, 0.25, 0.13], { r: [29, 30, 22, 22] }, { res: 0.1, ax: B.frame(-0.4, 0.25, 0) });
+    S.box([GOODS[0] + 1.05, gy(1.05, 0.75) + 0.1, GOODS[1] + 0.75], [0.26, 0.11, 0.18], CASE, { res: 0.1, ax: B.frame(-0.2, 0, 0) });
+    ROUND.push([GOODS[0] + 0.15, GOODS[1] + 0.05, 0.62], [GOODS[0] + 0.7, GOODS[1] + 0.55, 0.5]);
 
     // ---------------------------------------------------------------- people
     // a figure standing at (x, z), facing south. tag(part) names the solids for a rig, or gives nothing for one that only stands
@@ -821,7 +885,7 @@ module.exports = ({ makeBuilder, makeSculpt, KIT: K }) => ({
       npc = { wake: { x: WAKE[0], z: WAKE[1], face: 0.25, rest: 0.25, look: 0, here: true, at: 0, to: 0, gait: 0, phase: 0 }, mer: { x: MER[0], z: MER[1], look: -0.3, scream: 0 } },
       WY = height(WAKE[0], WAKE[1]),
       // where the old man may be found: [x, z, the way he faces]. By his door (where he begins), round the cottage, round the tower,
-      // and down by the planks that go to the water
+      // and down by the boathouse and the slip that goes to the water
       SPOTS = [
         [WAKE[0], WAKE[1], 0.25],
         [COT[0] + COT[2] + 1.0, COT[1] - 0.2, 1.4],
@@ -830,8 +894,8 @@ module.exports = ({ makeBuilder, makeSculpt, KIT: K }) => ({
         [0.4, 2.9, 0.1],
         [-2.9, 0.8, -1.3],
         [2.3, -2.3, 2.4],
-        [-3.0, 9.4, 0.5],
-        [-5.5, 10.4, 0.2],
+        [BOAT[0] + BOAT[2] + 0.9, BOAT[1] + 0.2, 0.5],
+        [BOAT[0] - BOAT[2] - 0.9, BOAT[1] + 1.1, 0.2],
         [-3.4, slipEnd - 2.2, -0.2]
       ],
       stand = spot => {
@@ -1044,7 +1108,7 @@ module.exports = ({ makeBuilder, makeSculpt, KIT: K }) => ({
     W.panes = panes.length;
     W.blocks = BLOCKS;
     W.sea = [water.length, white.length];
-    W.game = { pl, spawn: SPAWN, height, blocked, step, turn, npc, inside, spots: SPOTS, stand, home, night, grade, sea, places: { tower: TOWER, cottage: COT, engine: ENG, privy: PRIVY, well: WELL, landing: [-4.6, slipEnd - 1.2], wake: WAKE, mermaid: MER } };
+    W.game = { pl, spawn: SPAWN, height, blocked, step, turn, npc, inside, spots: SPOTS, stand, home, night, grade, sea, places: { tower: TOWER, cottage: COT, engine: ENG, privy: PRIVY, well: WELL, landing: [SLIP - 0.3, slipEnd - 1.2], boathouse: BOAT, wake: WAKE, mermaid: MER } };
     return W;
   }
 });
