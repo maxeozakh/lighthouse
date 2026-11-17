@@ -5,7 +5,7 @@
 //                            key, click or tap, so every one of those calls this again
 //   Sound.wake()             the rest (the drone, the glass tones, the fog signal), which wait until he does something
 //   Sound.set({ sea, song, horn, mutter })   0..1 each: how near the water he is, how near her, the engine house, the old man
-//   Sound.step() .strike() .scream() .duck(level) .mute()
+//   Sound.step() .strike() .scream() .duck(level) .mute() .deaf()
 //   Sound.volume({ all, music, rest })       0..1 each: how loud he has all of it, the music (the drone and the glass tones) and
 //                            everything that is not the music (they can be given before there is anything to hear)
 //   index.html?quiet: no sound at all. index.html?deaf: all of it runs, with the ears stopped (for trying when things begin)
@@ -566,6 +566,7 @@ const Sound = (() => {
       if (g) g.mute(muted);
       return muted;
     },
+    deaf: () => muted, // (are his ears stopped)
     state: () => (ac ? ac.state : 'none'),
     peek: () => (g ? Object.assign({ state: ac.state, at: +ac.currentTime.toFixed(2), woken, muted }, g.peek()) : null)
   };

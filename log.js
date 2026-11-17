@@ -177,6 +177,8 @@ const FIRST = 1898,
       did: [
         '<b>Esc</b> lays a ledger over the picture; under a thumb, its name is there to be pressed in the row of hints.',
         'In it, how loud you have it: all of it, the music, and the wind, sea and voices, each by itself. The browser keeps what you set.',
+        'Two things to tick there: your ears stopped, and the row of controls kept in sight for good (it goes out, a part at a time, as you learn it; ticked, all of it is put back and stays).',
+        'Its steps of loudness and its ticks are cut of the same stone as the things a thumb presses.',
         'And who made what.',
         'A link to the game is shown with a picture where it is posted, and the tab has the tower and its beams for a mark.'
       ]

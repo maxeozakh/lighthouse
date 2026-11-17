@@ -94,10 +94,13 @@ SOFTWARE.
   #menu .vol.sel .name { color: #e4e5df; }
   body.touch #menu .vol.sel .name { color: inherit; }
   #menu .pips { display: flex; padding: 0.55em 0 0.55em 1.4em; cursor: pointer; touch-action: none; }
-  #menu .pips i { width: 0.6em; height: 1.05em; margin-left: 0.24em; background: #2e2f2b; }
-  #menu .pips i.on { background: #d9dad4; }
-  #menu .ears .name, #back { cursor: pointer; }
-  #menu .ears .name, body.touch #menu .ears.sel .name { color: #d9dad4; border-bottom: 1px dotted #8b8c87; }
+  /* its steps and its things to tick are of stone, as the things a thumb presses are (icons.js): shown so many times the
+     size they were drawn (--pix, which game.js gives), each point of them a square */
+  #menu .pips i { width: calc(var(--pix, 1) * 9px); height: calc(var(--pix, 1) * 16px); margin-left: calc(var(--pix, 1) * 2px); background: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAkAAAAQCAYAAADESFVDAAAAX0lEQVR42r3SsQrAIAwE0Bv9gIyuGbNm8v9/60oKgVAtdpAe3OQjoBEA4O4cY7C1RqwSh28FwC1SVfbeCTNjbQXZCWUTLCc9kYgcQvcNf0X4hmJvZyZl4mW3qCa+TAUXMvG35RrcIgEAAAAASUVORK5CYII=) 0 0 / 100% 100% no-repeat; image-rendering: pixelated; }
+  #menu .pips i.on { background-image: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAkAAAAQCAYAAADESFVDAAAAYUlEQVR42r3S0QnAIAwE0FvFiTKKw2SXrJI5nOBKCoFQLfZDenBfPgIaAQDuzjEGW2vEKnH4VgDcIlVl750wM9ZWkJ1QNsFy0hOJyCF03/BXhG8o9nZmUiZedotq4stUcAHFkXFw8E4jIwAAAABJRU5ErkJggg==); }
+  #menu .tick, #back { cursor: pointer; }
+  #menu .tick .box { flex: none; width: calc(var(--pix, 1) * 16px); height: calc(var(--pix, 1) * 18px); background: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAASCAYAAABSO15qAAAAr0lEQVR42p2Tuw3AIAxEvQIdNR0jsAMzsAILsDvRRboICB8nlq7B8cvZBhERSSnVUsqtGGOVL+G9rwBQBKmBxpgOMEoF3AF2wAf2BUCh+AWw1lbnnLr4BcBAoRAC+7w/UjtAIbSa/NEBDxsHXdDNEkAHaOOXAxZjmL8AHGLOuds3HalmMBZTOF8C2uTsxiGP9pYABNc32zkAbW4KaIPbUN/E03MfYaf7sn36bJV/vwCp5Z5bOanJtwAAAABJRU5ErkJggg==) 0 0 / 100% 100% no-repeat; image-rendering: pixelated; }
+  #menu .tick.on .box { background-image: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAASCAYAAABSO15qAAAAvklEQVR42p2U0Q3AEBCGreDNszcj2MEMVrCALexiLxNofsk1V0Wp5E+a4/96ziGEEMJ7X2OMTc65Kk6GMaYCQCLQNlBK+QD02gKuACvgDTsBkGB+AZRSVWvdvkspt2bmFwAFhbiZlHNuWmZgrW3CwpGZANMMKMgNXCmlNYBn0BtJnwDU4DeAivgbgEAI4dEsHDA9RphWHYd5bG8KwMACBEZdBwCfGwL4oNP4auOtq4+i9jAyI370duDq01bp7xfCOgNBJVc47gAAAABJRU5ErkJggg==); }
   #menu .by { margin: 1.7em 0 0; font-size: 0.86em; line-height: 1.8; }
   #menu .by span { display: block; }
   #menu a { color: #d9dad4; text-decoration: none; border-bottom: 1px dotted #8b8c87; }
@@ -141,14 +144,15 @@ SOFTWARE.
 <div id="stick"><i></i></div>
 <div id="fps"></div>
 <div id="dead"><p id="lived"></p></div>
-<div id="menu" aria-hidden="true"><div class="in">
+<div id="menu" aria-hidden="true" data-step="11"><div class="in">
 <div class="vol" data-v="all"><span class="name">all of it</span><span class="pips"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></span></div>
 <div class="vol" data-v="music"><span class="name">the music</span><span class="pips"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></span></div>
 <div class="vol" data-v="rest"><span class="name">wind, sea and voices</span><span class="pips"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></span></div>
-<div class="vol ears"><span class="name snd">stop yer ears</span></div>
+<div class="vol tick" data-c="ears" role="checkbox" aria-checked="false"><span class="name">stop yer ears</span><span class="box"></span></div>
+<div class="vol tick" data-c="keep" role="checkbox" aria-checked="false"><span class="name">keep the controls in sight</span><span class="box"></span></div>
 <p class="by">
-<span>made by <a href="https://mxz.sh/" target="_blank" rel="noopener">maxeo</a></span>
-<span>drawn with <a href="https://github.com/siliconjungle/shapeshift-labs-ink-studio" target="_blank" rel="noopener">ink-studio</a>, by James Addison</span>
+<span>made by <a href="https://x.com/maxeozakh" target="_blank" rel="noopener">@maxeozakh</a></span>
+<span>drawn with <a href="https://github.com/siliconjungle/shapeshift-labs-ink-studio" target="_blank" rel="noopener">ink-studio</a>, by <a href="https://x.com/JungleSilicon" target="_blank" rel="noopener">@JungleSilicon</a></span>
 <span>set in <a href="https://www.redaction.us/" target="_blank" rel="noopener">Redaction</a>, by Forest Young and Jeremy Mickel</span>
 <span>after <i>The Lighthouse</i> (2019), a film by Robert Eggers</span>
 <span>(unofficial: no one from the film had a hand in it)</span>
@@ -26839,7 +26843,7 @@ module.exports = ({ makeBuilder, makeSculpt, KIT: K }) => ({
 //                            key, click or tap, so every one of those calls this again
 //   Sound.wake()             the rest (the drone, the glass tones, the fog signal), which wait until he does something
 //   Sound.set({ sea, song, horn, mutter })   0..1 each: how near the water he is, how near her, the engine house, the old man
-//   Sound.step() .strike() .scream() .duck(level) .mute()
+//   Sound.step() .strike() .scream() .duck(level) .mute() .deaf()
 //   Sound.volume({ all, music, rest })       0..1 each: how loud he has all of it, the music (the drone and the glass tones) and
 //                            everything that is not the music (they can be given before there is anything to hear)
 //   index.html?quiet: no sound at all. index.html?deaf: all of it runs, with the ears stopped (for trying when things begin)
@@ -27400,6 +27404,7 @@ const Sound = (() => {
       if (g) g.mute(muted);
       return muted;
     },
+    deaf: () => muted, // (are his ears stopped)
     state: () => (ac ? ac.state : 'none'),
     peek: () => (g ? Object.assign({ state: ac.state, at: +ac.currentTime.toFixed(2), woken, muted }, g.peek()) : null)
   };
@@ -27446,6 +27451,7 @@ const Sound = (() => {
       try {
         localStorage.setItem(KNOWN, [...learnt].join(' '));
       } catch (e) {} // (a browser that keeps nothing: he is told again next time, and that is all)
+      if (always) return;
       for (const el of document.querySelectorAll('#hud [data-h="' + h + '"]')) {
         // (the row that is not shown, keys' or thumbs', has nothing to close)
         if (!el.getClientRects().length) {
@@ -27478,22 +27484,44 @@ const Sound = (() => {
         setTimeout(() => el.remove(), 8000);
       }
     };
+  // Unless he has asked for all of the row to be kept in sight (the ledger has a thing to tick for it; the browser keeps
+  // that too: KEEP). Then nothing goes out of it, though what he has done is still counted, for when he asks no longer
+  const KEEP = 'wickie.legend',
+    whole = $('hud').innerHTML; // (the row as it was made, to put back)
+  let always = false;
+  try {
+    always = localStorage.getItem(KEEP) === '1';
+  } catch (e) {}
   // what was kept from another time is not in the row at all: it is taken out before anything is shown, with no going out
   try {
     for (const h of (localStorage.getItem(KNOWN) || '').split(' ')) {
       if (!h) continue;
       learnt.add(h);
-      for (const el of document.querySelectorAll('#hud [data-h="' + h + '"]')) el.remove();
+      if (!always) for (const el of document.querySelectorAll('#hud [data-h="' + h + '"]')) el.remove();
     }
   } catch (e) {}
+  function keep(on) {
+    always = on;
+    try {
+      localStorage.setItem(KEEP, on ? '1' : '0');
+    } catch (e) {}
+    if (on) {
+      $('hud').innerHTML = whole;
+      if (Sound.deaf()) for (const el of document.querySelectorAll('#hud .snd')) el.textContent = 'unstop yer ears';
+    } else for (const h of learnt) for (const el of document.querySelectorAll('#hud [data-h="' + h + '"]')) el.remove();
+    layout(); // (under a thumb, what is pressed is put where the row leaves room for it)
+    paint();
+  }
   // the ledger: laid over the picture by Esc (under a thumb, by pressing its name in the row of hints) and put away the same
   // way. In it, how loud he has it: all of it, the music, and what is not the music, each in so many steps (STEPS: all of them
-  // is as loud as it was made); his ears, to stop or unstop; and who made what. What he sets the browser keeps (VOLS). While
-  // it is open he stands where he is, and the days go by as they do
+  // is as loud as it was made); two things to tick, his ears stopped and the row of hints kept whole (keep(), above); and who
+  // made what. What he sets the browser keeps (VOLS). While it is open he stands where he is, and the days go by as they do
   const VOLS = 'wickie.sound',
     STEPS = 10,
     vol = { all: STEPS, music: STEPS, rest: STEPS },
-    lines = [...document.querySelectorAll('#menu .vol')]; // (the three of them, and under them the one for his ears)
+    lines = [...document.querySelectorAll('#menu .vol')], // (the three of them, and under them the two to tick)
+    ticked = c => (c === 'keep' ? always : Sound.deaf()),
+    tick = c => (c === 'keep' ? keep(!always) : ears());
   let open = false, line = 0;
   try {
     const kept = (localStorage.getItem(VOLS) || '').split(' ').map(Number),
@@ -27505,7 +27533,12 @@ const Sound = (() => {
     paint = () =>
       lines.forEach((el, i) => {
         el.classList.toggle('sel', i === line);
-        const v = vol[el.dataset.v];
+        const v = vol[el.dataset.v],
+          c = el.dataset.c;
+        if (c) {
+          el.classList.toggle('on', ticked(c));
+          el.setAttribute('aria-checked', String(ticked(c)));
+        }
         [...el.querySelectorAll('.pips i')].forEach((p, n) => p.classList.toggle('on', n < v));
       }),
     turnTo = (k, v) => {
@@ -27529,7 +27562,8 @@ const Sound = (() => {
     drop();
     paint();
   }
-  // the keys, while it is open: up and down among its lines, left and right to turn the one he is on down or up
+  // the keys, while it is open: up and down among its lines, left and right to turn the one he is on down or up (or, if it
+  // is one to tick, to tick it or not: as Enter does, and the long key)
   function leaf(c) {
     const el = lines[line],
       k = el.dataset.v,
@@ -27537,7 +27571,7 @@ const Sound = (() => {
     if (c === 'ArrowUp' || c === 'KeyW') line = (line + lines.length - 1) % lines.length;
     else if (c === 'ArrowDown' || c === 'KeyS') line = (line + 1) % lines.length;
     else if (k && by) turnTo(k, vol[k] + by);
-    else if (!k && (by || c === 'Enter' || c === 'Space')) ears();
+    else if (!k && (by || c === 'Enter' || c === 'Space')) tick(el.dataset.c);
     paint();
   }
   let softAt = 0; // when a thumb began sending him softly (0: it is not)
@@ -27589,7 +27623,13 @@ const Sound = (() => {
     }
     $('ui').style.fontSize = Math.max(14, Math.round(h / 31)) + 'px';
     $('hud').style.fontSize = Math.max(13, Math.round(h / 58)) + 'px';
-    $('menu').style.fontSize = Math.max(14, Math.min(22, Math.round(h / 46))) + 'px';
+    const letter = Math.max(14, Math.min(22, Math.round(h / 46))),
+      fine = Math.max(1, Math.round(devicePixelRatio || 1)),
+      room = Math.min(25 * letter, innerWidth) - 2.4 * letter, // (how long a line of it is)
+      most = (0.5 * room) / (STEPS * Number($('menu').dataset.step)); // (a line's steps are to take no more than half of it)
+    $('menu').style.fontSize = letter + 'px';
+    // (its stone things, so many times the size they were drawn: a whole number of the screen's own points to each of theirs)
+    $('menu').style.setProperty('--pix', Math.max(1, Math.min(Math.round((letter / 11) * fine), Math.floor(most * fine)) / fine));
     if (TOUCH) {
       // the two that turn the view: in a row under the picture where there is room for one, or else one at either side of it
       // (they are drawn in pixels as big as the picture's own, as near as a thumb can do with)
@@ -27627,7 +27667,7 @@ const Sound = (() => {
     W.anim.update(0, 0);
     yaw = yawTo = W.cam.yaw;
     cam = [G.pl.x, G.pl.y + 1.6, G.pl.z];
-    window.wickie = { W, G, keys, mem, die, wish, hours, songAt, mutterAt, days: v => (v === undefined ? clock : (clock = v)), book, state: () => ({ book: open, vol, mode, indoors, duskAt, dawnAt, lamp, late, touch: TOUCH, quality, soft, stick: !!stick, zoomTo, yawTo, held }) }; // for poking at from the console
+    window.wickie = { W, G, keys, mem, die, wish, hours, songAt, mutterAt, days: v => (v === undefined ? clock : (clock = v)), book, keep, learn, state: () => ({ book: open, vol, legend: always, learnt: [...learnt].join(' '), mode, indoors, duskAt, dawnAt, lamp, late, touch: TOUCH, quality, soft, stick: !!stick, zoomTo, yawTo, held }) }; // for poking at from the console
   }
 
   // which way he is asked to go, across the ground, from the keys or from where the pointer is held.
@@ -27926,7 +27966,8 @@ const Sound = (() => {
   }
   function ears() {
     const label = Sound.mute() ? 'unstop yer ears' : 'stop yer ears';
-    for (const el of document.querySelectorAll('.snd')) if (!el.closest('.known')) el.textContent = label;
+    for (const el of document.querySelectorAll('#hud .snd')) if (!el.closest('.known')) el.textContent = label;
+    paint(); // (the ledger has it too, as a thing ticked)
   }
   document.addEventListener('pointerdown', ev => {
     if (ev.target.closest && ev.target.closest('.tap')) Sound.start();
@@ -27969,8 +28010,19 @@ const Sound = (() => {
       learn('look');
     });
   $('light').addEventListener('pointerdown', light);
-  for (const el of document.querySelectorAll('.snd.tap, #menu .ears')) el.addEventListener('click', ears);
-  for (const el of document.querySelectorAll('.book.tap')) el.addEventListener('click', () => book(true));
+  // (what is pressed in the row of hints is looked for when it is pressed: the row may have been put back whole since)
+  $('hud').addEventListener('click', ev => {
+    const el = ev.target.closest && ev.target.closest('.tap');
+    if (el) el.classList.contains('snd') ? ears() : book(true);
+  });
+  lines.forEach(
+    (el, i) =>
+      el.dataset.c &&
+      el.addEventListener('click', () => {
+        line = i;
+        tick(el.dataset.c);
+      })
+  );
   $('back').addEventListener('click', () => book(false));
   // a line of the ledger, pressed or dragged along: it is turned to where the pointer is (left of the first step: to nothing)
   lines.forEach((el, i) => {

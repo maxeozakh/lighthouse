@@ -39,6 +39,7 @@
       try {
         localStorage.setItem(KNOWN, [...learnt].join(' '));
       } catch (e) {} // (a browser that keeps nothing: he is told again next time, and that is all)
+      if (always) return;
       for (const el of document.querySelectorAll('#hud [data-h="' + h + '"]')) {
         // (the row that is not shown, keys' or thumbs', has nothing to close)
         if (!el.getClientRects().length) {
@@ -71,22 +72,44 @@
         setTimeout(() => el.remove(), 8000);
       }
     };
+  // Unless he has asked for all of the row to be kept in sight (the ledger has a thing to tick for it; the browser keeps
+  // that too: KEEP). Then nothing goes out of it, though what he has done is still counted, for when he asks no longer
+  const KEEP = 'wickie.legend',
+    whole = $('hud').innerHTML; // (the row as it was made, to put back)
+  let always = false;
+  try {
+    always = localStorage.getItem(KEEP) === '1';
+  } catch (e) {}
   // what was kept from another time is not in the row at all: it is taken out before anything is shown, with no going out
   try {
     for (const h of (localStorage.getItem(KNOWN) || '').split(' ')) {
       if (!h) continue;
       learnt.add(h);
-      for (const el of document.querySelectorAll('#hud [data-h="' + h + '"]')) el.remove();
+      if (!always) for (const el of document.querySelectorAll('#hud [data-h="' + h + '"]')) el.remove();
     }
   } catch (e) {}
+  function keep(on) {
+    always = on;
+    try {
+      localStorage.setItem(KEEP, on ? '1' : '0');
+    } catch (e) {}
+    if (on) {
+      $('hud').innerHTML = whole;
+      if (Sound.deaf()) for (const el of document.querySelectorAll('#hud .snd')) el.textContent = 'unstop yer ears';
+    } else for (const h of learnt) for (const el of document.querySelectorAll('#hud [data-h="' + h + '"]')) el.remove();
+    layout(); // (under a thumb, what is pressed is put where the row leaves room for it)
+    paint();
+  }
   // the ledger: laid over the picture by Esc (under a thumb, by pressing its name in the row of hints) and put away the same
   // way. In it, how loud he has it: all of it, the music, and what is not the music, each in so many steps (STEPS: all of them
-  // is as loud as it was made); his ears, to stop or unstop; and who made what. What he sets the browser keeps (VOLS). While
-  // it is open he stands where he is, and the days go by as they do
+  // is as loud as it was made); two things to tick, his ears stopped and the row of hints kept whole (keep(), above); and who
+  // made what. What he sets the browser keeps (VOLS). While it is open he stands where he is, and the days go by as they do
   const VOLS = 'wickie.sound',
     STEPS = 10,
     vol = { all: STEPS, music: STEPS, rest: STEPS },
-    lines = [...document.querySelectorAll('#menu .vol')]; // (the three of them, and under them the one for his ears)
+    lines = [...document.querySelectorAll('#menu .vol')], // (the three of them, and under them the two to tick)
+    ticked = c => (c === 'keep' ? always : Sound.deaf()),
+    tick = c => (c === 'keep' ? keep(!always) : ears());
   let open = false, line = 0;
   try {
     const kept = (localStorage.getItem(VOLS) || '').split(' ').map(Number),
@@ -98,7 +121,12 @@
     paint = () =>
       lines.forEach((el, i) => {
         el.classList.toggle('sel', i === line);
-        const v = vol[el.dataset.v];
+        const v = vol[el.dataset.v],
+          c = el.dataset.c;
+        if (c) {
+          el.classList.toggle('on', ticked(c));
+          el.setAttribute('aria-checked', String(ticked(c)));
+        }
         [...el.querySelectorAll('.pips i')].forEach((p, n) => p.classList.toggle('on', n < v));
       }),
     turnTo = (k, v) => {
@@ -122,7 +150,8 @@
     drop();
     paint();
   }
-  // the keys, while it is open: up and down among its lines, left and right to turn the one he is on down or up
+  // the keys, while it is open: up and down among its lines, left and right to turn the one he is on down or up (or, if it
+  // is one to tick, to tick it or not: as Enter does, and the long key)
   function leaf(c) {
     const el = lines[line],
       k = el.dataset.v,
@@ -130,7 +159,7 @@
     if (c === 'ArrowUp' || c === 'KeyW') line = (line + lines.length - 1) % lines.length;
     else if (c === 'ArrowDown' || c === 'KeyS') line = (line + 1) % lines.length;
     else if (k && by) turnTo(k, vol[k] + by);
-    else if (!k && (by || c === 'Enter' || c === 'Space')) ears();
+    else if (!k && (by || c === 'Enter' || c === 'Space')) tick(el.dataset.c);
     paint();
   }
   let softAt = 0; // when a thumb began sending him softly (0: it is not)
@@ -182,7 +211,13 @@
     }
     $('ui').style.fontSize = Math.max(14, Math.round(h / 31)) + 'px';
     $('hud').style.fontSize = Math.max(13, Math.round(h / 58)) + 'px';
-    $('menu').style.fontSize = Math.max(14, Math.min(22, Math.round(h / 46))) + 'px';
+    const letter = Math.max(14, Math.min(22, Math.round(h / 46))),
+      fine = Math.max(1, Math.round(devicePixelRatio || 1)),
+      room = Math.min(25 * letter, innerWidth) - 2.4 * letter, // (how long a line of it is)
+      most = (0.5 * room) / (STEPS * Number($('menu').dataset.step)); // (a line's steps are to take no more than half of it)
+    $('menu').style.fontSize = letter + 'px';
+    // (its stone things, so many times the size they were drawn: a whole number of the screen's own points to each of theirs)
+    $('menu').style.setProperty('--pix', Math.max(1, Math.min(Math.round((letter / 11) * fine), Math.floor(most * fine)) / fine));
     if (TOUCH) {
       // the two that turn the view: in a row under the picture where there is room for one, or else one at either side of it
       // (they are drawn in pixels as big as the picture's own, as near as a thumb can do with)
@@ -220,7 +255,7 @@
     W.anim.update(0, 0);
     yaw = yawTo = W.cam.yaw;
     cam = [G.pl.x, G.pl.y + 1.6, G.pl.z];
-    window.wickie = { W, G, keys, mem, die, wish, hours, songAt, mutterAt, days: v => (v === undefined ? clock : (clock = v)), book, state: () => ({ book: open, vol, mode, indoors, duskAt, dawnAt, lamp, late, touch: TOUCH, quality, soft, stick: !!stick, zoomTo, yawTo, held }) }; // for poking at from the console
+    window.wickie = { W, G, keys, mem, die, wish, hours, songAt, mutterAt, days: v => (v === undefined ? clock : (clock = v)), book, keep, learn, state: () => ({ book: open, vol, legend: always, learnt: [...learnt].join(' '), mode, indoors, duskAt, dawnAt, lamp, late, touch: TOUCH, quality, soft, stick: !!stick, zoomTo, yawTo, held }) }; // for poking at from the console
   }
 
   // which way he is asked to go, across the ground, from the keys or from where the pointer is held.
@@ -519,7 +554,8 @@
   }
   function ears() {
     const label = Sound.mute() ? 'unstop yer ears' : 'stop yer ears';
-    for (const el of document.querySelectorAll('.snd')) if (!el.closest('.known')) el.textContent = label;
+    for (const el of document.querySelectorAll('#hud .snd')) if (!el.closest('.known')) el.textContent = label;
+    paint(); // (the ledger has it too, as a thing ticked)
   }
   document.addEventListener('pointerdown', ev => {
     if (ev.target.closest && ev.target.closest('.tap')) Sound.start();
@@ -562,8 +598,19 @@
       learn('look');
     });
   $('light').addEventListener('pointerdown', light);
-  for (const el of document.querySelectorAll('.snd.tap, #menu .ears')) el.addEventListener('click', ears);
-  for (const el of document.querySelectorAll('.book.tap')) el.addEventListener('click', () => book(true));
+  // (what is pressed in the row of hints is looked for when it is pressed: the row may have been put back whole since)
+  $('hud').addEventListener('click', ev => {
+    const el = ev.target.closest && ev.target.closest('.tap');
+    if (el) el.classList.contains('snd') ? ears() : book(true);
+  });
+  lines.forEach(
+    (el, i) =>
+      el.dataset.c &&
+      el.addEventListener('click', () => {
+        line = i;
+        tick(el.dataset.c);
+      })
+  );
   $('back').addEventListener('click', () => book(false));
   // a line of the ledger, pressed or dragged along: it is turned to where the pointer is (left of the first step: to nothing)
   lines.forEach((el, i) => {

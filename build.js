@@ -127,10 +127,13 @@ ${mit}
   #menu .vol.sel .name { color: #e4e5df; }
   body.touch #menu .vol.sel .name { color: inherit; }
   #menu .pips { display: flex; padding: 0.55em 0 0.55em 1.4em; cursor: pointer; touch-action: none; }
-  #menu .pips i { width: 0.6em; height: 1.05em; margin-left: 0.24em; background: #2e2f2b; }
-  #menu .pips i.on { background: #d9dad4; }
-  #menu .ears .name, #back { cursor: pointer; }
-  #menu .ears .name, body.touch #menu .ears.sel .name { color: #d9dad4; border-bottom: 1px dotted #8b8c87; }
+  /* its steps and its things to tick are of stone, as the things a thumb presses are (icons.js): shown so many times the
+     size they were drawn (--pix, which game.js gives), each point of them a square */
+  #menu .pips i { width: calc(var(--pix, 1) * ${icons.pip.w}px); height: calc(var(--pix, 1) * ${icons.pip.h}px); margin-left: calc(var(--pix, 1) * 2px); background: url(${icons.pip.off}) 0 0 / 100% 100% no-repeat; image-rendering: pixelated; }
+  #menu .pips i.on { background-image: url(${icons.pip.on}); }
+  #menu .tick, #back { cursor: pointer; }
+  #menu .tick .box { flex: none; width: calc(var(--pix, 1) * ${icons.box.w}px); height: calc(var(--pix, 1) * ${icons.box.h}px); background: url(${icons.box.off}) 0 0 / 100% 100% no-repeat; image-rendering: pixelated; }
+  #menu .tick.on .box { background-image: url(${icons.box.on}); }
   #menu .by { margin: 1.7em 0 0; font-size: 0.86em; line-height: 1.8; }
   #menu .by span { display: block; }
   #menu a { color: #d9dad4; text-decoration: none; border-bottom: 1px dotted #8b8c87; }
@@ -174,14 +177,15 @@ ${mit}
 <div id="stick"><i></i></div>
 <div id="fps"></div>
 <div id="dead"><p id="lived"></p></div>
-<div id="menu" aria-hidden="true"><div class="in">
+<div id="menu" aria-hidden="true" data-step="${icons.pip.w + 2}"><div class="in">
 <div class="vol" data-v="all"><span class="name">all of it</span><span class="pips"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></span></div>
 <div class="vol" data-v="music"><span class="name">the music</span><span class="pips"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></span></div>
 <div class="vol" data-v="rest"><span class="name">wind, sea and voices</span><span class="pips"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></span></div>
-<div class="vol ears"><span class="name snd">stop yer ears</span></div>
+<div class="vol tick" data-c="ears" role="checkbox" aria-checked="false"><span class="name">stop yer ears</span><span class="box"></span></div>
+<div class="vol tick" data-c="keep" role="checkbox" aria-checked="false"><span class="name">keep the controls in sight</span><span class="box"></span></div>
 <p class="by">
-<span>made by <a href="https://mxz.sh/" target="_blank" rel="noopener">maxeo</a></span>
-<span>drawn with <a href="https://github.com/siliconjungle/shapeshift-labs-ink-studio" target="_blank" rel="noopener">ink-studio</a>, by James Addison</span>
+<span>made by <a href="https://x.com/maxeozakh" target="_blank" rel="noopener">@maxeozakh</a></span>
+<span>drawn with <a href="https://github.com/siliconjungle/shapeshift-labs-ink-studio" target="_blank" rel="noopener">ink-studio</a>, by <a href="https://x.com/JungleSilicon" target="_blank" rel="noopener">@JungleSilicon</a></span>
 <span>set in <a href="https://www.redaction.us/" target="_blank" rel="noopener">Redaction</a>, by Forest Young and Jeremy Mickel</span>
 <span>after <i>The Lighthouse</i> (2019), a film by Robert Eggers</span>
 <span>(unofficial: no one from the film had a hand in it)</span>
