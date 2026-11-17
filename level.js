@@ -673,17 +673,11 @@ module.exports = ({ makeBuilder, makeSculpt, KIT: K }) => ({
         // a cap with a peak
         S.ball(at(0, 1.37, -0.01), [0.16, 0.075, 0.165], { r: [42, 43, 44] }, g('head'));
         S.ball(at(0, 1.34, 0.14), [0.11, 0.02, 0.07], { r: [42, 42, 43] }, g('head'));
-        // his pipe: a thin stem from the corner of his mouth, and the bowl at the end of it
-        if (o.pipe) {
-          const FINE = { res: 0.03, tag: o.tag + 'head' };
-          S.tube([at(0.05, 1.215, 0.16), at(0.085, 1.185, 0.27)], 0.012, 0.012, { r: [42, 43] }, FINE);
-          S.ball(at(0.088, 1.19, 0.285), [0.024, 0.03, 0.024], { r: [42, 43] }, FINE);
-        }
         // what he stands on: his own shadow
         S.ball(at(0, 0.015, 0), [0.2 + st, 0.01, 0.2 + st], { r: [7] }, { res: 0.1, tag: o.tag, ghost: true });
       };
     figure(SPAWN[0], SPAWN[1], { tag: 'pl', coat: [45, 46, 47, 48, 48] });
-    figure(WAKE[0], WAKE[1], { tag: 'wk', stout: 0.045, coat: [42, 42, 43, 44], beard: true, pipe: true });
+    figure(WAKE[0], WAKE[1], { tag: 'wk', stout: 0.045, coat: [42, 42, 43, 44], beard: true });
     const wakeAt = [WAKE[0], WAKE[1], 0.35]; // what stops you where he stands: it goes where he goes
     ROUND.push(wakeAt);
 
