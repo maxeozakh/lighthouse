@@ -281,9 +281,11 @@
 
   addEventListener('keydown', ev => {
     if (ev.metaKey || ev.ctrlKey || ev.altKey) return;
-    Sound.start();
     const c = ev.code,
       once = !ev.repeat;
+    // (whatever he does first brings in what is not weather: all but stopping his ears)
+    if (c === 'KeyM') Sound.start();
+    else Sound.wake();
     if (c === 'KeyM' && once) ears();
     if (mode === 'play' && once) {
       if (c === 'KeyQ') yawTo += Math.PI / 2;
@@ -335,7 +337,8 @@
     for (const el of document.querySelectorAll('.snd')) el.textContent = label;
   }
   document.addEventListener('pointerdown', ev => {
-    Sound.start();
+    if (ev.target.closest && ev.target.closest('.tap')) Sound.start();
+    else Sound.wake();
     if (ev.pointerType === 'mouse' || mode !== 'play' || (ev.target.closest && ev.target.closest('button, .tap'))) return;
     fingers.set(ev.pointerId, { x: ev.clientX, y: ev.clientY });
     // the first finger down is the stick; a second with it and the two are for bringing the picture nearer, and he stands
@@ -377,6 +380,7 @@
     'wheel',
     ev => {
       ev.preventDefault();
+      Sound.wake();
       zoomTo = Math.max(0.45, Math.min(2.2, zoomTo * Math.exp(-ev.deltaY * 0.0015)));
     },
     { passive: false }
@@ -384,6 +388,7 @@
   addEventListener('resize', layout);
 
   layout();
+  Sound.start(); // the weather, at once: or as soon as the browser lets a page be heard
   setTimeout(() => {
     build();
     $('veil').classList.add('gone'); // it opens out of black

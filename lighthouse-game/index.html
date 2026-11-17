@@ -26233,9 +26233,13 @@ module.exports = ({ makeBuilder, makeSculpt, KIT: K }) => ({
 })();
 // The sound of the rock. Nothing is played from a file: the wind, the sea, the rain, the fog signal, a low drone under all of it, glass
 // tones that come and go, the gulls, her singing, his footfalls and the old man's muttering are made here out of oscillators and noise.
-//   Sound.start()            on the first key or click (a page may not make a sound before one)
+//   Sound.start()            the weather (wind, sea, rain, the gulls): asked for as the page opens, and it comes up out of nothing.
+//                            A browser that will not let a page be heard before it has been touched holds it back until the first
+//                            key, click or tap, so every one of those calls this again
+//   Sound.wake()             the rest (the drone, the glass tones, the fog signal), which wait until he does something
 //   Sound.set({ sea, song, horn, mutter })   0..1 each: how near the water he is, how near her, the engine house, the old man
 //   Sound.step() .scream() .duck(level) .mute()
+//   index.html?quiet: no sound at all. index.html?deaf: all of it runs, with the ears stopped (for trying when things begin)
 //   Sound.test({ secs, only })       renders it without playing it and measures how loud each second is (for checking levels)
 const Sound = (() => {
   const rnd = (a, b) => a + Math.random() * (b - a);
@@ -26297,8 +26301,10 @@ const Sound = (() => {
     const SONG = 0.3, // her voice at its nearest
       MUTTER = 0.34; // and his
     const master = gain(0.9),
+      door = gain(1), // (open() shuts it and lets it open slowly)
       limit = ctx.createDynamicsCompressor();
-    master.connect(limit);
+    master.connect(door);
+    door.connect(limit);
     limit.connect(ctx.destination);
     const amb = gain(1, master), // the place
       fx = gain(1, master); // what he and they do in it
@@ -26598,6 +26604,11 @@ const Sound = (() => {
       mutter,
       step,
       scream,
+      // all of it comes up out of nothing over a few seconds, rather than starting
+      open: when => {
+        door.gain.setValueAtTime(0, when || 0);
+        door.gain.linearRampToValueAtTime(1, (when || 0) + 3);
+      },
       // the drone comes up slowly, so the first thing heard is the weather
       rise: when => {
         droneG.gain.setValueAtTime(0, when || 0);
@@ -26620,7 +26631,8 @@ const Sound = (() => {
       duck: (v, tc) => amb.gain.setTargetAtTime(v, now(), tc || 0.3),
       mute: m => master.gain.setTargetAtTime(m ? 0 : 0.9, now(), 0.05),
       // for the test: silence what runs all the time, leaving one thing to be heard alone
-      hush: () => [windG, whisG, seaG, washG, rainG, droneG].forEach(g => g.disconnect())
+      hush: () => [windG, whisG, seaG, washG, rainG, droneG].forEach(g => g.disconnect()),
+      peek: () => ({ door: +door.gain.value.toFixed(3), drone: +droneG.gain.value.toFixed(4), master: +master.gain.value.toFixed(3) })
     };
   }
 
@@ -26635,34 +26647,55 @@ const Sound = (() => {
   let ac = null,
     g = null,
     muted = false,
+    woken = false,
     hornK = 0.5,
     song = 0,
     mut = 0;
+  const awake = () => ac.state === 'running' && !document.hidden,
+    // something that happens again and again, at uneven times, for as long as the page can be heard
+    every = (fn, lo, hi, first) => {
+      const tick = () => {
+        if (awake()) fn(ac.currentTime + 0.1);
+        setTimeout(tick, rnd(lo, hi) * 1000);
+      };
+      setTimeout(tick, first * 1000);
+    };
   function start() {
     if (ac) {
-      if (ac.state === 'suspended') ac.resume();
+      if (ac.state !== 'running') ac.resume(); // (held back by the browser: this is a key or a touch, and now it may)
       return;
     }
     const AC = window.AudioContext || window.webkitAudioContext;
     if (!AC || /[?&]quiet\b/.test(location.search)) return; // index.html?quiet: no sound at all (for trying things without the horn going)
     ac = new AC();
     g = make(ac);
-    g.rise(ac.currentTime);
-    const awake = () => ac.state === 'running' && !document.hidden,
-      every = (fn, lo, hi, first) => {
-        const tick = () => {
-          if (awake()) fn(ac.currentTime + 0.1);
-          setTimeout(tick, rnd(lo, hi) * 1000);
-        };
-        setTimeout(tick, first * 1000);
-      };
-    every(t => g.horn(t, 0.05 + 0.14 * hornK), 21, 27, 7);
-    every(t => tones(g, t), 13, 24, 11);
+    g.open(ac.currentTime); // (a context that is held back stands at this moment until it is let go: so it opens from there)
+    if (/[?&]deaf\b/.test(location.search)) g.mute((muted = true));
+    if (document.hidden) {
+      // opened where it cannot be seen (a tab behind another): it is not to be heard from there either, until it is looked at
+      ac.suspend();
+      document.addEventListener('visibilitychange', function seen() {
+        if (document.hidden) return;
+        document.removeEventListener('visibilitychange', seen);
+        ac.resume();
+      });
+    }
     every(t => g.gull(t), 7, 19, 3);
     const phrase = () => setTimeout(phrase, (awake() && song > 0.004 ? g.sing(ac.currentTime + 0.1) : 1.5) * 1000); // she sings only when there is someone to hear
     phrase();
     const chat = () => setTimeout(chat, (awake() && mut > 0.004 ? g.mutter(ac.currentTime + 0.1) : 0.6) * 1000); // nor does he waste it on nobody
     chat();
+  }
+  // he has done something: what is not weather begins. The drone comes in under it (a little after the weather, if that has only
+  // just been let start), and from here the fog signal sounds and the tones come and go
+  function wake() {
+    start();
+    if (!ac || woken) return;
+    woken = true;
+    const t = ac.currentTime;
+    g.rise(t + (t < 3 ? 2.5 : 0.2));
+    every(t => g.horn(t, 0.05 + 0.14 * hornK), 21, 27, 7);
+    every(t => tones(g, t), 13, 24, 11);
   }
 
   // render some seconds of it and say how loud each was (root-mean-square) and the loudest sample of all
@@ -26707,6 +26740,7 @@ const Sound = (() => {
 
   return {
     start,
+    wake,
     test,
     set: o => {
       if (o.horn !== undefined) hornK = o.horn;
@@ -26722,7 +26756,8 @@ const Sound = (() => {
       if (g) g.mute(muted);
       return muted;
     },
-    state: () => (ac ? ac.state : 'none')
+    state: () => (ac ? ac.state : 'none'),
+    peek: () => (g ? Object.assign({ state: ac.state, at: +ac.currentTime.toFixed(2), woken, muted }, g.peek()) : null)
   };
 })();
 
@@ -27009,9 +27044,11 @@ const Sound = (() => {
 
   addEventListener('keydown', ev => {
     if (ev.metaKey || ev.ctrlKey || ev.altKey) return;
-    Sound.start();
     const c = ev.code,
       once = !ev.repeat;
+    // (whatever he does first brings in what is not weather: all but stopping his ears)
+    if (c === 'KeyM') Sound.start();
+    else Sound.wake();
     if (c === 'KeyM' && once) ears();
     if (mode === 'play' && once) {
       if (c === 'KeyQ') yawTo += Math.PI / 2;
@@ -27063,7 +27100,8 @@ const Sound = (() => {
     for (const el of document.querySelectorAll('.snd')) el.textContent = label;
   }
   document.addEventListener('pointerdown', ev => {
-    Sound.start();
+    if (ev.target.closest && ev.target.closest('.tap')) Sound.start();
+    else Sound.wake();
     if (ev.pointerType === 'mouse' || mode !== 'play' || (ev.target.closest && ev.target.closest('button, .tap'))) return;
     fingers.set(ev.pointerId, { x: ev.clientX, y: ev.clientY });
     // the first finger down is the stick; a second with it and the two are for bringing the picture nearer, and he stands
@@ -27105,6 +27143,7 @@ const Sound = (() => {
     'wheel',
     ev => {
       ev.preventDefault();
+      Sound.wake();
       zoomTo = Math.max(0.45, Math.min(2.2, zoomTo * Math.exp(-ev.deltaY * 0.0015)));
     },
     { passive: false }
@@ -27112,6 +27151,7 @@ const Sound = (() => {
   addEventListener('resize', layout);
 
   layout();
+  Sound.start(); // the weather, at once: or as soon as the browser lets a page be heard
   setTimeout(() => {
     build();
     $('veil').classList.add('gone'); // it opens out of black
