@@ -25880,12 +25880,23 @@ module.exports = ({ makeBuilder, makeSculpt, KIT: K }) => ({
         S.tube([at(-0.185, 1.03, 0), at(0.185, 1.03, 0)], 0.086, 0.086, COAT, g('body')); // across the shoulders
         S.ball(at(0, 0.7, st * 0.4), [0.174 + st, 0.21, 0.13 + st * 1.2], COAT, g('body')); // the belly and the hips
         S.ball(at(0, 1.25, 0.01), [0.14, 0.155, 0.15], SKIN, g('head'));
-        if (o.beard) S.ball(at(0, 1.14, 0.09), [0.13, 0.14, 0.1], { r: [49, 50, 51] }, g('head')); // the old man's beard
+        if (o.beard) {
+          // the old man's beard: grey, not white; it is on his jaw and round his chin (his face is left bare above it), and comes
+          // down no further than his collar
+          const GREY = { r: [49, 50, 50] };
+          S.ball(at(0, 1.155, 0.075), [0.13, 0.088, 0.104], GREY, g('head'));
+          S.ball(at(0, 1.1, 0.11), [0.098, 0.075, 0.07], GREY, g('head'));
+        }
         else S.ball(at(0, 1.2, 0.135), [0.085, 0.025, 0.03], { r: [42, 43] }, g('head')); // the young man's moustache
         // a cap with a peak
         S.ball(at(0, 1.37, -0.01), [0.16, 0.075, 0.165], { r: [42, 43, 44] }, g('head'));
         S.ball(at(0, 1.34, 0.14), [0.11, 0.02, 0.07], { r: [42, 42, 43] }, g('head'));
-        if (o.pipe) S.tube([at(0.03, 1.17, 0.16), at(0.08, 1.13, 0.3)], 0.018, 0.03, { r: [42, 43] }, g('head'));
+        // his pipe: a thin stem from the corner of his mouth, and the bowl at the end of it
+        if (o.pipe) {
+          const FINE = { res: 0.03, tag: o.tag + 'head' };
+          S.tube([at(0.05, 1.215, 0.16), at(0.085, 1.185, 0.27)], 0.012, 0.012, { r: [42, 43] }, FINE);
+          S.ball(at(0.088, 1.19, 0.285), [0.024, 0.03, 0.024], { r: [42, 43] }, FINE);
+        }
         // what he stands on: his own shadow
         S.ball(at(0, 0.015, 0), [0.2 + st, 0.01, 0.2 + st], { r: [7] }, { res: 0.1, tag: o.tag, ghost: true });
       };
