@@ -176,6 +176,66 @@
   // the days: clock counts them from the first sunrise and never goes back. What is shown is a bare number, and it begins at the
   // same one every time: 1898, which can be read as a count of days or as the year
   const FIRST = 1898;
+  // The count of his cigarettes is kept as a scoreboard keeps a score: each figure on a reel of its own, and one that
+  // changes is wound up out of sight as the next comes up from under it, the right-hand one first. A reel is as wide as
+  // the figure on it, and goes from the one width to the other as it turns.
+  // (tally.n: what is shown; tally.on: when it was first put up; tally.till: when any reel still turning is to be stopped
+  // where it belongs, in a browser that has not said that it is done)
+  const tally = { n: '', on: 0, till: 0 },
+    LAG = 90, // each reel begins so long after the one to its right (thousandths of a second)
+    figure = c => {
+      const i = document.createElement('i');
+      i.textContent = c;
+      return i;
+    },
+    // a reel has stopped: it keeps only the figure it shows
+    still = reel => {
+      if (!reel.classList.contains('go')) return;
+      reel.classList.remove('go');
+      reel.style.width = '';
+      reel.firstChild.replaceChildren(reel.firstChild.lastChild);
+    },
+    settle = () => {
+      for (const reel of $('cigs').children) still(reel);
+      tally.till = 0;
+    },
+    // a number put up as it is, with no turning
+    put = n => {
+      tally.n = String(n);
+      $('cigs').replaceChildren(
+        ...tally.n.split('').map(c => {
+          const reel = document.createElement('span'),
+            strip = document.createElement('span');
+          reel.className = 'reel';
+          strip.append(figure(c));
+          reel.append(strip);
+          return reel;
+        })
+      );
+    },
+    // and one it is turned to
+    roll = (n, now) => {
+      const to = String(n);
+      settle();
+      if (to.length !== tally.n.length) return put(n);
+      [...$('cigs').children].forEach((reel, k) => {
+        if (to[k] === tally.n[k]) return;
+        const strip = reel.firstChild,
+          next = figure(to[k]);
+        strip.append(next);
+        const wide = next.getBoundingClientRect().width;
+        reel.style.width = strip.firstChild.getBoundingClientRect().width + 'px';
+        reel.style.setProperty('--wait', (to.length - 1 - k) * LAG + 'ms');
+        reel.getBoundingClientRect(); // (so that it turns from where it is)
+        reel.classList.add('go');
+        reel.style.width = wide + 'px';
+      });
+      tally.n = to;
+      tally.till = now + 5000;
+    };
+  $('cigs').addEventListener('transitionend', ev => {
+    if (ev.propertyName === 'transform') still(ev.target.parentNode);
+  });
   let clock = 0.03, dark = -1;
   // the old man's hours. Before the light begins to go he goes in, every night; and in the morning he comes out: but one
   // morning in seven or so (KEEPS) he does not, and is not seen for the whole of that day.
@@ -344,7 +404,7 @@
     if (at(1.8)) {
       canvas.style.filter = canvas.style.transform = '';
       $('lived').textContent = $('day').textContent; // the count stopped where it was
-      $('smoked').textContent = $('cigs').textContent; // (and the other)
+      $('smoked').textContent = G.pl.smoked ? FIRST + G.pl.smoked : ''; // (and the other)
       $('dead').classList.add('on');
       Sound.set({ song: 0, mutter: 0 }); // she has what she sang for
       Sound.duck(0.2, 0.2);
@@ -457,9 +517,15 @@
     }
     // how many he has smoked: a bare number under the count of days, and not there until he has lit the first. It does
     // not begin at nothing, any more than the days do: he had smoked as many as that before he came
-    if (pl.smoked && $('cigs').textContent !== String(FIRST + pl.smoked)) {
-      $('cigs').textContent = FIRST + pl.smoked;
-      $('cigs').classList.add('on');
+    // It is put up as it stood before this one, and then turned (roll()), so that it is seen what it is a count of
+    if (pl.smoked) {
+      const now = performance.now();
+      if (!tally.on) {
+        tally.on = now;
+        put(FIRST);
+        $('cigs').classList.add('on');
+      } else if (now - tally.on > 900 && tally.n !== String(FIRST + pl.smoked)) roll(FIRST + pl.smoked, now);
+      else if (tally.till && now > tally.till) settle();
     }
     G.sea(t); // the swell comes on
     // the camera: turns a quarter at a time (and not in a hurry), and follows a little behind

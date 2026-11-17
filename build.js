@@ -115,8 +115,16 @@ ${mit}
   /* the count of days, which nobody explains */
   #day { position: absolute; left: 3.2%; top: 2.6%; font-size: 0.8em; letter-spacing: 0.14em; color: #e4e5df; text-shadow: 0 0 6px #000, 0 1px 2px #000; }
   /* and under it, smaller, the count of his cigarettes: not there until he has lit one */
-  #cigs { position: absolute; left: 3.2%; top: calc(2.6% + 1.75em); font-size: max(0.6em, 10px); letter-spacing: 0.14em; color: #b9bab4; text-shadow: 0 0 6px #000, 0 1px 2px #000; opacity: 0; transition: opacity 1.2s ease; }
+  #cigs { position: absolute; left: 3.2%; top: calc(2.6% + 1.75em); font-size: max(0.6em, 10px); line-height: 1.3; letter-spacing: 0.14em; white-space: nowrap; color: #b9bab4; filter: drop-shadow(0 0 6px #000) drop-shadow(0 1px 2px #000); opacity: 0; transition: opacity 0.8s ease; }
   #cigs.on { opacity: 1; }
+  /* its figures are on reels, one each, as a scoreboard's are: a figure that changes is wound up out of its window as the
+     next comes up from under it, and stops with a little overrun (game.js: roll()). (The shadow is the whole count's, and
+     not each figure's, so that the windows do not cut it) */
+  #cigs .reel { display: inline-block; height: 1.3em; overflow: hidden; vertical-align: top; }
+  #cigs .reel > span { display: block; }
+  #cigs .reel i { display: block; width: max-content; height: 1.3em; font-style: normal; }
+  #cigs .reel.go { transition: width 0.8s ease-in-out var(--wait, 0s); }
+  #cigs .reel.go > span { transform: translateY(-50%); transition: transform 0.8s cubic-bezier(0.5, 0, 0.25, 1.5) var(--wait, 0s); }
   #dead { position: fixed; inset: 0; display: grid; place-items: center; background: #000; text-align: center; opacity: 0; pointer-events: none; transition: opacity 0.5s; }
   #dead.on { opacity: 1; }
   /* the ledger: laid over everything by Esc. How loud he has it, a line for each thing and ten steps to a line; and who made
