@@ -1065,8 +1065,8 @@ module.exports = ({ makeBuilder, makeSculpt, KIT: K }) => ({
         wk.face = wk.rest = spot[2];
         wk.look = 0;
       },
-      // The old man keeps hours: into the cottage for the night and out of it again by day (game.js says when; it is most
-      // nights and most days, not all of them). He goes by his own door and at his own pace. WAY is the way he takes, from where
+      // The old man keeps hours: into the cottage for the night and out of it again by day (game.js says when; it is every
+      // night, and most days but not all of them). He goes by his own door and at his own pace. WAY is the way he takes, from where
       // he stands to a step inside the wall; wk.at is how far along it he is, and wk.to how far he means to go
       DOOR = [COT[0] + CDOOR, COT[1] + COT[3]],
       WAY = [[WAKE[0], WAKE[1]], [DOOR[0] + 0.08, DOOR[1] + 0.5], [DOOR[0], DOOR[1] - 0.5]],

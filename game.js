@@ -2,7 +2,7 @@
 // drawn in a 1.19:1 frame;
 // what comes of going near her, what is heard (sound.js: among it the old man, who is not to be talked to but can be heard
 // muttering by anyone who comes close); and the days: they go by whatever he does, and night follows day. The old man keeps
-// hours by them: indoors for the night and out again in the morning, most days.
+// hours by them: indoors for the night, and out again in the morning, most days.
 (() => {
   const canvas = document.getElementById('view'),
     ctx = canvas.getContext('2d'),
@@ -94,12 +94,11 @@
   // same one every time: 1898, which can be read as a count of days or as the year
   const FIRST = 1898;
   let clock = 0.03, dark = -1;
-  // the old man's hours. Before the light begins to go he goes in, and in the morning he comes out: but one night in seven or
-  // so he does not go in, and stands out there till morning; and as often, having gone in, he does not come out for the
-  // whole of the day after. (duskAt, dawnAt: when in the day he does it, a little different each time)
+  // the old man's hours. Before the light begins to go he goes in, every night; and in the morning he comes out: but one
+  // morning in seven or so (KEEPS) he does not, and is not seen for the whole of that day.
+  // (duskAt, dawnAt: when in the day he does it, a little different each time)
   // The light is his. By day it is out. It is lit a little after he has gone in for the night (LIGHTS: he has the stair to
   // climb), which is as the dusk begins; in the morning it is put out, and a little after that (COMES) he comes out of his door.
-  // The night he does not go in, there is nobody up there, and it is not lit at all.
   // (lamp: how far it is lit, 0..1, and shown, what the picture last had of it; tends: how long he has been in there, of a
   // night; comes: how long till he comes out)
   const KEEPS = 0.85,
@@ -293,11 +292,8 @@
         nightly = f >= duskAt && f < dawnAt;
       if (nightly !== late) {
         late = nightly;
-        // (otherwise he stays as he is, in or out)
-        if (Math.random() < KEEPS) {
-          if (nightly) G.home((indoors = true));
-          else comes = COMES;
-        }
+        if (nightly) G.home((indoors = true));
+        else if (Math.random() < KEEPS) comes = COMES; // (otherwise he stays in)
         if (nightly) dawnAt = 0.955 + 0.03 * Math.random();
         else duskAt = 0.42 + 0.03 * Math.random();
       }
