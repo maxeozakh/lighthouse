@@ -81,6 +81,9 @@ SOFTWARE.
   #ui { position: fixed; pointer-events: none; }
   /* the count of days, which nobody explains */
   #day { position: absolute; left: 3.2%; top: 2.6%; font-size: 0.8em; letter-spacing: 0.14em; color: #e4e5df; text-shadow: 0 0 6px #000, 0 1px 2px #000; }
+  /* and under it, smaller, the count of his cigarettes: not there until he has lit one */
+  #cigs { position: absolute; left: 3.2%; top: calc(2.6% + 1.75em); font-size: max(0.6em, 10px); letter-spacing: 0.14em; color: #b9bab4; text-shadow: 0 0 6px #000, 0 1px 2px #000; opacity: 0; transition: opacity 1.2s ease; }
+  #cigs.on { opacity: 1; }
   #dead { position: fixed; inset: 0; display: grid; place-items: center; background: #000; text-align: center; opacity: 0; pointer-events: none; transition: opacity 0.5s; }
   #dead.on { opacity: 1; }
   /* the ledger: laid over everything by Esc. How loud he has it, a line for each thing and ten steps to a line; and who made
@@ -129,7 +132,9 @@ SOFTWARE.
   #hud .bend { width: 24px; height: 24px; margin: -6px 1px; vertical-align: middle; }
   #stick { position: fixed; width: 96px; height: 96px; margin: -48px 0 0 -48px; border-radius: 50%; border: 1px solid rgba(217, 218, 212, 0.3); pointer-events: none; }
   #stick i { position: absolute; left: 50%; top: 50%; width: 30px; height: 30px; margin: -15px 0 0 -15px; border-radius: 50%; background: rgba(217, 218, 212, 0.35); }
-  /* the end: the count where it stopped, and nothing else */
+  /* the end: the count where it stopped (and the count of what he smoked, if he did), and nothing else */
+  #smoked { margin: 0.5em 0 0; padding-left: 0.16em; font: 3.2vh/1 'Redaction', Georgia, serif; letter-spacing: 0.16em; color: #b9bab4; }
+  #smoked:empty { display: none; }
   #lived { margin: 0; padding-left: 0.16em; font: 5vh/1 'Redaction', Georgia, serif; letter-spacing: 0.16em; color: #e4e5df; }
 </style>
 </head>
@@ -138,12 +143,13 @@ SOFTWARE.
 <div id="frame"></div>
 <div id="ui">
   <div id="day"></div>
+  <div id="cigs"></div>
 </div>
 <div id="hud"><span class="keys"><span data-h="roam"><b>WASD</b> or arrows roam the rock</span><span data-h="soft"><b>Shift</b> tread soft</span><span data-h="look"><b>Q</b> / <b>E</b> look about ye</span><span data-h="zoom">wheel peer close</span><span data-h="smoke"><b>C</b> have a smoke</span><span data-h="ears"><b>M</b> <span class="snd">stop yer ears</span></span><span data-h="book"><b>Esc</b> the ledger</span></span><span class="thumbs"><span data-h="roam"><b>drag</b> roam the rock</span><span data-h="soft"><b>drag a little</b> tread soft</span><span data-h="look"><img class="bend" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABgAAAAYCAYAAADgdz34AAAApUlEQVR42u2V6wnAIAyE3cMB3MD/DuIiLuIgTuFUlhMCqa2p9gGlNHAUA3dffECV+nyllErOuTwWTmohWJMuhxNA0qXwGGPx3tfvHgz9YcheOGStrRDea3W4m174jLoQHno2nGsDCCFMBzvnxgEEkQKNMTCuzLgX+LgXg4oXTS+Gm9DrDUWQYUA7nbTtdvopAJXWup73YwCpfsA7Abf/NwBQf722FvYbCRRuRVuTAAAAAElFTkSuQmCC" width="24" height="24" alt="" draggable="false"><img class="bend" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABgAAAAYCAYAAADgdz34AAAAqElEQVR42u2T0Q2AIAwF3YMB2IB/BmERFmEQpmAqzDNpUrEileiPNnkxIfUOpC7LZ6uUUnPOdRpCkeCUabgULlBLAEgpiVCshxC2p1pCILwsBRDAnXO7tSHJFbyXIckdcCvhsmGB914tijEeBbQDBA0IvnfTVq21XYEIlwSAnzXTFFEvTVZ3griAn6J3XyennBfgXowxup9LI7hVv2CoHhfwehT+16u1AnwsCRR8lNaoAAAAAElFTkSuQmCC" width="24" height="24" alt="" draggable="false"> look about ye</span><span data-h="zoom"><b>pinch</b> peer close</span><span data-h="smoke"><img class="bend" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABgAAAAYCAYAAADgdz34AAAAvElEQVR42uWU0QnGIAyEu4cDuIHvDuIiLuIgTuFU+bkfroTSopbkqUJeKtxn7tIcxyfPGENQvXdxFWe5QCDcWpNaqz2glHKKs8whAGiIuUUEmNsEQQ2AXS7WuIgTEGOUlNIfEEKQrfme+Yl7vn7Zf7aM2SaIsLsX6nBzzrLlqy4N093BHlq0HdxT6bWArrYCXgEwXFjCHJjFUg4MbQa4fnv1J/NVM4DJLgKM3d3Zab6Lrla6bVNMkpv4t84PakKLLEizLUgAAAAASUVORK5CYII=" width="24" height="24" alt="" draggable="false"> have a smoke</span><span><span class="snd tap">stop yer ears</span></span><span><span class="book tap">the ledger</span></span></span></div>
 <div id="pad"><button id="turnL" aria-label="look about ye, to the left"><img class="bend" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABgAAAAYCAYAAADgdz34AAAApUlEQVR42u2V6wnAIAyE3cMB3MD/DuIiLuIgTuFUlhMCqa2p9gGlNHAUA3dffECV+nyllErOuTwWTmohWJMuhxNA0qXwGGPx3tfvHgz9YcheOGStrRDea3W4m174jLoQHno2nGsDCCFMBzvnxgEEkQKNMTCuzLgX+LgXg4oXTS+Gm9DrDUWQYUA7nbTtdvopAJXWup73YwCpfsA7Abf/NwBQf722FvYbCRRuRVuTAAAAAElFTkSuQmCC" width="24" height="24" alt="" draggable="false"></button><button id="turnR" aria-label="look about ye, to the right"><img class="bend" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABgAAAAYCAYAAADgdz34AAAAqElEQVR42u2T0Q2AIAwF3YMB2IB/BmERFmEQpmAqzDNpUrEileiPNnkxIfUOpC7LZ6uUUnPOdRpCkeCUabgULlBLAEgpiVCshxC2p1pCILwsBRDAnXO7tSHJFbyXIckdcCvhsmGB914tijEeBbQDBA0IvnfTVq21XYEIlwSAnzXTFFEvTVZ3griAn6J3XyennBfgXowxup9LI7hVv2CoHhfwehT+16u1AnwsCRR8lNaoAAAAAElFTkSuQmCC" width="24" height="24" alt="" draggable="false"></button><button id="light" aria-label="have a smoke"><img class="bend" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABgAAAAYCAYAAADgdz34AAAAvElEQVR42uWU0QnGIAyEu4cDuIHvDuIiLuIgTuFU+bkfroTSopbkqUJeKtxn7tIcxyfPGENQvXdxFWe5QCDcWpNaqz2glHKKs8whAGiIuUUEmNsEQQ2AXS7WuIgTEGOUlNIfEEKQrfme+Yl7vn7Zf7aM2SaIsLsX6nBzzrLlqy4N093BHlq0HdxT6bWArrYCXgEwXFjCHJjFUg4MbQa4fnv1J/NVM4DJLgKM3d3Zab6Lrla6bVNMkpv4t84PakKLLEizLUgAAAAASUVORK5CYII=" width="24" height="24" alt="" draggable="false"></button></div>
 <div id="stick"><i></i></div>
 <div id="fps"></div>
-<div id="dead"><p id="lived"></p></div>
+<div id="dead"><div><p id="lived"></p><p id="smoked"></p></div></div>
 <div id="menu" aria-hidden="true" data-step="11"><div class="in">
 <div class="vol" data-v="all"><span class="name">all of it</span><span class="pips"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></span></div>
 <div class="vol" data-v="music"><span class="name">the music</span><span class="pips"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></span></div>
@@ -26304,7 +26310,7 @@ module.exports = ({ makeBuilder, makeSculpt, KIT: K }) => ({
       },
       // (cig: how long he has been at his smoke, in seconds, 0 when he has none; lit: how much of it there is to see; raise: how
       // far his hand is up to his mouth; wisp: how long since the last of its smoke came off it)
-      pl = { x: SPAWN[0], z: SPAWN[1], y: height(SPAWN[0], SPAWN[1]), face: 0.6, go: 0, phase: 0, speed: 0, cig: 0, pull: 0, pulls: 0, was: 0, out: 0, lit: 0, raise: 0, wisp: 0, strike: 0, cup: 0, aim: null, look: [0, 0], jig: 0, flare: false, murk: 0 },
+      pl = { x: SPAWN[0], z: SPAWN[1], y: height(SPAWN[0], SPAWN[1]), face: 0.6, go: 0, phase: 0, speed: 0, cig: 0, pull: 0, pulls: 0, was: 0, out: 0, lit: 0, raise: 0, wisp: 0, strike: 0, cup: 0, aim: null, look: [0, 0], jig: 0, flare: false, murk: 0, smoked: 0 },
       SY = pl.y,
       turnTo = (a, b, k) => {
         let d = (b - a) % TAU;
@@ -26713,6 +26719,7 @@ module.exports = ({ makeBuilder, makeSculpt, KIT: K }) => ({
           if (was < STRUCK - 0.1 && s >= STRUCK - 0.1) pl.flare = true; // (as it is drawn down his thigh: the rasp of it first)
           fire = b < 0 || b > BURNS ? 0 : b < 0.14 ? 1 : 0.42 + 0.06 * Math.sin(b * 43) + 0.05 * Math.sin(b * 71);
           burn = sm((s - CATCH) / 0.4);
+          if (was < CATCH && s >= CATCH) pl.smoked++; // (one more of them: it is counted as it catches, whatever he does with it after)
           glow = burn * (1 - sm((b - BURNS + 0.1) / 0.5)); // (he draws on it to light it, and it glows as he does)
           if (was < STRUCK + BURNS && s >= STRUCK + BURNS) for (let k = 0; k < 2; k++) puff(from(0.035, 1.2, 0.28), [(Math.random() - 0.5) * 0.1, 0.34 + k * 0.1, (Math.random() - 0.5) * 0.1], 0.02, 0.085, 0.32, 1.5);
           if (s >= LIGHT) {
@@ -27789,6 +27796,7 @@ const Sound = (() => {
     if (at(1.8)) {
       canvas.style.filter = canvas.style.transform = '';
       $('lived').textContent = $('day').textContent; // the count stopped where it was
+      $('smoked').textContent = $('cigs').textContent; // (and the other)
       $('dead').classList.add('on');
       Sound.set({ song: 0, mutter: 0 }); // she has what she sang for
       Sound.duck(0.2, 0.2);
@@ -27898,6 +27906,11 @@ const Sound = (() => {
     if (pl.flare) {
       pl.flare = false; // (his match has taken)
       Sound.strike();
+    }
+    // how many he has smoked: a bare number under the count of days, and not there until he has lit the first
+    if (pl.smoked && $('cigs').textContent !== String(pl.smoked)) {
+      $('cigs').textContent = pl.smoked;
+      $('cigs').classList.add('on');
     }
     G.sea(t); // the swell comes on
     // the camera: turns a quarter at a time (and not in a hurry), and follows a little behind

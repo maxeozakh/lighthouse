@@ -991,7 +991,7 @@ module.exports = ({ makeBuilder, makeSculpt, KIT: K }) => ({
       },
       // (cig: how long he has been at his smoke, in seconds, 0 when he has none; lit: how much of it there is to see; raise: how
       // far his hand is up to his mouth; wisp: how long since the last of its smoke came off it)
-      pl = { x: SPAWN[0], z: SPAWN[1], y: height(SPAWN[0], SPAWN[1]), face: 0.6, go: 0, phase: 0, speed: 0, cig: 0, pull: 0, pulls: 0, was: 0, out: 0, lit: 0, raise: 0, wisp: 0, strike: 0, cup: 0, aim: null, look: [0, 0], jig: 0, flare: false, murk: 0 },
+      pl = { x: SPAWN[0], z: SPAWN[1], y: height(SPAWN[0], SPAWN[1]), face: 0.6, go: 0, phase: 0, speed: 0, cig: 0, pull: 0, pulls: 0, was: 0, out: 0, lit: 0, raise: 0, wisp: 0, strike: 0, cup: 0, aim: null, look: [0, 0], jig: 0, flare: false, murk: 0, smoked: 0 },
       SY = pl.y,
       turnTo = (a, b, k) => {
         let d = (b - a) % TAU;
@@ -1400,6 +1400,7 @@ module.exports = ({ makeBuilder, makeSculpt, KIT: K }) => ({
           if (was < STRUCK - 0.1 && s >= STRUCK - 0.1) pl.flare = true; // (as it is drawn down his thigh: the rasp of it first)
           fire = b < 0 || b > BURNS ? 0 : b < 0.14 ? 1 : 0.42 + 0.06 * Math.sin(b * 43) + 0.05 * Math.sin(b * 71);
           burn = sm((s - CATCH) / 0.4);
+          if (was < CATCH && s >= CATCH) pl.smoked++; // (one more of them: it is counted as it catches, whatever he does with it after)
           glow = burn * (1 - sm((b - BURNS + 0.1) / 0.5)); // (he draws on it to light it, and it glows as he does)
           if (was < STRUCK + BURNS && s >= STRUCK + BURNS) for (let k = 0; k < 2; k++) puff(from(0.035, 1.2, 0.28), [(Math.random() - 0.5) * 0.1, 0.34 + k * 0.1, (Math.random() - 0.5) * 0.1], 0.02, 0.085, 0.32, 1.5);
           if (s >= LIGHT) {

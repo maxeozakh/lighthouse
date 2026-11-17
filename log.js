@@ -182,6 +182,7 @@ const FIRST = 1898,
         'The view comes round a little slower when it is turned.',
         'It is called lighthouse now.',
         'The horn is counted with the music, and is as loud as you have that. The music begins at seven of its ten steps.',
+        'Under the count of days, smaller, a count of his cigarettes: not there until he has lit the first. It is left on the screen with the other at the end.',
         'And who made what.',
         'A link to the game is shown with a picture where it is posted, and the tab has the tower and its beams for a mark.'
       ]

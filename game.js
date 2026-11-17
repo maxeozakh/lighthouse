@@ -344,6 +344,7 @@
     if (at(1.8)) {
       canvas.style.filter = canvas.style.transform = '';
       $('lived').textContent = $('day').textContent; // the count stopped where it was
+      $('smoked').textContent = $('cigs').textContent; // (and the other)
       $('dead').classList.add('on');
       Sound.set({ song: 0, mutter: 0 }); // she has what she sang for
       Sound.duck(0.2, 0.2);
@@ -453,6 +454,11 @@
     if (pl.flare) {
       pl.flare = false; // (his match has taken)
       Sound.strike();
+    }
+    // how many he has smoked: a bare number under the count of days, and not there until he has lit the first
+    if (pl.smoked && $('cigs').textContent !== String(pl.smoked)) {
+      $('cigs').textContent = pl.smoked;
+      $('cigs').classList.add('on');
     }
     G.sea(t); // the swell comes on
     // the camera: turns a quarter at a time (and not in a hurry), and follows a little behind
