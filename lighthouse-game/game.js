@@ -1,4 +1,5 @@
-// The page's side of Wickie: keys and pointer in, the keeper moved, the camera kept on him, the picture drawn in a 1.19:1 frame;
+// The page's side of Wickie: keys and pointer in (or, on a phone, thumbs), the keeper moved, the camera kept on him, the picture
+// drawn in a 1.19:1 frame;
 // what comes of going near her, what is heard (sound.js: among it the old man, who is not to be talked to but can be heard
 // muttering by anyone who comes close); and the days: they go by whatever he does, and night follows day. The old man keeps
 // hours by them: indoors for the night and out again in the morning, most days.
@@ -9,14 +10,21 @@
     scene = sceneFactory({ makeBuilder, makeSculpt, KIT }),
     ASPECT = 1.19, // the film's own frame
     ROWS = 200, // art pixels down the frame: the picture costs the same whatever the window or the zoom
-    keys = new Set();
-  // a phone has no keys to run him with: it is told to come back on a desktop, and nothing is built or listened for
-  // (index.html?mobile shows that card on any machine; ?play goes past it)
-  if ((matchMedia('(hover: none) and (pointer: coarse)').matches && !/[?&]play\b/.test(location.search)) || /[?&]mobile\b/.test(location.search)) {
-    $('mobile').classList.add('on');
-    return;
-  }
+    keys = new Set(),
+    // a phone or a tablet has no keys: there a thumb does all of it, and the page shows what it needs for that
+    // (index.html?touch shows the same on any machine)
+    TOUCH = matchMedia('(hover: none) and (pointer: coarse)').matches || /[?&]touch\b/.test(location.search);
+  if (TOUCH) document.body.classList.add('touch');
   let W, G, rest, posedBuf, holder, img, t = 0, last = 0, frames = 0, fpsAt = 0;
+  // fingers. One of them put down and dragged is a stick: he goes the way it is dragged from where it was put down, softly
+  // for a short drag and at a run for a longer one. Two of them, drawn apart or together, bring the picture nearer or further
+  const fingers = new Map(),
+    DEAD = 10, // a drag shorter than this is not one
+    SOFT = 36, // nor a run, under this
+    REACH = 48; // how far the stick's knob is drawn from its middle
+  let stick = null, pinch = null, soft = false;
+  // a slow machine: when a frame takes too long to make, the picture is made of fewer, bigger points (1: as designed)
+  let quality = 1, spent = 0, counted = 0;
   let yaw, yawTo, zoom = 0.5, zoomTo = 1, cam = [0, 0, 0], box = { w: 1, h: 1 }, ptr = null; // it opens far off and comes in
   // 'play': he runs about. 'dead': she has him, and that is the end of it: the count of his days is all that is left on the screen
   let mode = 'play', deadT = 0, heard = 0, strides = 0;
@@ -51,16 +59,25 @@
       h = Math.round(w / ASPECT);
     }
     box = { w, h };
-    const left = Math.round((innerWidth - w) / 2) + 'px',
-      top = Math.round((innerHeight - h) / 2) + 'px';
+    // (a phone held upright has room over and under the picture: it sits high, and the thumbs have what is under it)
+    const x = Math.round((innerWidth - w) / 2),
+      y = Math.round((innerHeight - h) * (TOUCH ? 0.2 : 0.5));
     for (const el of [canvas, $('frame'), $('ui')]) {
       el.style.width = w + 'px';
       el.style.height = h + 'px';
-      el.style.left = left;
-      el.style.top = top;
+      el.style.left = x + 'px';
+      el.style.top = y + 'px';
     }
     $('ui').style.fontSize = Math.max(14, Math.round(h / 31)) + 'px';
     $('hud').style.fontSize = Math.max(13, Math.round(h / 58)) + 'px';
+    if (TOUCH) {
+      // the two that turn the view: in a row under the picture where there is room for one, or else one at either side of it
+      const pad = $('pad'),
+        under = innerHeight - (y + h) - $('hud').offsetHeight - 12;
+      pad.style.top = (under >= 64 ? y + h : Math.round(innerHeight * 0.14)) + 'px';
+      pad.style.height = (under >= 64 ? Math.min(under, 92) : 92) + 'px';
+      pad.style.padding = '0 ' + (under >= 64 ? Math.round(innerWidth * 0.06) : Math.max(8, Math.round((x - 52) / 2))) + 'px'; // (at a side: in the middle of the black beside the picture)
+    }
   }
 
   function build() {
@@ -81,7 +98,7 @@
     W.anim.update(0, 0);
     yaw = yawTo = W.cam.yaw;
     cam = [G.pl.x, G.pl.y + 1.6, G.pl.z];
-    window.wickie = { W, G, keys, mem, die, songAt, mutterAt, days: v => (v === undefined ? clock : (clock = v)), state: () => ({ mode, indoors, duskAt, dawnAt }) }; // for poking at from the console
+    window.wickie = { W, G, keys, mem, die, songAt, mutterAt, days: v => (v === undefined ? clock : (clock = v)), state: () => ({ mode, indoors, duskAt, dawnAt, touch: TOUCH, quality, soft, stick: !!stick, zoomTo, yawTo }) }; // for poking at from the console
   }
 
   // which way he is asked to go, across the ground, from the keys or from where the pointer is held
@@ -92,6 +109,7 @@
     if (keys.has('KeyS') || keys.has('ArrowDown')) iy -= 1;
     if (keys.has('KeyD') || keys.has('ArrowRight')) ix += 1;
     if (keys.has('KeyA') || keys.has('ArrowLeft')) ix -= 1;
+    soft = false;
     if (!ix && !iy && ptr) {
       const r = canvas.getBoundingClientRect(),
         dx = ptr.x - (r.left + r.width / 2),
@@ -99,6 +117,16 @@
       if (Math.hypot(dx, dy) > 16) {
         ix = dx;
         iy = -dy / Math.sin(W.cam.pitch); // the ground is seen from above at a slant: up the screen is further than it looks
+      }
+    }
+    if (!ix && !iy && stick) {
+      const dx = stick.x - stick.x0,
+        dy = stick.y - stick.y0,
+        d = Math.hypot(dx, dy);
+      if (d > DEAD) {
+        ix = dx;
+        iy = -dy / Math.sin(W.cam.pitch);
+        soft = d < SOFT;
       }
     }
     if (!ix && !iy) return [0, 0];
@@ -113,6 +141,7 @@
   function die() {
     mode = 'dead';
     ptr = null;
+    drop();
     deadT = 0;
     mem.deaths++;
     Sound.scream();
@@ -145,7 +174,7 @@
       target: cam,
       w: box.w,
       h: box.h,
-      px: Math.max(1, Math.round(box.h / ROWS))
+      px: Math.max(1, Math.round(box.h / ROWS)) / quality
     });
     W.data = rest;
     if (canvas.width !== im.w || canvas.height !== im.h) {
@@ -164,7 +193,8 @@
   }
 
   function frame(now) {
-    const dt = last ? Math.min(0.05, (now - last) / 1000) : 1 / 60;
+    const dt = last ? Math.min(0.05, (now - last) / 1000) : 1 / 60,
+      began = performance.now();
     last = now;
     t += dt;
     const pl = G.pl,
@@ -173,7 +203,7 @@
       close = 1;
     if (mode === 'play') {
       const [mx, mz] = wish();
-      G.step(dt, mx, mz, keys.has('ShiftLeft') || keys.has('ShiftRight'));
+      G.step(dt, mx, mz, keys.has('ShiftLeft') || keys.has('ShiftRight') || soft);
       // a boot down at every half turn of his stride
       const s = Math.floor(pl.phase / Math.PI);
       if (s !== strides && pl.go > 0.5) Sound.step();
@@ -227,6 +257,15 @@
     for (let i = 0; i < 3; i++) cam[i] += (look[i] - cam[i]) * k;
     draw();
     frames++;
+    // what the frame cost to make (not how long it was until the next: a page that is not looked at is not drawn at all).
+    // Over 36 thousandths of a second each, a second or so running, and the picture is made a step coarser; never finer again
+    if (t > 4 && mode === 'play') {
+      spent += performance.now() - began;
+      if (++counted >= 40) {
+        if (spent / counted > 36 && quality > 0.6) quality = Math.max(0.6, quality * 0.86);
+        spent = counted = 0;
+      }
+    }
     if (now - fpsAt > 500) {
       $('fps').textContent = Math.round((frames * 1000) / (now - fpsAt)) + ' fps';
       frames = 0;
@@ -241,7 +280,7 @@
     Sound.start();
     const c = ev.code,
       once = !ev.repeat;
-    if (c === 'KeyM' && once) $('snd').textContent = Sound.mute() ? 'unstop yer ears' : 'stop yer ears';
+    if (c === 'KeyM' && once) ears();
     if (mode === 'play' && once) {
       if (c === 'KeyQ') yawTo += Math.PI / 2;
       else if (c === 'KeyE') yawTo -= Math.PI / 2;
@@ -253,18 +292,83 @@
   addEventListener('blur', () => {
     keys.clear();
     ptr = null;
+    drop();
   });
+  // a mouse held down on the picture: he goes toward it
   canvas.addEventListener('pointerdown', ev => {
-    Sound.start();
-    if (mode !== 'play') return;
+    if (ev.pointerType !== 'mouse' || mode !== 'play') return;
     ptr = { x: ev.clientX, y: ev.clientY };
     canvas.setPointerCapture(ev.pointerId);
   });
   canvas.addEventListener('pointermove', ev => {
-    if (ptr) ptr = { x: ev.clientX, y: ev.clientY };
+    if (ptr && ev.pointerType === 'mouse') ptr = { x: ev.clientX, y: ev.clientY };
   });
   canvas.addEventListener('pointerup', () => (ptr = null));
   canvas.addEventListener('pointercancel', () => (ptr = null));
+  // fingers, anywhere on the page but on what is there to be pressed
+  const far2 = () => {
+      const [a, b] = [...fingers.values()];
+      return Math.hypot(a.x - b.x, a.y - b.y) || 1;
+    },
+    knob = () => {
+      const el = $('stick');
+      el.style.display = stick ? 'block' : 'none';
+      if (!stick) return;
+      const dx = stick.x - stick.x0,
+        dy = stick.y - stick.y0,
+        k = Math.min(1, REACH / (Math.hypot(dx, dy) || 1));
+      el.style.left = stick.x0 + 'px';
+      el.style.top = stick.y0 + 'px';
+      el.firstElementChild.style.transform = 'translate(' + Math.round(dx * k) + 'px,' + Math.round(dy * k) + 'px)';
+    };
+  function drop() {
+    fingers.clear();
+    stick = pinch = null;
+    knob();
+  }
+  function ears() {
+    const label = Sound.mute() ? 'unstop yer ears' : 'stop yer ears';
+    for (const el of document.querySelectorAll('.snd')) el.textContent = label;
+  }
+  document.addEventListener('pointerdown', ev => {
+    Sound.start();
+    if (ev.pointerType === 'mouse' || mode !== 'play' || (ev.target.closest && ev.target.closest('button, .tap'))) return;
+    fingers.set(ev.pointerId, { x: ev.clientX, y: ev.clientY });
+    // the first finger down is the stick; a second with it and the two are for bringing the picture nearer, and he stands
+    stick = fingers.size === 1 ? { id: ev.pointerId, x0: ev.clientX, y0: ev.clientY, x: ev.clientX, y: ev.clientY } : null;
+    pinch = fingers.size === 2 ? { far: far2(), zoom: zoomTo } : null;
+    knob();
+  });
+  document.addEventListener('pointermove', ev => {
+    const f = fingers.get(ev.pointerId);
+    if (!f) return;
+    f.x = ev.clientX;
+    f.y = ev.clientY;
+    if (stick && stick.id === ev.pointerId) {
+      stick.x = f.x;
+      stick.y = f.y;
+      knob();
+    }
+    if (pinch && fingers.size === 2) zoomTo = Math.max(0.45, Math.min(2.2, (pinch.zoom * far2()) / pinch.far));
+  });
+  for (const type of ['pointerup', 'pointercancel'])
+    document.addEventListener(type, ev => {
+      Sound.start(); // (a finger's touch lets a page make a sound only as it is lifted)
+      if (!fingers.delete(ev.pointerId)) return;
+      // (the finger left over from a pinch does not become a stick: it has to be lifted and put down again)
+      if (stick && stick.id === ev.pointerId) stick = null;
+      pinch = null;
+      knob();
+    });
+  $('turnL').addEventListener('pointerdown', () => mode === 'play' && (yawTo += Math.PI / 2));
+  $('turnR').addEventListener('pointerdown', () => mode === 'play' && (yawTo -= Math.PI / 2));
+  for (const el of document.querySelectorAll('.tap')) el.addEventListener('click', ears);
+  if (TOUCH) {
+    // nothing of the page itself moves under a finger: no scrolling, no zooming, no menu on a long press
+    for (const type of ['gesturestart', 'gesturechange', 'dblclick', 'contextmenu']) document.addEventListener(type, ev => ev.preventDefault());
+    document.addEventListener('touchmove', ev => ev.preventDefault(), { passive: false });
+    addEventListener('orientationchange', () => setTimeout(layout, 250));
+  }
   addEventListener(
     'wheel',
     ev => {

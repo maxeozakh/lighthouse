@@ -24,18 +24,21 @@ const html = `<!doctype html>
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
 <title>wickie</title>
 <!-- Type: Redaction, copyright 2019 MCKL Inc., used under the SIL Open Font License 1.1 (https://scripts.sil.org/OFL). -->
 <style>
   ${fonts}
   html, body { margin: 0; height: 100%; background: #000; color: #cfd0cb; font: 13px/1.4 'Redaction', Georgia, serif; overflow: hidden; -webkit-font-smoothing: none; font-smooth: never; }
+  /* under a thumb nothing of the page scrolls, zooms, or is picked out as text */
+  body.touch, body.touch * { touch-action: none; -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; -webkit-tap-highlight-color: transparent; }
+  body.touch { overscroll-behavior: none; }
   canvas { position: fixed; image-rendering: pixelated; touch-action: none; cursor: crosshair; }
   /* the edges of the frame fall off, as an old lens does */
   #frame { position: fixed; pointer-events: none; background: radial-gradient(ellipse at center, transparent 52%, rgba(0, 0, 0, 0.5) 100%); }
-  #hud { position: fixed; left: 0; right: 0; bottom: 8px; text-align: center; letter-spacing: 0.06em; color: #8b8c87; user-select: none; pointer-events: none; text-shadow: 0 1px 2px #000; }
+  #hud { position: fixed; left: 0; right: 0; bottom: calc(8px + env(safe-area-inset-bottom)); padding: 0 12px; text-align: center; letter-spacing: 0.06em; color: #8b8c87; user-select: none; pointer-events: none; text-shadow: 0 1px 2px #000; }
   #hud b { color: #d9dad4; font-weight: normal; }
-  #fps { position: fixed; right: 12px; top: 10px; color: #5c5d59; font: 11px ui-monospace, Menlo, monospace; }
+  #fps { position: fixed; right: calc(12px + env(safe-area-inset-right)); top: calc(10px + env(safe-area-inset-top)); color: #5c5d59; font: 11px ui-monospace, Menlo, monospace; }
   /* it opens out of black, and quickly */
   #veil { position: fixed; inset: 0; background: #000; transition: opacity 0.7s ease; pointer-events: none; }
   #veil.gone { opacity: 0; }
@@ -45,12 +48,19 @@ const html = `<!doctype html>
   #day { position: absolute; left: 3.2%; top: 2.6%; font-size: 0.8em; letter-spacing: 0.14em; color: #e4e5df; text-shadow: 0 0 6px #000, 0 1px 2px #000; }
   #dead { position: fixed; inset: 0; display: grid; place-items: center; background: #000; text-align: center; opacity: 0; pointer-events: none; transition: opacity 0.5s; }
   #dead.on { opacity: 1; }
-  /* what a phone gets instead of the game */
-  #mobile { position: fixed; inset: 0; display: none; place-items: center; background: #000; text-align: center; padding: 0 8vmin; }
-  #mobile.on { display: grid; }
-  #mobile p { margin: 0; }
-  #mobile .a { font: 7vmin/1.25 'Redaction', Georgia, serif; color: #e4e5df; margin-bottom: 3vmin; }
-  #mobile .b { font-size: 3.8vmin; letter-spacing: 0.08em; color: #8b8c87; }
+  /* a phone: the row of hints says what a thumb does instead of what the keys do, and has two things to press that turn the
+     view. Where a thumb is put down and dragged, a ring shows, and in it which way he is being sent */
+  #hud .thumbs, #pad, #stick { display: none; }
+  body.touch #hud { line-height: 1.9; }
+  body.touch #hud .keys { display: none; }
+  body.touch #hud .thumbs { display: inline; }
+  #hud .thumbs span { white-space: nowrap; }
+  body.touch .tap { pointer-events: auto; padding: 8px 2px; color: #d9dad4; border-bottom: 1px dotted #8b8c87; }
+  body.touch #pad { display: flex; position: fixed; left: 0; right: 0; box-sizing: border-box; align-items: center; justify-content: space-between; pointer-events: none; }
+  #pad button { pointer-events: auto; width: 52px; height: 52px; margin: 0; padding: 0 0 5px; border-radius: 50%; border: 1px solid #5c5d59; background: rgba(0, 0, 0, 0.4); color: #d9dad4; font: 30px/1 'Redaction', Georgia, serif; }
+  #pad button:active { background: #2b2c2a; }
+  #stick { position: fixed; width: 96px; height: 96px; margin: -48px 0 0 -48px; border-radius: 50%; border: 1px solid rgba(217, 218, 212, 0.3); pointer-events: none; }
+  #stick i { position: absolute; left: 50%; top: 50%; width: 30px; height: 30px; margin: -15px 0 0 -15px; border-radius: 50%; background: rgba(217, 218, 212, 0.35); }
   /* the end: the count where it stopped, and nothing else */
   #lived { margin: 0; padding-left: 0.16em; font: 5vh/1 'Redaction', Georgia, serif; letter-spacing: 0.16em; color: #e4e5df; }
 </style>
@@ -61,11 +71,12 @@ const html = `<!doctype html>
 <div id="ui">
   <div id="day"></div>
 </div>
-<div id="hud"><b>WASD</b> or arrows roam the rock &nbsp;·&nbsp; <b>Shift</b> tread soft &nbsp;·&nbsp; <b>Q</b> / <b>E</b> look about ye &nbsp;·&nbsp; wheel peer close &nbsp;·&nbsp; <b>M</b> <span id="snd">stop yer ears</span></div>
+<div id="hud"><span class="keys"><b>WASD</b> or arrows roam the rock &nbsp;·&nbsp; <b>Shift</b> tread soft &nbsp;·&nbsp; <b>Q</b> / <b>E</b> look about ye &nbsp;·&nbsp; wheel peer close &nbsp;·&nbsp; <b>M</b> <span class="snd">stop yer ears</span></span><span class="thumbs"><span><b>drag</b> roam the rock</span> &nbsp;·&nbsp; <span><b>drag a little</b> tread soft</span> &nbsp;·&nbsp; <span><b>&lsaquo; &rsaquo;</b> look about ye</span> &nbsp;·&nbsp; <span><b>pinch</b> peer close</span> &nbsp;·&nbsp; <span class="snd tap">stop yer ears</span></span></div>
+<div id="pad"><button id="turnL" aria-label="look about ye, to the left">&lsaquo;</button><button id="turnR" aria-label="look about ye, to the right">&rsaquo;</button></div>
+<div id="stick"><i></i></div>
 <div id="fps"></div>
 <div id="dead"><p id="lived"></p></div>
 <div id="veil"></div>
-<div id="mobile"><div><p class="a">this one needs a keyboard</p><p class="b">open mxz.sh/lighthouse on a desktop</p></div></div>
 <script>
 ${safe(studio.bundle())}
 const InkRender = (() => {
