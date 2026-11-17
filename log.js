@@ -54,10 +54,10 @@ const FIRST = 1898,
     },
     {
       at: '19:39',
-      name: 'Against the stills',
+      name: 'Looked at again',
       did: [
         'The sea moves: long swell coming down from the north, white riding its light bands, foam running up the shore and falling back.',
-        'The buildings made again from stills of the film. A long low passage with a row of small windows; the cottage in pale boards, with dormers and one brick chimney; the fog-signal house square under a pointed roof, a slim brick stack behind it, its horn out through the roof.',
+        'The buildings made again, with pictures to go by. A long low passage with a row of small windows; the cottage in pale boards, with dormers and one brick chimney; the fog-signal house square under a pointed roof, a slim brick stack behind it, its horn out through the roof.',
         'A day and a night take a minute and a half, and half of that is daylight.',
         'The old man no longer goes missing. The key that put the keeper back where he began is gone.',
         'The picture a step dimmer by day.'
@@ -68,7 +68,7 @@ const FIRST = 1898,
       name: 'Greyer',
       did: [
         'The tower: stouter, less tapered, swelling out under a gallery with a tall rail, its whitewash worn off in patches.',
-        'The greys measured against the film and set again. Nothing built is white; every wall sits under the sky; the faint tint is gone.',
+        'The greys measured, not guessed at, and set again. Nothing built is white; every wall sits under the sky; the faint tint is gone.',
         'The hints speak as keepers might: roam the rock, tread soft, look about ye, peer close, stop yer ears.',
         'A shed that stood on no picture of the place, taken away.',
         'The passage meets the tower at the middle of its wall. The name goes in small letters.'
@@ -79,7 +79,7 @@ const FIRST = 1898,
       name: 'He keeps hours',
       did: [
         'At dusk the old man walks to his door and goes in. In the morning he comes out and takes up his place. Most days.',
-        'The passage between tower and cottage is twice as long, which is what the film has.'
+        'The passage between tower and cottage is twice as long.'
       ]
     },
     {
@@ -176,7 +176,7 @@ module.exports = fonts => `<!doctype html>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>wickie · the log</title>
-<!-- Type: Redaction, copyright 2019 MCKL Inc., used under the SIL Open Font License 1.1 (https://scripts.sil.org/OFL). -->
+<!-- Type: Redaction, copyright 2019 MCKL Inc., used under the SIL Open Font License 1.1 (https://scripts.sil.org/OFL); its text is in licenses.txt, beside this page. -->
 <style>
   ${fonts}
   html { background: #000; }
@@ -232,7 +232,7 @@ ${e.did.map(d => `<li>${d}</li>`).join('\n')}
   .reverse()
   .join('\n')}
 <footer>
-<p>After Robert Eggers’ film <i>The Lighthouse</i> (2019). Built with <a href="https://github.com/siliconjungle/shapeshift-labs-ink-studio">ink-studio</a>. Type: Redaction, by MCKL, under the SIL Open Font License.</p>
+<p>Built with <a href="https://github.com/siliconjungle/shapeshift-labs-ink-studio">ink-studio</a>, by siliconjungle, under the MIT License. Type: Redaction, by MCKL, under the SIL Open Font License. <a href="licenses.txt">The licences in full</a></p>
 </footer>
 </main>
 <div id="frame"></div>

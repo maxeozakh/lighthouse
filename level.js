@@ -1,4 +1,4 @@
-// Wickie. One level after Robert Eggers' "The Lighthouse" (2019): the rock, the tower, the keepers' cottage and its outbuildings, in
+// Wickie. One level: a light station on a rock in the sea: the rock, the tower, the keepers' cottage and its outbuildings, in
 // black and white. You are the young keeper; you can run about the island. The old keeper stands by the cottage door, and something
 // pale lies on a rock at the east point. What comes of going near her and the days going by are the page's business; the level
 // only stands the two of them there, turns their heads to watch, and has the lamps to light and the sea to move.
@@ -25,7 +25,7 @@ module.exports = ({ makeBuilder, makeSculpt, KIT: K }) => ({
       0x232423, 0x353634, 0x4a4b48, 0x62635e, 0x7d7e77, // 26-30 weathered shingle and plank
       0x0b0c0c, 0x171818, 0x242525, 0x363837, // 31-34 iron, tar, the dark behind glass
       0xd8d9d2, 0xfafaf8, 0xffffff, // 35-37 the light (whiter than anything else here: night spares only what is this white)
-      0x3a3a38, 0x595955, 0x7a7a74, 0x9a9a92, // 38-41 skin (dark, the way old film saw it)
+      0x3a3a38, 0x595955, 0x7a7a74, 0x9a9a92, // 38-41 skin (dark, the way old plates saw it)
       0x0f1010, 0x1b1c1c, 0x2b2c2b, 0x3c3d3c, // 42-45 dark wool
       0x444543, 0x5a5b58, 0x747571, // 46-48 lighter cloth
       0x8e908d, 0xc4c6c2, 0xf0f0ec, // 49-51 gull, beard
@@ -108,8 +108,8 @@ module.exports = ({ makeBuilder, makeSculpt, KIT: K }) => ({
         if (d <= 0) return Math.max(-1.2, d * 5);
         const shore = sm(d / 0.2),
           // the tower stands on the highest of it. West, north and south the ground falls away from it quickly; east it goes
-          // down slowly, a long back with the passage along it and the cottage at its end (the film's passage falls by less
-          // than half the height of its own wall from one end to the other)
+          // down slowly, a long back with the passage along it and the cottage at its end (the passage falls by less than half
+          // the height of its own wall from one end to the other)
           // (south of it the fall is slower than to the north: a long open slope down toward the landing)
           knoll = Math.exp(-(x * x) / (x > 0 ? 780 : 110) - (z * z) / (z > 0 ? 190 : 95)),
           ridge = Math.exp(-((x + 14.7) * (x + 14.7)) / 64 - ((z + 4.3) * (z + 4.3)) / 30);
@@ -144,7 +144,7 @@ module.exports = ({ makeBuilder, makeSculpt, KIT: K }) => ({
       COT = [TR + 10.2 * BIG + 2.9 * BIG, 0, 2.9 * BIG, 1.9 * BIG], // the cottage: middle, half-length, half-depth
       CDOOR = 0.3 * BIG, // where its door is along the south wall, from the middle
       // the long low passage from the tower to the cottage's west gable: tower, passage and cottage all on one line, so the
-      // passage runs square into the middle of the tower's wall and both its walls die into the curve. As in the film it is
+      // passage runs square into the middle of the tower's wall and both its walls die into the curve. It is
       // three times as long as the tower is wide at the foot, and not far off twice the length of the cottage
       PASS = [(TR - 0.5 + COT[0] - COT[2]) / 2, 0, (COT[0] - COT[2] - TR + 0.5) / 2, 0.62 * BIG], // (it begins inside the tower's wall)
       ENG = [-9.8, 4.0, 1.7 * BIG, 1.7 * BIG], // the fog signal's engine house: square, under a roof that comes to a point
@@ -170,7 +170,7 @@ module.exports = ({ makeBuilder, makeSculpt, KIT: K }) => ({
         while (r > 0.3 && inside(east(ca * IX * r), sa * IZ * r) < 0.035) r -= 0.004;
         return [east(ca * IX * r), sa * IZ * r];
       })(),
-      WAKE = [COT[0] + CDOOR + 1.2, COT[1] + COT[3] + 0.7];
+      OLDMAN = [COT[0] + CDOOR + 1.2, COT[1] + COT[3] + 0.7];
     const TPAD = TR + 0.9, // the level ground the tower stands on, from its middle
       Y0 = pad(TOWER[0], TOWER[1], TPAD, TPAD),
       YC = pad(COT[0], COT[1], COT[2] + 0.6, COT[3] + 0.6),
@@ -235,7 +235,7 @@ module.exports = ({ makeBuilder, makeSculpt, KIT: K }) => ({
       // roofs: grey weathered shingle in courses, some of them darker where they have been patched
       ROOF = { r: [26, 27, 28, 29, 30], mod: (x, y, z) => 0.3 * (hash(Math.floor(y * 5.5), 7) - 0.5) + 0.3 * (n3(x * 1.7, y * 1.7, z * 1.7) - 0.5) },
       SLATE = { r: [26, 26, 27, 27, 28], mod: (x, y, z) => ROOF.mod(x, y, z) }, // the darker roofs: the cottage's, the passage's
-      // walls: white-painted boards, the paint gone grey and coming off in places (in the film nothing built is as light as the sky)
+      // walls: white-painted boards, the paint gone grey and coming off in places (nothing built is as light as the sky)
       CLAP = { r: [20, 21, 22, 22, 23, 23], mod: (x, y, z) => 0.16 * (hash(Math.floor(y * 4.6), 3) - 0.5) + 0.5 * (n3(x * 1.3, y * 2.2, z * 1.3) - 0.5) },
       // the passage: whitewash over rough stone, dirtier than the boards
       WASH = { r: [20, 21, 21, 22, 22, 23], mod: (x, y, z) => 0.5 * (n3(x * 2.1, y * 2.1, z * 2.1) - 0.5) + 0.2 * (hash(Math.floor(x * 2.4 + y), Math.floor(y * 3.2) + Math.floor(z * 2.4)) - 0.5) },
@@ -413,7 +413,7 @@ module.exports = ({ makeBuilder, makeSculpt, KIT: K }) => ({
     const STACK = [COT[0] + 0.4 * BIG, YC + 3.95 * BIG, COT[1]]; // the top of the cottage's chimney
     S.box([STACK[0], YC + 3.4 * BIG, STACK[2]], [0.27 * BIG, 0.55 * BIG, 0.27 * BIG], BRICK, { res: 0.15 });
     // the passage from the tower to the cottage's west gable: long and low, going down with the ground. In each of its long
-    // walls a door near the tower's end and four small windows after it, spaced as the film has them (unevenly; and set low
+    // walls a door near the tower's end and four small windows after it, spaced unevenly (and set low
     // enough in the wall to be seen under the eave from where the game looks)
     const PL = COT[0] - COT[2] - TR, // its length, from the tower's wall to the cottage's
       pu = f => TR + PL * f - PASS[0]; // a place f of the way along it from the tower, as the wall's own measure has it
@@ -678,9 +678,9 @@ module.exports = ({ makeBuilder, makeSculpt, KIT: K }) => ({
         S.ball(at(0, 0.015, 0), [0.2 + st, 0.01, 0.2 + st], { r: [7] }, { res: 0.1, tag: o.tag, ghost: true });
       };
     figure(SPAWN[0], SPAWN[1], { tag: 'pl', coat: [45, 46, 47, 48, 48] });
-    figure(WAKE[0], WAKE[1], { tag: 'wk', stout: 0.045, coat: [42, 42, 43, 44], beard: true });
-    const wakeAt = [WAKE[0], WAKE[1], 0.35]; // what stops you where he stands: it goes where he goes
-    ROUND.push(wakeAt);
+    figure(OLDMAN[0], OLDMAN[1], { tag: 'om', stout: 0.045, coat: [42, 42, 43, 44], beard: true });
+    const oldAt = [OLDMAN[0], OLDMAN[1], 0.35]; // what stops you where he stands: it goes where he goes
+    ROUND.push(oldAt);
 
     // ---------------------------------------------------------------- her: on a slab at the east point, half in the weed, facing the land
     const MF = B.norm([0.3, 0, 1]), // the way she faces: down the shore, and three parts toward where the game looks from
@@ -1061,12 +1061,12 @@ module.exports = ({ makeBuilder, makeSculpt, KIT: K }) => ({
       turn = (x, z, dt) => {
         pl.face = turnTo(pl.face, Math.atan2(x - pl.x, z - pl.z), Math.min(1, dt * 8));
       },
-      npc = { wake: { x: WAKE[0], z: WAKE[1], face: 0.25, rest: 0.25, look: 0, here: true, at: 0, to: 0, gait: 0, phase: 0 }, mer: { x: MER[0], z: MER[1], look: -0.3, scream: 0 } },
-      WY = height(WAKE[0], WAKE[1]),
+      npc = { old: { x: OLDMAN[0], z: OLDMAN[1], face: 0.25, rest: 0.25, look: 0, here: true, at: 0, to: 0, gait: 0, phase: 0 }, mer: { x: MER[0], z: MER[1], look: -0.3, scream: 0 } },
+      WY = height(OLDMAN[0], OLDMAN[1]),
       // where the old man may be found: [x, z, the way he faces]. By his door (where he begins), round the cottage, round the tower,
       // and down by the boathouse and the slip that goes to the water
       SPOTS = [
-        [WAKE[0], WAKE[1], 0.25],
+        [OLDMAN[0], OLDMAN[1], 0.25],
         [COT[0] + COT[2] + 1.0, COT[1] - 0.2, 1.4],
         [COT[0] - 0.9, COT[1] - COT[3] - 0.9, 3.0],
         [WELL[0] - 0.3, WELL[1] + 1.9, 0.2],
@@ -1078,51 +1078,51 @@ module.exports = ({ makeBuilder, makeSculpt, KIT: K }) => ({
         [SLIP + 0.8, slipEnd - 2.2, -0.2]
       ],
       stand = spot => {
-        const wk = npc.wake;
-        wk.here = !!spot;
-        wakeAt[2] = spot ? 0.35 : -9;
+        const om = npc.old;
+        om.here = !!spot;
+        oldAt[2] = spot ? 0.35 : -9;
         if (!spot) return;
-        wk.x = wakeAt[0] = spot[0];
-        wk.z = wakeAt[1] = spot[1];
-        wk.face = wk.rest = spot[2];
-        wk.look = 0;
+        om.x = oldAt[0] = spot[0];
+        om.z = oldAt[1] = spot[1];
+        om.face = om.rest = spot[2];
+        om.look = 0;
       },
       // The old man keeps hours: into the cottage for the night and out of it again by day (game.js says when; it is every
       // night, and most days but not all of them). He goes by his own door and at his own pace. WAY is the way he takes, from where
-      // he stands to a step inside the wall; wk.at is how far along it he is, and wk.to how far he means to go
+      // he stands to a step inside the wall; om.at is how far along it he is, and om.to how far he means to go
       DOOR = [COT[0] + CDOOR, COT[1] + COT[3]],
-      WAY = [[WAKE[0], WAKE[1]], [DOOR[0] + 0.08, DOOR[1] + 0.5], [DOOR[0], DOOR[1] - 0.5]],
+      WAY = [[OLDMAN[0], OLDMAN[1]], [DOOR[0] + 0.08, DOOR[1] + 0.5], [DOOR[0], DOOR[1] - 0.5]],
       HOPS = WAY.slice(1).map((q, i) => Math.hypot(q[0] - WAY[i][0], q[1] - WAY[i][1])),
       FAR = HOPS[0] + HOPS[1],
       home = indoors => {
-        npc.wake.to = indoors ? FAR : 0;
+        npc.old.to = indoors ? FAR : 0;
       },
       keep = dt => {
-        const wk = npc.wake,
+        const om = npc.old,
           ease = Math.min(1, dt * 8);
-        if (wk.at === wk.to) {
-          wk.gait -= wk.gait * ease;
-          if (!wk.at && wk.here) {
+        if (om.at === om.to) {
+          om.gait -= om.gait * ease;
+          if (!om.at && om.here) {
             // back where he stands: he turns to face as he did, and is in the way again once there is room for him to be
-            wk.face = turnTo(wk.face, wk.rest, Math.min(1, dt * 3));
-            if (wakeAt[2] < 0 && Math.hypot(pl.x - wk.x, pl.z - wk.z) > 0.75) wakeAt[2] = 0.35;
+            om.face = turnTo(om.face, om.rest, Math.min(1, dt * 3));
+            if (oldAt[2] < 0 && Math.hypot(pl.x - om.x, pl.z - om.z) > 0.75) oldAt[2] = 0.35;
           }
           return;
         }
-        const dir = wk.to > wk.at ? 1 : -1; // 1: going in
-        wk.at = dir > 0 ? Math.min(wk.to, wk.at + dt * 0.8) : Math.max(wk.to, wk.at - dt * 0.8);
-        const i = wk.at > HOPS[0] ? 1 : 0,
+        const dir = om.to > om.at ? 1 : -1; // 1: going in
+        om.at = dir > 0 ? Math.min(om.to, om.at + dt * 0.8) : Math.max(om.to, om.at - dt * 0.8);
+        const i = om.at > HOPS[0] ? 1 : 0,
           a = WAY[i],
           b = WAY[i + 1],
-          k = (wk.at - (i ? HOPS[0] : 0)) / HOPS[i];
-        wk.x = wakeAt[0] = a[0] + (b[0] - a[0]) * k;
-        wk.z = wakeAt[1] = a[1] + (b[1] - a[1]) * k;
+          k = (om.at - (i ? HOPS[0] : 0)) / HOPS[i];
+        om.x = oldAt[0] = a[0] + (b[0] - a[0]) * k;
+        om.z = oldAt[1] = a[1] + (b[1] - a[1]) * k;
         const way = Math.atan2((b[0] - a[0]) * dir, (b[1] - a[1]) * dir);
-        wk.face = wk.here ? turnTo(wk.face, way, Math.min(1, dt * 6)) : way; // (coming out, he comes out facing the way he goes)
-        wk.here = wk.at < FAR; // through the door, he is gone
-        wakeAt[2] = -9; // nobody is stopped by a man walking
-        wk.gait += (1 - wk.gait) * ease;
-        wk.phase += dt * 5.2;
+        om.face = om.here ? turnTo(om.face, way, Math.min(1, dt * 6)) : way; // (coming out, he comes out facing the way he goes)
+        om.here = om.at < FAR; // through the door, he is gone
+        oldAt[2] = -9; // nobody is stopped by a man walking
+        om.gait += (1 - om.gait) * ease;
+        om.phase += dt * 5.2;
       },
       // the lamps: every dab of the beam and of the lamp itself, and how strong it is, lit, as the dusk begins and by night
       lamps = [],
@@ -1378,7 +1378,7 @@ module.exports = ({ makeBuilder, makeSculpt, KIT: K }) => ({
       parts: {
         ...man('pl', SPAWN[0], SY, SPAWN[1]),
         plcig: { ids: cig, pivot: HAND, parent: 'plforeR' },
-        ...man('wk', WAKE[0], WY, WAKE[1]),
+        ...man('om', OLDMAN[0], WY, OLDMAN[1]),
         mm: { ids: tags.mm, pivot: mp(0, 0, 0) },
         mmtop: { ids: tags.mmtop, pivot: mp(0, 0.2, 0), parent: 'mm' }, // all of her above the scales: it turns at the hips
         mmhead: { ids: tags.mmhead, pivot: mp(0.02, 0.77, -LEAN * 0.6), parent: 'mmtop' },
@@ -1394,19 +1394,19 @@ module.exports = ({ makeBuilder, makeSculpt, KIT: K }) => ({
         fag(p, dt);
         // neither of them turns about to watch him: the old man stands as he stood and only his head follows whoever comes near
         keep(dt);
-        const wk = npc.wake,
+        const om = npc.old,
           mer = npc.mer,
           deg = 180 / Math.PI,
           ease = Math.min(1, dt * 4);
-        wk.look += ((Math.hypot(pl.x - wk.x, pl.z - wk.z) < 6 ? glance(wk, wk.face, 1.25) : 0) - wk.look) * ease;
+        om.look += ((Math.hypot(pl.x - om.x, pl.z - om.z) < 6 ? glance(om, om.face, 1.25) : 0) - om.look) * ease;
         // (when he is nowhere he is put a long way under the rock)
         // the old man: stooped, standing or going, his elbows a little bent. Going to his door he takes short steps and rocks
         // from one foot to the other, as a stiff man does; and one leg is stiffer than the other
-        p.pose.wk = {
-          pos: wk.here ? [wk.x - WAKE[0], height(wk.x, wk.z) - WY + 0.02 * Math.abs(Math.cos(wk.phase)) * wk.gait, wk.z - WAKE[1]] : [0, -60, 0],
-          rot: [0, wk.face * deg, 0]
+        p.pose.om = {
+          pos: om.here ? [om.x - OLDMAN[0], height(om.x, om.z) - WY + 0.02 * Math.abs(Math.cos(om.phase)) * om.gait, om.z - OLDMAN[1]] : [0, -60, 0],
+          rot: [0, om.face * deg, 0]
         };
-        stride(p, 'wk', wk.phase, wk.gait, { A: 15, K0: 5, K: 20, arm: 9, el0: 14, el: 4, el1: 4, stoop: 7, lean: 2, twist: 3, roll: 4, limp: 0.5, look: wk.look * deg, breath: 1 + 0.012 * Math.sin(t * 1.3) });
+        stride(p, 'om', om.phase, om.gait, { A: 15, K0: 5, K: 20, arm: 9, el0: 14, el: 4, el1: 4, stoop: 7, lean: 2, twist: 3, roll: 4, limp: 0.5, look: om.look * deg, breath: 1 + 0.012 * Math.sin(t * 1.3) });
         // nor does she, and her tail keeps its own slow time. But she watches him come: with nobody near she looks a little
         // aside, as she was made (AWAY); from SEES off her head begins to come round to him, and is on him by the time he is at
         // HAS. Her shoulders come a part of the way with it (TWIST of what her head has turned from where it rests, and no
@@ -1451,7 +1451,7 @@ module.exports = ({ makeBuilder, makeSculpt, KIT: K }) => ({
     W.glass = glass.length;
     W.blocks = BLOCKS;
     W.sea = [water.length, white.length];
-    W.game = { pl, spawn: SPAWN, height, blocked, step, turn, npc, inside, spots: SPOTS, stand, home, smoke, night, grade, sea, places: { tower: TOWER, cottage: COT, engine: ENG, well: WELL, landing: [SLIP - 0.3, slipEnd - 1.2], boathouse: BOAT, shed: SHED, wake: WAKE, mermaid: MER } };
+    W.game = { pl, spawn: SPAWN, height, blocked, step, turn, npc, inside, spots: SPOTS, stand, home, smoke, night, grade, sea, places: { tower: TOWER, cottage: COT, engine: ENG, well: WELL, landing: [SLIP - 0.3, slipEnd - 1.2], boathouse: BOAT, shed: SHED, old: OLDMAN, mermaid: MER } };
     return W;
   }
 });

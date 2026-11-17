@@ -8,7 +8,7 @@
     ctx = canvas.getContext('2d'),
     $ = id => document.getElementById(id),
     scene = sceneFactory({ makeBuilder, makeSculpt, KIT }),
-    ASPECT = 1.19, // the film's own frame
+    ASPECT = 1.19, // nearly square, as the first talking pictures were
     ROWS = 200, // art pixels down the frame: the picture costs the same whatever the window or the zoom
     keys = new Set(),
     // a phone or a tablet has no keys: there a thumb does all of it, and the page shows what it needs for that
@@ -280,7 +280,7 @@
     }
     const src = im.rgb,
       dst = img.data;
-    // black and white film: whatever tint the paint had is dropped, and each point is only as light as it is
+    // black and white: whatever tint the paint had is dropped, and each point is only as light as it is
     for (let i = 0, j = 0; i < src.length; i += 3, j += 4) {
       dst[j] = dst[j + 1] = dst[j + 2] = lut[(src[i] * 77 + src[i + 1] * 150 + src[i + 2] * 29) >> 8];
       dst[j + 3] = 255;
@@ -305,7 +305,7 @@
       }
       if (comes > 0 && (comes -= dt) <= 0) G.home((indoors = false));
       // the lamp: lit once he has been through his door a while, of a night, and out as soon as the night is over
-      tends = late && !G.npc.wake.here ? tends + dt : 0;
+      tends = late && !G.npc.old.here ? tends + dt : 0;
       const to = tends > LIGHTS ? 1 : 0;
       lamp += Math.max(-dt * 0.7, Math.min(dt * 0.7, to - lamp));
     }
@@ -356,7 +356,7 @@
       heard = t;
       const d = far('mer'),
         e = Math.hypot(pl.x - G.places.engine[0], pl.z - G.places.engine[1]);
-      Sound.set({ sea: 1 - Math.max(0, Math.min(1, G.inside(pl.x, pl.z) / 0.4)), song: mode === 'dead' && deadT >= 1.8 ? 0 : songAt(d), mutter: mode === 'play' ? (G.npc.wake.here ? mutterAt(far('wake')) : 0) : 0, horn: 1 / (1 + (e * e) / 90) });
+      Sound.set({ sea: 1 - Math.max(0, Math.min(1, G.inside(pl.x, pl.z) / 0.4)), song: mode === 'dead' && deadT >= 1.8 ? 0 : songAt(d), mutter: mode === 'play' ? (G.npc.old.here ? mutterAt(far('old')) : 0) : 0, horn: 1 / (1 + (e * e) / 90) });
     }
     hours(dt);
     W.anim.update(dt, t);

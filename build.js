@@ -1,6 +1,7 @@
 // Packs the ink-studio toolkit, its software renderer, the level and the game into one self-contained page.
 //   node build.js [--repo path/to/shapeshift-labs-ink-studio]     -> index.html beside this file
-// and, beside that, the log of what has been done to it (log.js) as a page in the same type: changelog.html
+// and, beside that, the log of what has been done to it (log.js) as a page in the same type: changelog.html;
+// and the licences of what is packed into them (the toolkit's and the type's), in full: licenses.txt
 const fs = require('fs'),
   path = require('path');
 const args = process.argv.slice(2),
@@ -15,6 +16,24 @@ const level = fs.readFileSync(path.join(here, 'level.js'), 'utf8');
 const game = fs.readFileSync(path.join(here, 'game.js'), 'utf8');
 const sound = fs.readFileSync(path.join(here, 'sound.js'), 'utf8');
 const safe = s => s.replace(/<\/script/gi, '<\\/script');
+// what is packed into the page that is not ours: the toolkit (MIT: its notice has to go wherever a copy of it goes, so it is written
+// into the page itself) and the type (SIL OFL). Both licences in full go beside the pages, in licenses.txt
+const mit = fs.readFileSync(path.join(repo, 'LICENSE'), 'utf8').trim();
+if (!/^MIT License/.test(mit) || /--/.test(mit)) throw new Error('the toolkit\'s licence is not the one expected: read ' + path.join(repo, 'LICENSE'));
+const rule = '='.repeat(78),
+  licences = [
+    'wickie is built with the two things below. Their licences, in full.',
+    rule,
+    'ink-studio, a toolkit for making and drawing scenes (the page contains it, and a renderer made from its own)',
+    'https://github.com/siliconjungle/shapeshift-labs-ink-studio',
+    rule,
+    mit,
+    rule,
+    'Redaction, the type (grade 50, regular and italic, as web fonts)',
+    'https://www.redaction.us',
+    rule,
+    fs.readFileSync(path.join(here, 'fonts', 'LICENSE-Redaction.md'), 'utf8').trim()
+  ].join('\n\n');
 // the type: Redaction (MCKL, 2019; SIL Open Font License 1.1, see fonts/LICENSE-Redaction.md), a book face worn down to pixels.
 // Grade 50 of it: the edges are still broken up, but every letter keeps its shape (at grade 70 an n could be a u).
 const face = (family, file, style) =>
@@ -32,7 +51,12 @@ const html = `<!doctype html>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
 <title>wickie</title>
-<!-- Type: Redaction, copyright 2019 MCKL Inc., used under the SIL Open Font License 1.1 (https://scripts.sil.org/OFL). -->
+<!-- Type: Redaction, copyright 2019 MCKL Inc., used under the SIL Open Font License 1.1 (https://scripts.sil.org/OFL); its text is in licenses.txt, beside this page. -->
+<!--
+This page contains ink-studio (https://github.com/siliconjungle/shapeshift-labs-ink-studio) and a renderer made from its own, used under this licence:
+
+${mit}
+-->
 <style>
   ${fonts}
   html, body { margin: 0; height: 100%; background: #000; color: #cfd0cb; font: 13px/1.4 'Redaction', Georgia, serif; overflow: hidden; -webkit-font-smoothing: none; font-smooth: never; }
@@ -115,6 +139,8 @@ ${safe(game)}
 </body>
 </html>
 `;
+fs.writeFileSync(path.join(here, 'licenses.txt'), licences + '\n');
+console.log('wrote', path.join(here, 'licenses.txt'), (licences.length / 1024).toFixed(0) + ' KB');
 // the log, in the same type
 const logOut = path.join(here, 'changelog.html'),
   log = require('./log.js')(fonts);
