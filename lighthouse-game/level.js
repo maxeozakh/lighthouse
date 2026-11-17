@@ -40,7 +40,11 @@ module.exports = ({ makeBuilder, makeSculpt, KIT: K }) => ({
         return v - Math.floor(v);
       },
       sm = s => (s <= 0 ? 0 : s >= 1 ? 1 : s * s * (3 - 2 * s)),
-      lerp = (a, b, s) => a + (b - a) * s;
+      lerp = (a, b, s) => a + (b - a) * s,
+      // The station's buildings (tower, passage, cottage, engine house) were first drawn small beside the men: a passage a man
+      // could hardly have gone down. The boathouse was made to a man's measure, and beside it they looked like models of
+      // themselves. So they are all this much bigger than they were drawn, and the rock is bigger under them
+      BIG = 1.3;
     // an overcast noon: light from everywhere, a little more from one side
     S.sun = B.norm([-0.5, 0.8, 0.35]);
     S.res = 0.2;
@@ -74,17 +78,24 @@ module.exports = ({ makeBuilder, makeSculpt, KIT: K }) => ({
       );
 
     // ---------------------------------------------------------------- the rock itself
-    const IX = 23, // half its length, east to west
-      IZ = 15, // half its breadth
+    const IX = 26, // half its length, east to west
+      IZ = 16, // half its breadth
       // the tower stands at the middle of it, and the passage from the tower to the cottage is long: so the half of the rock
-      // east of the tower is drawn out by the length that was added to the passage, and the half west of it is as it was.
-      // east(x): where a place of the plain oval lies on the rock as it is
-      MORE = 5.2,
+      // east of the tower is drawn out by the length of the passage. And the landing is a walk from the station, not under its
+      // windows: so the half south of the tower is drawn out too, and that is where the open ground between them is.
+      // east(x), south(z): where a place of the plain oval lies on the rock as it is
+      MORE = 9,
       EAST = (IX + MORE) / IX,
+      SOUTH = 21 / IZ,
       east = x => (x > 0 ? x * EAST : x),
+      south = z => (z > 0 ? z * SOUTH : z),
+      MID = [MORE / 2, 0, (IZ * SOUTH - IZ) / 2], // the middle of it (the tower is not there)
+      // where a place of the rock as it was first laid out (23 long each way, 5.2 more to the east, 15 broad) lies on this one
+      moved = (x, z) => [(x > 0 ? (IX + MORE) / 28.2 : IX / 23) * x, (z > 0 ? (IZ * SOUTH) / 15 : IZ / 15) * z],
       // how far inside the shore a place is: 0 at the waterline, about 1 in the middle, below 0 at sea
       inside = (x, z) => {
         if (x > 0) x /= EAST;
+        if (z > 0) z /= SOUTH;
         const a = Math.atan2(z / IZ, x / IX),
           ca = Math.cos(a),
           sa = Math.sin(a),
@@ -98,8 +109,9 @@ module.exports = ({ makeBuilder, makeSculpt, KIT: K }) => ({
           // the tower stands on the highest of it. West, north and south the ground falls away from it quickly; east it goes
           // down slowly, a long back with the passage along it and the cottage at its end (the film's passage falls by less
           // than half the height of its own wall from one end to the other)
-          knoll = Math.exp(-(x * x) / (x > 0 ? 340 : 80) - (z * z) / 80),
-          ridge = Math.exp(-((x + 13) * (x + 13)) / 50 - ((z + 4) * (z + 4)) / 26);
+          // (south of it the fall is slower than to the north: a long open slope down toward the landing)
+          knoll = Math.exp(-(x * x) / (x > 0 ? 780 : 110) - (z * z) / (z > 0 ? 190 : 95)),
+          ridge = Math.exp(-((x + 14.7) * (x + 14.7)) / 64 - ((z + 4.3) * (z + 4.3)) / 30);
         return shore * (0.5 + 1.9 * knoll + 1.0 * ridge + 0.5 * (n3(x * 0.22, 0, z * 0.22) - 0.5) + 0.14 * (n3(x * 0.9, 1, z * 0.9) - 0.5)) + 0.06 * sm(d / 0.04);
       },
       // level ground under what is built: [x, z, half-width, half-depth]
@@ -127,15 +139,24 @@ module.exports = ({ makeBuilder, makeSculpt, KIT: K }) => ({
 
     // where things stand (x east, z south: the camera looks from the south-east)
     const TOWER = [0, 0], // must be the origin: the beam turns about it
-      COT = [9.6 + MORE, 0, 2.9, 1.9], // the cottage: middle, half-length, half-depth
+      TR = 1.7 * BIG, // how wide the tower is at the foot, from the middle
+      COT = [TR + 10.2 * BIG + 2.9 * BIG, 0, 2.9 * BIG, 1.9 * BIG], // the cottage: middle, half-length, half-depth
+      CDOOR = 0.3 * BIG, // where its door is along the south wall, from the middle
       // the long low passage from the tower to the cottage's west gable: tower, passage and cottage all on one line, so the
       // passage runs square into the middle of the tower's wall and both its walls die into the curve. As in the film it is
       // three times as long as the tower is wide at the foot, and not far off twice the length of the cottage
-      PASS = [4.0 + MORE / 2, 0, 2.7 + MORE / 2, 0.62],
-      ENG = [-8, 3.2, 1.7, 1.7], // the fog signal's engine house: square, under a roof that comes to a point
-      PRIVY = [13.2 + MORE, -3.4, 0.5, 0.5],
-      WELL = [10.2 + MORE, 5.2],
-      SPAWN = [4.6 + MORE / 2, 4.6];
+      PASS = [(TR - 0.5 + COT[0] - COT[2]) / 2, 0, (COT[0] - COT[2] - TR + 0.5) / 2, 0.62 * BIG], // (it begins inside the tower's wall)
+      ENG = [-9.8, 4.0, 1.7 * BIG, 1.7 * BIG], // the fog signal's engine house: square, under a roof that comes to a point
+      PRIVY = [COT[0] + 4.7, -4.6, 0.5, 0.5],
+      WELL = [COT[0] + 0.8, 6.6],
+      SPAWN = [PASS[0], 5.6],
+      // the boathouse, on the south shore: [its middle, half its width, half its length]. It stands so far back from the water
+      LANDX = -4.6,
+      BOAT = (() => {
+        let z = 8;
+        while (z < 40 && inside(LANDX, z) > 0) z += 0.05;
+        return [LANDX, z - 6.3, 1.4, 1.9];
+      })();
     // the east point, at the water's edge: where she lies
     const MER = (() => {
         const ca = Math.cos(-0.22),
@@ -144,8 +165,9 @@ module.exports = ({ makeBuilder, makeSculpt, KIT: K }) => ({
         while (r > 0.3 && inside(east(ca * IX * r), sa * IZ * r) < 0.035) r -= 0.004;
         return [east(ca * IX * r), sa * IZ * r];
       })(),
-      WAKE = [COT[0] + 1.3, COT[1] + COT[3] + 0.7];
-    const Y0 = pad(TOWER[0], TOWER[1], 2.6, 2.6),
+      WAKE = [COT[0] + CDOOR + 1.2, COT[1] + COT[3] + 0.7];
+    const TPAD = TR + 0.9, // the level ground the tower stands on, from its middle
+      Y0 = pad(TOWER[0], TOWER[1], TPAD, TPAD),
       YC = pad(COT[0], COT[1], COT[2] + 0.6, COT[3] + 0.6),
       YE = pad(ENG[0], ENG[1], ENG[2] + 0.5, ENG[3] + 0.5),
       YP = pad(PRIVY[0], PRIVY[1], 0.8, 0.8),
@@ -153,7 +175,7 @@ module.exports = ({ makeBuilder, makeSculpt, KIT: K }) => ({
     // the passage runs down from the tower's ground to the cottage's, and the ground under it is cut to go down with it: one
     // even slope from the edge of the tower's level ground (PX0) to the edge of the cottage's (PX1). PFALL is how much it
     // falls for each step east, PY how high its floor is at the middle of its length
-    const PX0 = TOWER[0] + 2.6,
+    const PX0 = TOWER[0] + TPAD,
       PX1 = COT[0] - COT[2] - 0.6,
       PFALL = (YC - Y0) / (PX1 - PX0),
       PY = Y0 + PFALL * (PASS[0] - PX0);
@@ -195,7 +217,7 @@ module.exports = ({ makeBuilder, makeSculpt, KIT: K }) => ({
           for (const [wy, side] of [[2.9, 0], [4.7, 1], [6.3, 0]]) {
             const u = side ? z : x,
               f = side ? x : z;
-            if (f > 0.3 && Math.abs(u) < 0.17 && Math.abs(v - wy) < 0.3) return 31; // a window
+            if (f > 0.3 && Math.abs(u) < 0.17 * BIG && Math.abs(v - wy * BIG) < 0.3 * BIG) return 31; // a window
           }
           return undefined;
         }
@@ -217,8 +239,8 @@ module.exports = ({ makeBuilder, makeSculpt, KIT: K }) => ({
       STONE = { r: [3, 4, 5, 6, 20], mod: (x, y, z) => 0.5 * (hash(Math.floor(x * 2.2 + y), Math.floor(y * 3) + Math.floor(z * 2.2)) - 0.5) },
       GLOW = { r: [36], em: true };
 
-    S.ground(GROUND, { h: height, rad: 37, zs: 37 / 20, edge: 0, keep: (x, z) => height(x, z) > -0.12, res: 0.44 });
-    S.ground(SEA, { h: () => -0.06, rad: 49, zs: 49 / 36, edge: 0.08, keep: (x, z) => height(x, z) < 0.1, res: 0.8 });
+    S.ground(GROUND, { h: height, cx: MID[0], cz: MID[2], rad: 36, zs: 36 / 22, edge: 0, keep: (x, z) => height(x, z) > -0.12, res: 0.44 });
+    S.ground(SEA, { h: () => -0.06, cx: MID[0], cz: MID[2], rad: 52, zs: 52 / 38, edge: 0.08, keep: (x, z) => height(x, z) < 0.1, res: 0.8 });
 
     // what stops you: circles [x, z, r], boxes [x0, x1, z0, z1] square to the island, and the blocks the rocks are made of, each
     // as it lies ({ c, h, ax }: its middle, its half-sizes, its own three directions), so that what stops him is the rock he sees
@@ -236,55 +258,58 @@ module.exports = ({ makeBuilder, makeSculpt, KIT: K }) => ({
       if (r[0] > 0.7) S.box(c2, h2, ROCK, block(c2, h2, B.frame(hash(k, 26) * TAU, (hash(k, 27) - 0.5) * 0.9, (hash(k, 28) - 0.5) * 0.9)));
     };
     // rocks: a ring of them where the sea breaks, some inland, a few standing off in the water
-    for (let k = 0; k < 64; k++) {
-      const a = (k / 64) * TAU + 0.07 * hash(k, 1),
+    for (let k = 0; k < 76; k++) {
+      const a = (k / 76) * TAU + 0.07 * hash(k, 1),
         ca = Math.cos(a),
         sa = Math.sin(a);
       let r = 0.6;
-      for (let i = 0; i < 40 && inside(east(ca * IX * r), sa * IZ * r) > 0.02 + 0.07 * hash(k, 2); i++) r += 0.02;
+      for (let i = 0; i < 40 && inside(east(ca * IX * r), south(sa * IZ * r)) > 0.02 + 0.07 * hash(k, 2); i++) r += 0.02;
       const x = east(ca * IX * r),
-        z = sa * IZ * r,
+        z = south(sa * IZ * r),
         q = 0.45 + 0.85 * hash(k, 3) * hash(k, 4);
-      if (Math.hypot(x + 4.2, z - 13) < 2.6) continue; // the landing is kept clear
+      if (Math.abs(x - BOAT[0]) < 2.9 && z > BOAT[1]) continue; // the landing is kept clear
       if (Math.hypot(x - MER[0], z - MER[1]) < 3.4) continue; // and the way down to her
       crag([x, height(x, z) + q * 0.2, z], [q * (1 + 0.5 * hash(k, 5)), q * (0.6 + 0.6 * hash(k, 6)), q * (1 + 0.5 * hash(k, 7))], k);
     }
-    // (those east of the cottage went east with it; the last two stand on the ground the longer passage opened up)
-    [[-14, -5.5, 1.5], [-11.5, -8, 1.1], [-16.5, 1.5, 1.0], [15.5 + MORE, 4.5, 1.2], [17 + MORE, -1, 0.9], [-2.5, -7.5, 1.3], [4.5, -8.5, 1.0], [-13, 8, 0.9], [11 + MORE, 10.2, 0.8], [-3.6, 5.6, 0.6], [19 + MORE, 2.4, 0.7], [10.5, -6.4, 1.0], [9.2, 9.4, 0.7]].forEach(
-      ([x, z, q], k) => {
+    // (given as they lay on the rock when it was smaller, and carried out with it; the last four are on the new ground to the south)
+    [[-14, -5.5, 1.5], [-11.5, -8, 1.1], [-16.5, 1.5, 1.0], [20.7, 4.5, 1.2], [22.2, -1, 0.9], [-2.5, -7.5, 1.3], [4.5, -8.5, 1.0], [-13, 8, 0.9], [16.2, 10.2, 0.8], [-3.6, 5.6, 0.6], [24.2, 2.4, 0.7], [10.5, -6.4, 1.0], [9.2, 9.4, 0.7], [3.2, 8.3, 1.0], [-9.4, 10.6, 0.8], [1.6, 11.6, 0.6], [11.8, 8.9, 0.8]].forEach(
+      ([ox, oz, q], k) => {
+        const [x, z] = moved(ox, oz);
         crag([x, height(x, z) + q * 0.2, z], [q * 1.25, q * (0.55 + 0.4 * hash(k, 11)), q], k + 100);
       }
     );
-    [[-27, 6, 1.5, 2.6], [-25.5, 9.5, 0.9, 1.4], [26.5 + MORE, -9, 1.3, 2.2], [9, 18.5, 1.0, 1.5], [-8, -18, 1.4, 2.4], [28 + MORE, 7, 0.8, 1.2]].forEach(([x, z, q, hgt], k) =>
-      crag([x, hgt * 0.3, z], [q, hgt, q * 0.9], k + 200)
-    );
+    [[-27, 6, 1.5, 2.6], [-25.5, 9.5, 0.9, 1.4], [31.7, -9, 1.3, 2.2], [9, 18.5, 1.0, 1.5], [-8, -18, 1.4, 2.4], [33.2, 7, 0.8, 1.2]].forEach(([ox, oz, q, hgt], k) => {
+      const [x, z] = moved(ox, oz);
+      crag([x, hgt * 0.3, z], [q, hgt, q * 0.9], k + 200);
+    });
 
     // ---------------------------------------------------------------- the tower
     // stout, and hardly narrower at the top than at the foot; under the gallery the wall swells out to carry it; the gallery
     // has a rail of thin bars; on it a low white drum, and on that the lantern
-    const TH = 8, // the height of its gallery above the ground
-      TR = 1.7, // how wide it is at the foot, from the middle
-      TN = 1.38, // and at its neck, under the swell
-      GR = 1.82; // the gallery, from the middle to its rail
-    S.lathe([0, Y0 - 0.3, 0], TH - 0.3, t => TR + (TN - TR) * t, WHITE, { res: 0.2 });
-    S.lathe([0, Y0 + TH - 0.6, 0], 0.6, t => TN + (GR - 0.14 - TN) * Math.pow(t, 1.6), WHITE, { res: 0.17 });
-    S.lathe([0, Y0 + TH, 0], 0.12, [GR + 0.05, GR + 0.05], IRON, { res: 0.15 }); // the gallery
-    S.torus([0, Y0 + TH + 0.98, 0], GR, 0.024, IRON, { res: 0.075 });
-    for (let k = 0; k < 16; k++) {
-      const a = (k / 16) * TAU;
-      S.tube([[Math.cos(a) * GR, Y0 + TH + 0.1, Math.sin(a) * GR], [Math.cos(a) * GR, Y0 + TH + 0.98, Math.sin(a) * GR]], 0.016, 0.016, IRON, { res: 0.07 });
+    const TH = 8 * BIG, // the height of its gallery above the ground (TR: how wide it is at the foot, from the middle)
+      TN = 1.38 * BIG, // how wide it is at its neck, under the swell
+      GR = 1.82 * BIG, // the gallery, from the middle to its rail
+      TS = 0.6 * BIG, // how high the swell is
+      RAIL = 1.15; // and the rail (a man leans on it: it is not as much bigger as the rest)
+    S.lathe([0, Y0 - 0.3, 0], TH - TS + 0.3, t => TR + (TN - TR) * t, WHITE, { res: 0.22 });
+    S.lathe([0, Y0 + TH - TS, 0], TS, t => TN + (GR - 0.14 * BIG - TN) * Math.pow(t, 1.6), WHITE, { res: 0.18 });
+    S.lathe([0, Y0 + TH, 0], 0.12 * BIG, [GR + 0.05, GR + 0.05], IRON, { res: 0.16 }); // the gallery
+    S.torus([0, Y0 + TH + RAIL, 0], GR, 0.026, IRON, { res: 0.08 });
+    for (let k = 0; k < 20; k++) {
+      const a = (k / 20) * TAU;
+      S.tube([[Math.cos(a) * GR, Y0 + TH + 0.1, Math.sin(a) * GR], [Math.cos(a) * GR, Y0 + TH + RAIL, Math.sin(a) * GR]], 0.017, 0.017, IRON, { res: 0.075 });
     }
-    S.lathe([0, Y0 + TH + 0.12, 0], 0.72, [1.1, 1.06], { r: WHITE.r, mod: WHITE.mod }, { res: 0.17 });
+    S.lathe([0, Y0 + TH + 0.12 * BIG, 0], 0.72 * BIG, [1.1 * BIG, 1.06 * BIG], { r: WHITE.r, mod: WHITE.mod }, { res: 0.18 });
     // the lantern: lit glass between black bars, a black cap
-    const LY = Y0 + TH + 0.84;
-    S.lathe([0, LY - 0.06, 0], 0.36, [1.16, 0.92], IRON, { res: 0.14 });
-    S.lathe([0, LY + 0.3, 0], 1.15, [0.84, 0.84], {
+    const LY = Y0 + TH + 0.84 * BIG;
+    S.lathe([0, LY - 0.06 * BIG, 0], 0.36 * BIG, [1.16 * BIG, 0.92 * BIG], IRON, { res: 0.15 });
+    S.lathe([0, LY + 0.3 * BIG, 0], 1.15 * BIG, [0.84 * BIG, 0.84 * BIG], {
       r: [36],
       em: true,
       tex: (x, y, z) => (((Math.atan2(z, x) / TAU + 1) * 8) % 1 < 0.16 ? 31 : n3(x * 6, y * 6, z * 6) > 0.6 ? 37 : 36)
-    }, { res: 0.13, ghost: true });
-    S.lathe([0, LY + 1.45, 0], 0.75, t => 1.0 * (1 - t * t) + 0.06, IRON, { res: 0.14 });
-    S.ball([0, LY + 2.28, 0], 0.13, IRON, { res: 0.08 });
+    }, { res: 0.14, ghost: true });
+    S.lathe([0, LY + 1.45 * BIG, 0], 0.75 * BIG, t => (1.0 * (1 - t * t) + 0.06) * BIG, IRON, { res: 0.15 });
+    S.ball([0, LY + 2.28 * BIG, 0], 0.13 * BIG, IRON, { res: 0.08 });
     ROUND.push([0, 0, TR + 0.1]);
 
     // ---------------------------------------------------------------- buildings: walls and gables in one solid, a roof over them
@@ -357,55 +382,56 @@ module.exports = ({ makeBuilder, makeSculpt, KIT: K }) => ({
     };
     // the keepers' cottage: white boards under a shingle roof, a door and two windows to the south, a window in the east gable,
     // two dormers in the roof and one brick chimney on the ridge
-    house(COT, YC, 2.0, 1.25, {
+    // (the door and the windows are a man's: they did not grow as much as the walls they are in)
+    house(COT, YC, 2.0 * BIG, 1.25 * BIG, {
       mat: CLAP,
       roof: SLATE,
-      marks: [['S', 0.3, 0.75, 0.33, 0.75, 31], ['S', -1.7, 1.15, 0.34, 0.4, 31], ['S', 1.9, 1.15, 0.34, 0.4, 31], ['E', 0, 1.2, 0.34, 0.4, 31], ['E', 0, 2.55, 0.2, 0.22, 31]]
+      marks: [['S', CDOOR, 0.86, 0.38, 0.86, 31], ['S', -1.7 * BIG, 1.15 * BIG, 0.4, 0.46, 31], ['S', 1.9 * BIG, 1.15 * BIG, 0.4, 0.46, 31], ['E', 0, 1.2 * BIG, 0.4, 0.46, 31], ['E', 0, 2.55 * BIG, 0.24, 0.26, 31]]
     });
-    for (const dx of [-1.5, 1.6]) {
-      const c = [COT[0] + dx, YC + 2.7, COT[1] + 1.18];
-      S.box(c, [0.34, 0.3, 0.42], { r: CLAP.r, tex: (x, y, z) => (z > c[2] + 0.3 && Math.abs(x - c[0]) < 0.19 && Math.abs(y - c[1]) < 0.19 ? 31 : undefined) }, { res: 0.11 });
-      S.box([c[0], c[1] + 0.35, c[2] + 0.02], [0.44, 0.05, 0.5], SLATE, { res: 0.12 });
+    for (const dx of [-1.5 * BIG, 1.6 * BIG]) {
+      const c = [COT[0] + dx, YC + 2.7 * BIG, COT[1] + 1.18 * BIG];
+      S.box(c, [0.34 * BIG, 0.3 * BIG, 0.42 * BIG], { r: CLAP.r, tex: (x, y, z) => (z > c[2] + 0.3 * BIG && Math.abs(x - c[0]) < 0.19 * BIG && Math.abs(y - c[1]) < 0.19 * BIG ? 31 : undefined) }, { res: 0.12 });
+      S.box([c[0], c[1] + 0.35 * BIG, c[2] + 0.02], [0.44 * BIG, 0.05 * BIG, 0.5 * BIG], SLATE, { res: 0.13 });
     }
-    const STACK = [COT[0] + 0.4, YC + 3.95, COT[1]]; // the top of the cottage's chimney
-    S.box([STACK[0], YC + 3.4, STACK[2]], [0.27, 0.55, 0.27], BRICK, { res: 0.14 });
+    const STACK = [COT[0] + 0.4 * BIG, YC + 3.95 * BIG, COT[1]]; // the top of the cottage's chimney
+    S.box([STACK[0], YC + 3.4 * BIG, STACK[2]], [0.27 * BIG, 0.55 * BIG, 0.27 * BIG], BRICK, { res: 0.15 });
     // the passage from the tower to the cottage's west gable: long and low, going down with the ground. In each of its long
     // walls a door near the tower's end and four small windows after it, spaced as the film has them (unevenly; and set low
     // enough in the wall to be seen under the eave from where the game looks)
     const PL = COT[0] - COT[2] - TR, // its length, from the tower's wall to the cottage's
       pu = f => TR + PL * f - PASS[0]; // a place f of the way along it from the tower, as the wall's own measure has it
-    house(PASS, PY, 1.5, 0.45, {
+    house(PASS, PY, 1.5 * BIG, 0.45 * BIG, {
       mat: WASH,
       roof: SLATE,
-      res: 0.17,
+      res: 0.18,
       slope: PFALL,
-      marks: ['S', 'N'].flatMap(side => [[side, pu(0.1), 0.62, 0.25, 0.62, 31], ...[0.19, 0.45, 0.65, 0.92].map(f => [side, pu(f), 0.8, 0.22, 0.21, 31])])
+      marks: ['S', 'N'].flatMap(side => [[side, pu(0.1), 0.8, 0.33, 0.8, 31], ...[0.19, 0.45, 0.65, 0.92].map(f => [side, pu(f), 1.06, 0.27, 0.26, 31])])
     });
     // the engine house of the fog signal: white boards, a roof that comes to a point, double doors to the east; a thin brick
     // stack behind it, the horn out through the roof on the seaward side, coal heaped outside
-    house(ENG, YE, 1.95, 1.3, { mat: CLAP, hip: true, marks: [['E', 0, 0.78, 0.42, 0.78, 21]] });
+    house(ENG, YE, 1.95 * BIG, 1.3 * BIG, { mat: CLAP, hip: true, marks: [['E', 0, 0.95, 0.55, 0.95, 21]] });
     // (the stack is a slight thing: a foot or so square, against the back wall, its top not a man's height over the point of the roof)
-    const FLUE = [ENG[0] - ENG[2] - 0.17, YE + 4.1, ENG[1] - 0.8]; // the top of its stack
-    S.box([FLUE[0], YE + 2.05, FLUE[2]], [0.15, 2.05, 0.15], BRICK, { res: 0.085 });
-    S.box([FLUE[0], FLUE[1] - 0.04, FLUE[2]], [0.185, 0.045, 0.185], BRICK, { res: 0.085 }); // the course that stands out round its top
-    BOXES.push([FLUE[0] - 0.15, FLUE[0] + 0.15, FLUE[2] - 0.15, FLUE[2] + 0.15]);
+    const FLUE = [ENG[0] - ENG[2] - 0.17 * BIG, YE + 4.1 * BIG, ENG[1] - 0.8 * BIG]; // the top of its stack
+    S.box([FLUE[0], YE + 2.05 * BIG, FLUE[2]], [0.15 * BIG, 2.05 * BIG, 0.15 * BIG], BRICK, { res: 0.09 });
+    S.box([FLUE[0], FLUE[1] - 0.05, FLUE[2]], [0.185 * BIG, 0.055, 0.185 * BIG], BRICK, { res: 0.09 }); // the course that stands out round its top
+    BOXES.push([FLUE[0] - 0.15 * BIG, FLUE[0] + 0.15 * BIG, FLUE[2] - 0.15 * BIG, FLUE[2] + 0.15 * BIG]);
     // the horn: a trumpet of black iron that comes out through the roof over the seaward wall, wider all the way to its mouth,
     // two flanges on it and a rim round the mouth; it stands only a little way out from the wall, on a post at the wall's foot
     const HUP = 0.03, // how much it lifts toward the mouth
       HV = B.norm([0, HUP, 1]), // the way it points: to the south, at the sea
-      HORN = [ENG[0], YE + 2.42, ENG[1] + ENG[3] - 1.0], // its small end, inside the roof
-      HL = 1.85, // its length: the last 0.85 of it is out past the wall
-      bore = t => 0.145 + 0.09 * t + 0.05 * Math.pow(Math.max(0, (t - 0.8) / 0.2), 2) + (Math.abs(t - 0.4) < 0.022 || Math.abs(t - 0.64) < 0.022 ? 0.04 : 0) + (t > 0.965 ? 0.03 : 0);
+      HORN = [ENG[0], YE + 2.42 * BIG, ENG[1] + ENG[3] - 1.0 * BIG], // its small end, inside the roof
+      HL = 1.85 * BIG, // its length: the last 0.85 in every 1.85 of it is out past the wall
+      bore = t => BIG * (0.145 + 0.09 * t + 0.05 * Math.pow(Math.max(0, (t - 0.8) / 0.2), 2) + (Math.abs(t - 0.4) < 0.022 || Math.abs(t - 0.64) < 0.022 ? 0.04 : 0) + (t > 0.965 ? 0.03 : 0));
     S.lathe(
       HORN,
       HL,
       bore,
       { r: IRON.r, tex: (x, y, z) => ((x - HORN[0]) * HV[0] + (y - HORN[1]) * HV[1] + (z - HORN[2]) * HV[2] > HL - 0.03 ? 31 : undefined) }, // its mouth is black
-      { res: 0.07, ax: [[1, 0, 0], HV, [0, -HV[2], HV[1]]] }
+      { res: 0.08, ax: [[1, 0, 0], HV, [0, -HV[2], HV[1]]] }
     );
-    const POST = [HORN[0], ENG[1] + ENG[3] + 0.24];
-    S.tube([[POST[0], height(POST[0], POST[1]) - 0.1, POST[1]], [POST[0], HORN[1] - 0.2, POST[1]]], 0.075, 0.065, PLANK, { res: 0.085 });
-    ROUND.push([POST[0], POST[1], 0.1]);
+    const POST = [HORN[0], ENG[1] + ENG[3] + 0.24 * BIG];
+    S.tube([[POST[0], height(POST[0], POST[1]) - 0.1, POST[1]], [POST[0], HORN[1] - 0.2 * BIG, POST[1]]], 0.09, 0.08, PLANK, { res: 0.09 });
+    ROUND.push([POST[0], POST[1], 0.12]);
     // a tar barrel on its side in the grass beyond it
     const TUB = [ENG[0] + 0.7, ENG[1] + ENG[3] + 1.7];
     S.lathe([TUB[0] - 0.3, height(TUB[0], TUB[1]) + 0.25, TUB[1]], 0.6, t => 0.24 + 0.04 * Math.sin(t * Math.PI), { r: [31, 32, 33, 26] }, { res: 0.1, ax: [[0, 1, 0], [1, 0, 0], [0, 0, -1]] });
@@ -424,8 +450,7 @@ module.exports = ({ makeBuilder, makeSculpt, KIT: K }) => ({
     // the landing on the south shore. The boathouse stands over it, its gable to the sea: grey shingle walls, a dark roof, a wide
     // doorway with no door in it and a boat in the dark inside. Its back sits on the slope and its front is up on short posts,
     // and from the sill of the doorway a slip of timber goes down to the water
-    const BOAT = [-4.2, 9.3, 1.4, 1.9], // its middle, half its width, half its length
-      BDOOR = [0, 0.72, 1.58, 1.7], // the doorway: where across the gable, half its width, its height, how far in the dark goes
+    const BDOOR = [0, 0.72, 1.58, 1.7], // the doorway: where across the gable, half its width, its height, how far in the dark goes
       YB = height(BOAT[0], BOAT[1] - BOAT[3]) + 0.04, // its floor
       SLIP = BOAT[0] + BDOOR[0], // the line the slip takes
       SLIP0 = BOAT[1] + BOAT[3] + 0.3, // where it leaves the sill
@@ -459,7 +484,7 @@ module.exports = ({ makeBuilder, makeSculpt, KIT: K }) => ({
     S.box([SLIP, YB - 0.04, BOAT[1] + BOAT[3] + 0.15], [BDOOR[1] + 0.14, 0.05, 0.17], PLANK, { res: 0.12 }); // the sill
     // the slip: two long timbers and planks across them. It leaves the sill in the air and comes to the ground a step or two down
     let slipEnd = SLIP0;
-    while (slipEnd < 20 && height(SLIP, slipEnd) > 0.02) slipEnd += 0.1;
+    while (slipEnd < 40 && height(SLIP, slipEnd) > 0.02) slipEnd += 0.1;
     const SLIPS = 1.5, // how far it goes before it is on the ground
       slipY = z => Math.max(0.02, height(SLIP, z), lerp(YB - 0.1, height(SLIP, SLIP0 + SLIPS), (z - SLIP0) / SLIPS));
     slipEnd += 0.9;
@@ -473,7 +498,7 @@ module.exports = ({ makeBuilder, makeSculpt, KIT: K }) => ({
     }
     BOXES.push([SLIP - 0.78, SLIP + 0.78, BOAT[1] + BOAT[3], slipDown]);
     // the dory hauled up beside it
-    const DORY = [-1.9, slipEnd - 2.5];
+    const DORY = [SLIP + 2.3, slipEnd - 2.5];
     S.ball([DORY[0], height(DORY[0], DORY[1]) + 0.22, DORY[1]], [0.52, 0.34, 1.3], { r: [31, 32, 33, 26, 27] }, { res: 0.16, ax: B.frame(0.5, 0, 0.12) });
     S.ball([DORY[0], height(DORY[0], DORY[1]) + 0.5, DORY[1]], [0.38, 0.08, 1.05], { r: [26, 27, 28] }, { res: 0.16, ax: B.frame(0.5, 0, 0.12) });
     ROUND.push([DORY[0] - 0.3, DORY[1] - 0.5, 0.65], [DORY[0] + 0.3, DORY[1] + 0.5, 0.65]);
@@ -720,19 +745,19 @@ module.exports = ({ makeBuilder, makeSculpt, KIT: K }) => ({
 
     // ---------------------------------------------------------------- air and water: these are loose splats, drawn as they are
     // the light: two beams turning about the tower (the renderer turns them: they are laid along x and carried round the origin)
-    const BY = LY + 0.9;
+    const BY = LY + 0.9 * BIG;
     for (const sg of [-1, 1])
       for (let i = 0; i < 44; i++) {
-        const d = 1.0 + i * 0.62,
+        const d = 1.3 + i * 0.62,
           k = i / 43;
         B.iso(sg * d, BY, 0, 0.3 + d * 0.07, B.P[k < 0.2 ? 37 : 36], 0.34 * Math.pow(1 - k, 1.5) + 0.02, { k: 5, ph: 0, sp: 0.42, em: true, nd: true });
       }
-    B.iso(0, BY, 0, 1.5, B.P[37], 0.3, { em: true, nd: true });
+    B.iso(0, BY, 0, 1.5 * BIG, B.P[37], 0.3, { em: true, nd: true });
     // gulls wheeling round the tower, carried the same way
     for (let g = 0; g < 7; g++) {
       const a = B.R() * TAU,
-        r = 3.5 + B.R() * 9,
-        y = Y0 + 5 + B.R() * 8,
+        r = 4.5 + B.R() * 10,
+        y = Y0 + 7 + B.R() * 9,
         x = Math.cos(a) * r,
         z = Math.sin(a) * r,
         an = { k: 5, ph: 0, sp: (0.16 + 0.2 * B.R()) * (g % 2 ? 1 : -1), em: true, nd: true };
@@ -744,9 +769,9 @@ module.exports = ({ makeBuilder, makeSculpt, KIT: K }) => ({
     for (const [top, n] of [[STACK, 7], [FLUE, 9]])
       for (let k = 0; k < n; k++) B.iso(top[0] + B.rr(-0.06, 0.06), top[1] + 0.1, top[2] + B.rr(-0.06, 0.06), B.rr(0.11, 0.16), B.P[B.R() < 0.5 ? 17 : 52], 0.2, { k: 3, ph: k / n + B.R() * 0.05, sp: 0.55, rg: 3.2, ex: 1.5, nd: true });
     // dead brush: bare twigs standing out of the turf all over the rock, moving a little in the wind (he goes through them)
-    for (let k = 0, made = 0; k < 1000 && made < 122; k++) {
+    for (let k = 0, made = 0; k < 1400 && made < 170; k++) {
       const x = east((B.R() * 2 - 1) * IX),
-        z = (B.R() * 2 - 1) * IZ,
+        z = south((B.R() * 2 - 1) * IZ),
         y = height(x, z);
       if (inside(x, z) < 0.07 || y < 0.3) continue;
       if (BOXES.some(b => x > b[0] - 0.5 && x < b[1] + 0.5 && z > b[2] - 0.5 && z < b[3] + 0.5) || ROUND.some(r => Math.hypot(x - r[0], z - r[1]) < r[2] + 0.4)) continue;
@@ -763,23 +788,23 @@ module.exports = ({ makeBuilder, makeSculpt, KIT: K }) => ({
       }
     }
     // foam that comes and goes along the shore, and crests out on the water
-    for (let k = 0; k < 520; k++) {
+    for (let k = 0; k < 640; k++) {
       const a = B.R() * TAU,
         ca = Math.cos(a),
         sa = Math.sin(a);
       let r = 1.5;
-      while (r > 0.5 && inside(east(ca * IX * r), sa * IZ * r) < -0.01 - 0.05 * B.R()) r -= 0.02;
-      B.axial(east(ca * IX * r), 0.02, sa * IZ * r, [0, 1, 0], 0.03, B.rr(0.2, 0.55), B.P[B.R() < 0.5 ? 19 : 18], 0.75, { k: 1, ph: B.R() * TAU, sp: B.rr(0.7, 1.6), nd: true });
+      while (r > 0.5 && inside(east(ca * IX * r), south(sa * IZ * r)) < -0.01 - 0.05 * B.R()) r -= 0.02;
+      B.axial(east(ca * IX * r), 0.02, south(sa * IZ * r), [0, 1, 0], 0.03, B.rr(0.2, 0.55), B.P[B.R() < 0.5 ? 19 : 18], 0.75, { k: 1, ph: B.R() * TAU, sp: B.rr(0.7, 1.6), nd: true });
     }
-    for (let k = 0; k < 400; k++) {
-      const x = east((B.R() * 2 - 1) * 40),
-        z = (B.R() * 2 - 1) * 32;
-      if (inside(x, z) > -0.06 || Math.hypot(x / 49, z / 36) > 0.9) continue;
+    for (let k = 0; k < 460; k++) {
+      const x = MID[0] + (B.R() * 2 - 1) * 48,
+        z = MID[2] + (B.R() * 2 - 1) * 35;
+      if (inside(x, z) > -0.06 || Math.hypot((x - MID[0]) / 52, (z - MID[2]) / 38) > 0.9) continue;
       B.axial(x, 0.0, z, [0, 0, 1], 0.09, B.rr(0.5, 1.2), B.P[17], 0.6, { k: 1, ph: B.R() * TAU, sp: B.rr(0.4, 0.9), nd: true });
     }
     // haze lying on the water round the rock, rain over all of it
-    K.mist(B, { y: 0.3, depth: 2.4, rad: 45, zs: 45 / 32, n: 88, cols: [52, 53, 53, 54], a: 0.16, size: [1.6, 3.0], drift: 0.6, where: (x, z) => inside(x, z) < -0.1 });
-    K.weather.fall(B, { kind: 'rain', box: [-26, 26 + MORE, -18, 18], top: 15, n: 418, ground: (x, z) => Math.max(0, height(x, z)), cols: [18, 17, 53], speed: 12, size: 0.014, wind: [-3, 1.2] });
+    K.mist(B, { at: MID, y: 0.3, depth: 2.4, rad: 48, zs: 45 / 32, n: 100, cols: [52, 53, 53, 54], a: 0.16, size: [1.6, 3.0], drift: 0.6, where: (x, z) => inside(x, z) < -0.1 });
+    K.weather.fall(B, { kind: 'rain', box: [-IX - 3, IX + MORE + 3, -IZ - 3, IZ * SOUTH + 3], top: 17, n: 520, ground: (x, z) => Math.max(0, height(x, z)), cols: [18, 17, 53], speed: 12, size: 0.014, wind: [-3, 1.2] });
 
     const W = B.finish({
         cam: { target: [SPAWN[0], height(SPAWN[0], SPAWN[1]) + 1.6, SPAWN[1]], dist: 22, pitch: 0.62, yaw: Math.PI / 4 },
@@ -891,12 +916,12 @@ module.exports = ({ makeBuilder, makeSculpt, KIT: K }) => ({
         [COT[0] + COT[2] + 1.0, COT[1] - 0.2, 1.4],
         [COT[0] - 0.9, COT[1] - COT[3] - 0.9, 3.0],
         [WELL[0] - 1.6, WELL[1] - 0.2, -0.5],
-        [0.4, 2.9, 0.1],
-        [-2.9, 0.8, -1.3],
-        [2.3, -2.3, 2.4],
+        [0.4 * BIG, 2.9 * BIG, 0.1],
+        [-2.9 * BIG, 0.8 * BIG, -1.3],
+        [2.3 * BIG, -2.3 * BIG, 2.4],
         [BOAT[0] + BOAT[2] + 0.9, BOAT[1] + 0.2, 0.5],
         [BOAT[0] - BOAT[2] - 0.9, BOAT[1] + 1.1, 0.2],
-        [-3.4, slipEnd - 2.2, -0.2]
+        [SLIP + 0.8, slipEnd - 2.2, -0.2]
       ],
       stand = spot => {
         const wk = npc.wake;
@@ -911,7 +936,7 @@ module.exports = ({ makeBuilder, makeSculpt, KIT: K }) => ({
       // The old man keeps hours: into the cottage for the night and out of it again by day (game.js says when; it is most
       // nights and most days, not all of them). He goes by his own door and at his own pace. WAY is the way he takes, from where
       // he stands to a step inside the wall; wk.at is how far along it he is, and wk.to how far he means to go
-      DOOR = [COT[0] + 0.3, COT[1] + COT[3]],
+      DOOR = [COT[0] + CDOOR, COT[1] + COT[3]],
       WAY = [[WAKE[0], WAKE[1]], [DOOR[0] + 0.08, DOOR[1] + 0.5], [DOOR[0], DOOR[1] - 0.5]],
       HOPS = WAY.slice(1).map((q, i) => Math.hypot(q[0] - WAY[i][0], q[1] - WAY[i][1])),
       FAR = HOPS[0] + HOPS[1],
@@ -950,12 +975,10 @@ module.exports = ({ makeBuilder, makeSculpt, KIT: K }) => ({
       // and the panes of the windows somebody sits behind after dark: black glass by day, lamplight by night
       panes = [],
       WINDOWS = [
-        [COT[0] - 1.7, YC + 1.15, COT[1] + COT[3], 0.42, 0.48, 0.2],
-        [COT[0] + 1.9, YC + 1.15, COT[1] + COT[3], 0.42, 0.48, 0.2],
-        [COT[0] + COT[2], YC + 1.2, COT[1], 0.2, 0.48, 0.42],
-        [0, Y0 + 2.9, 1.2, 0.25, 0.4, 1], // and the three up the tower's stair
-        [1.2, Y0 + 4.7, 0, 1, 0.4, 0.25],
-        [0, Y0 + 6.3, 1.2, 0.25, 0.4, 1]
+        [COT[0] - 1.7 * BIG, YC + 1.15 * BIG, COT[1] + COT[3], 0.48, 0.54, 0.2],
+        [COT[0] + 1.9 * BIG, YC + 1.15 * BIG, COT[1] + COT[3], 0.48, 0.54, 0.2],
+        [COT[0] + COT[2], YC + 1.2 * BIG, COT[1], 0.2, 0.54, 0.48],
+        ...[[0, 2.9, 1.2, 0.25, 0.4, 1], [1.2, 4.7, 0, 1, 0.4, 0.25], [0, 6.3, 1.2, 0.25, 0.4, 1]].map(w => w.map((v, i) => v * BIG + (i === 1 ? Y0 : 0))) // and the three up the tower's stair
       ],
       pack = c => c[0] + c[1] * 256 + c[2] * 65536,
       night = n => {
