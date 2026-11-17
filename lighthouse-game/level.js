@@ -247,7 +247,9 @@ module.exports = ({ makeBuilder, makeSculpt, KIT: K }) => ({
     const ROUND = [],
       BOXES = [],
       BLOCKS = [],
-      block = (c, h, ax) => (BLOCKS.push({ c, h, ax, far: Math.hypot(h[0], h[1], h[2]) }), { res: 0.34, rd: 0.06, ax });
+      block = (c, h, ax) => (BLOCKS.push({ c, h, ax, far: Math.hypot(h[0], h[1], h[2]) }), { res: 0.34, rd: 0.06, ax }),
+      // is a place inside one of the rocks' blocks, or within pad of one
+      rocky = (x, y, z, pad) => BLOCKS.some(k => [0, 1, 2].every(j => Math.abs(k.ax[j][0] * (x - k.c[0]) + k.ax[j][1] * (y - k.c[1]) + k.ax[j][2] * (z - k.c[2])) < k.h[j] + pad));
 
     // a rock: two blocks through one another, each turned its own way, so it has flat faces and hard edges
     const crag = (c, r, k) => {
@@ -801,6 +803,7 @@ module.exports = ({ makeBuilder, makeSculpt, KIT: K }) => ({
       if (inside(x, z) < 0.07 || y < 0.3) continue;
       if (BOXES.some(b => x > b[0] - 0.5 && x < b[1] + 0.5 && z > b[2] - 0.5 && z < b[3] + 0.5) || ROUND.some(r => Math.hypot(x - r[0], z - r[1]) < r[2] + 0.4)) continue;
       if (Math.hypot(x - SPAWN[0], z - SPAWN[1]) < 1.2) continue;
+      if (rocky(x, y + 0.3, z, 0.65) || rocky(x, y + 0.9, z, 0.65)) continue; // nor out of a rock: its twigs would sway in and out of the stone
       made++;
       const ph = B.R() * TAU,
         tall = B.rr(0.7, 1.35);

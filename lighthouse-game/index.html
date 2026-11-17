@@ -24782,23 +24782,34 @@ function render(world, o) {
   if (world.back) for (let j = 0; j < world.back.length; j++) depth[world.back[j]] = mn;
   const order = new Uint32Array(N);
   {
-    let dmn = Infinity,
-      dmx = -Infinity;
+    const bits = new Uint32Array(depth.buffer, depth.byteOffset, N);
+    let ks = new Uint32Array(N),
+      kd = new Uint32Array(N),
+      src = order,
+      dst = new Uint32Array(N);
     for (let i = 0; i < N; i++) {
-      const v = depth[i];
-      if (v < dmn) dmn = v;
-      if (v > dmx) dmx = v;
+      const b = bits[i];
+      ks[i] = b >>> 31 ? ~b : b | 0x80000000; // a float's bits, made to count upward as the float does
+      order[i] = i;
     }
-    const ksc = 65535 / (dmx - dmn || 1),
-      bucket = new Uint16Array(N),
-      start = new Uint32Array(65537);
-    for (let i = 0; i < N; i++) {
-      const b = ((depth[i] - dmn) * ksc) | 0;
-      bucket[i] = b;
-      start[b + 1]++;
+    const cnt = new Uint32Array(2049);
+    for (let shift = 0; shift < 33; shift += 11) {
+      cnt.fill(0);
+      for (let i = 0; i < N; i++) cnt[((ks[i] >>> shift) & 2047) + 1]++;
+      for (let k = 0; k < 2048; k++) cnt[k + 1] += cnt[k];
+      for (let i = 0; i < N; i++) {
+        const p = cnt[(ks[i] >>> shift) & 2047]++;
+        dst[p] = src[i];
+        kd[p] = ks[i];
+      }
+      let w = src;
+      src = dst;
+      dst = w;
+      w = ks;
+      ks = kd;
+      kd = w;
     }
-    for (let k = 0; k < 65536; k++) start[k + 1] += start[k];
-    for (let i = 0; i < N; i++) order[start[bucket[i]]++] = i;
+    if (src !== order) order.set(src);
   }
   const col = new Float32Array(W * H * 3),
     dep = new Float32Array(W * H),
@@ -25446,7 +25457,9 @@ module.exports = ({ makeBuilder, makeSculpt, KIT: K }) => ({
     const ROUND = [],
       BOXES = [],
       BLOCKS = [],
-      block = (c, h, ax) => (BLOCKS.push({ c, h, ax, far: Math.hypot(h[0], h[1], h[2]) }), { res: 0.34, rd: 0.06, ax });
+      block = (c, h, ax) => (BLOCKS.push({ c, h, ax, far: Math.hypot(h[0], h[1], h[2]) }), { res: 0.34, rd: 0.06, ax }),
+      // is a place inside one of the rocks' blocks, or within pad of one
+      rocky = (x, y, z, pad) => BLOCKS.some(k => [0, 1, 2].every(j => Math.abs(k.ax[j][0] * (x - k.c[0]) + k.ax[j][1] * (y - k.c[1]) + k.ax[j][2] * (z - k.c[2])) < k.h[j] + pad));
 
     // a rock: two blocks through one another, each turned its own way, so it has flat faces and hard edges
     const crag = (c, r, k) => {
@@ -26000,6 +26013,7 @@ module.exports = ({ makeBuilder, makeSculpt, KIT: K }) => ({
       if (inside(x, z) < 0.07 || y < 0.3) continue;
       if (BOXES.some(b => x > b[0] - 0.5 && x < b[1] + 0.5 && z > b[2] - 0.5 && z < b[3] + 0.5) || ROUND.some(r => Math.hypot(x - r[0], z - r[1]) < r[2] + 0.4)) continue;
       if (Math.hypot(x - SPAWN[0], z - SPAWN[1]) < 1.2) continue;
+      if (rocky(x, y + 0.3, z, 0.65) || rocky(x, y + 0.9, z, 0.65)) continue; // nor out of a rock: its twigs would sway in and out of the stone
       made++;
       const ph = B.R() * TAU,
         tall = B.rr(0.7, 1.35);
