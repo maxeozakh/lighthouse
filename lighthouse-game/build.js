@@ -20,6 +20,10 @@ const face = (family, file, style) =>
   `@font-face { font-family: '${family}'; font-style: ${style || 'normal'}; font-weight: 400; src: url(data:font/woff2;base64,${fs.readFileSync(path.join(here, 'fonts', file)).toString('base64')}) format('woff2'); }`;
 const fonts = [face('Redaction', 'redaction-50-latin-400-normal.woff2'), face('Redaction', 'redaction-50-latin-400-italic.woff2', 'italic')].join('\n  ');
 
+// the two things a thumb presses to turn the view: an arrow that sets off upward and bends away to its side, a quarter of a
+// turn, which is what one press gives. Drawn once, to the right; the left one is the same, mirrored
+const bend = side => `<svg class="bend${side < 0 ? ' left' : ''}" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 21C4 11.5 8.5 7.5 20 7.5M15.8 3.3L20 7.5l-4.2 4.2"/></svg>`;
+
 const html = `<!doctype html>
 <html lang="en">
 <head>
@@ -57,8 +61,11 @@ const html = `<!doctype html>
   #hud .thumbs span { white-space: nowrap; }
   body.touch .tap { pointer-events: auto; padding: 8px 2px; color: #d9dad4; border-bottom: 1px dotted #8b8c87; }
   body.touch #pad { display: flex; position: fixed; left: 0; right: 0; box-sizing: border-box; align-items: center; justify-content: space-between; pointer-events: none; }
-  #pad button { pointer-events: auto; width: 52px; height: 52px; margin: 0; padding: 0 0 5px; border-radius: 50%; border: 1px solid #5c5d59; background: rgba(0, 0, 0, 0.4); color: #d9dad4; font: 30px/1 'Redaction', Georgia, serif; }
+  #pad button { pointer-events: auto; display: grid; place-items: center; width: 52px; height: 52px; margin: 0; padding: 0; border-radius: 50%; border: 1px solid #5c5d59; background: rgba(0, 0, 0, 0.4); color: #d9dad4; }
   #pad button:active { background: #2b2c2a; }
+  .bend { width: 30px; height: 30px; fill: none; stroke: currentColor; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; pointer-events: none; }
+  .bend.left { transform: scaleX(-1); }
+  #hud .bend { width: 1.2em; height: 1.2em; margin: 0 0.12em; vertical-align: -0.2em; stroke-width: 2; color: #d9dad4; }
   #stick { position: fixed; width: 96px; height: 96px; margin: -48px 0 0 -48px; border-radius: 50%; border: 1px solid rgba(217, 218, 212, 0.3); pointer-events: none; }
   #stick i { position: absolute; left: 50%; top: 50%; width: 30px; height: 30px; margin: -15px 0 0 -15px; border-radius: 50%; background: rgba(217, 218, 212, 0.35); }
   /* the end: the count where it stopped, and nothing else */
@@ -71,8 +78,8 @@ const html = `<!doctype html>
 <div id="ui">
   <div id="day"></div>
 </div>
-<div id="hud"><span class="keys"><b>WASD</b> or arrows roam the rock &nbsp;·&nbsp; <b>Shift</b> tread soft &nbsp;·&nbsp; <b>Q</b> / <b>E</b> look about ye &nbsp;·&nbsp; wheel peer close &nbsp;·&nbsp; <b>M</b> <span class="snd">stop yer ears</span></span><span class="thumbs"><span><b>drag</b> roam the rock</span> &nbsp;·&nbsp; <span><b>drag a little</b> tread soft</span> &nbsp;·&nbsp; <span><b>&lsaquo; &rsaquo;</b> look about ye</span> &nbsp;·&nbsp; <span><b>pinch</b> peer close</span> &nbsp;·&nbsp; <span class="snd tap">stop yer ears</span></span></div>
-<div id="pad"><button id="turnL" aria-label="look about ye, to the left">&lsaquo;</button><button id="turnR" aria-label="look about ye, to the right">&rsaquo;</button></div>
+<div id="hud"><span class="keys"><b>WASD</b> or arrows roam the rock &nbsp;·&nbsp; <b>Shift</b> tread soft &nbsp;·&nbsp; <b>Q</b> / <b>E</b> look about ye &nbsp;·&nbsp; wheel peer close &nbsp;·&nbsp; <b>M</b> <span class="snd">stop yer ears</span></span><span class="thumbs"><span><b>drag</b> roam the rock</span> &nbsp;·&nbsp; <span><b>drag a little</b> tread soft</span> &nbsp;·&nbsp; <span>${bend(-1)}${bend(1)} look about ye</span> &nbsp;·&nbsp; <span><b>pinch</b> peer close</span> &nbsp;·&nbsp; <span class="snd tap">stop yer ears</span></span></div>
+<div id="pad"><button id="turnL" aria-label="look about ye, to the left">${bend(-1)}</button><button id="turnR" aria-label="look about ye, to the right">${bend(1)}</button></div>
 <div id="stick"><i></i></div>
 <div id="fps"></div>
 <div id="dead"><p id="lived"></p></div>
