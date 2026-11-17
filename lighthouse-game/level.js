@@ -151,9 +151,9 @@ module.exports = ({ makeBuilder, makeSculpt, KIT: K }) => ({
       // on): a stride south of the house's front and reaching back west of its gable, so there is room to walk between them
       WELL = [COT[0] - COT[2] - 0.9, COT[1] + COT[3] + 2.0],
       SPAWN = [PASS[0], 5.6],
-      // the shed: the one small building off by itself, on the far side of the station from the tower: past the cottage, down
-      // on the north-east shore among the rocks, its door toward the island. It is where the young man goes to be alone
-      SHED = [26.3, -6.5, 1.2, 1.5], // its middle, half its width (east to west), half its length (its ridge runs north to south)
+      // the shed: the one small building off by itself, behind the station: down on the north shore among the rocks, across
+      // the rock from the landing, its door in the west end. It is where the young man goes to be alone
+      SHED = [13.4, -11.4, 1.25, 1.0], // its middle, half its length (east to west, as its ridge runs), half its width
       // the boathouse, on the south shore: [its middle, half its width, half its length]. It stands so far back from the water
       LANDX = -4.6,
       BOAT = (() => {
@@ -290,8 +290,8 @@ module.exports = ({ makeBuilder, makeSculpt, KIT: K }) => ({
       crag([x, hgt * 0.3, z], [q, hgt, q * 0.9], k + 200);
     });
 
-    // the rocks the shed stands among: two big ones between it and the sea, one at its west side
-    [[-0.5, -3.3, 1.5, 1.5, 1.2], [2.9, -2.0, 1.2, 1.1, 1.3], [-2.9, -1.5, 1.0, 0.9, 1.0]].forEach(([dx, dz, rx, ry, rz], k) => {
+    // the rocks the shed stands among: two big ones between it and the sea, one at its east end
+    [[-0.9, -2.7, 1.4, 1.3, 1.1], [2.2, -2.2, 1.2, 1.1, 1.2], [3.0, 0.5, 0.9, 0.8, 0.9]].forEach(([dx, dz, rx, ry, rz], k) => {
       const x = SHED[0] + dx,
         z = SHED[1] + dz;
       crag([x, Math.max(0, height(x, z)) + ry * 0.35, z], [rx, ry, rz], k + 300);
@@ -454,30 +454,30 @@ module.exports = ({ makeBuilder, makeSculpt, KIT: K }) => ({
     ROUND.push([TUB[0], TUB[1], 0.36]);
     S.rock([ENG[0] + 0.9, YE + 0.15, ENG[1] - ENG[3] - 1.0], [0.9, 0.45, 0.7], { r: [1, 1, 2, 3] }, { res: 0.2 });
     ROUND.push([ENG[0] + 0.9, ENG[1] - ENG[3] - 1.0, 0.8]);
-    // the shed: bare boards set upright, gone dark with weather, under a steep roof; one door of the same boards, in the gable
-    // toward the island and a little to one side of its middle, with a paler frame; a plank for a step
+    // the shed: bare boards set upright, gone dark with weather, under a steep roof; one door of the same boards, in the west
+    // gable (the end toward the tower) and a little to one side of its middle, with a paler frame; a plank for a step
     {
-      const [cx, cz, hw, hl] = SHED,
-        SDOOR = [0.39, 0.36, 1.58], // the door: where across the gable, half its width, its height
+      const [cx, cz, hl, hw] = SHED,
+        SDOOR = [0.28, 0.33, 1.42], // the door: where across the gable, half its width, its height
         BOARD = {
           r: [27, 28, 29, 29, 30, 30],
-          // (each board its own grey: on the gable walls they are told apart along x, on the side walls along z)
-          mod: (x, y, z) => 0.6 * (hash(Math.floor((Math.abs(x - cx) / hw > Math.abs(z - cz) / hl ? z : x) * 4.2), 9) - 0.5) + 0.22 * (n3(x * 2.2, y * 0.8, z * 2.2) - 0.5)
+          // (each board its own grey: on the gable walls they are told apart along z, on the side walls along x)
+          mod: (x, y, z) => 0.6 * (hash(Math.floor((Math.abs(x - cx) / hl > Math.abs(z - cz) / hw ? z : x) * 4.2), 9) - 0.5) + 0.22 * (n3(x * 2.2, y * 0.8, z * 2.2) - 0.5)
         };
-      house(SHED, YS, 1.75, 1.2, {
-        turn: true,
+      house(SHED, YS, 1.5, 1.0, {
         mat: BOARD,
         roof: SLATE,
         res: 0.15,
         paint: (x, y, z) => {
-          const du = Math.abs(x - SDOOR[0]);
-          if (z < hl - 0.12 || du > SDOOR[1] + 0.09 || y > SDOOR[2] + 0.09) return undefined;
-          return du > SDOOR[1] || y > SDOOR[2] ? 22 : hash(Math.floor(x * 6), 4) > 0.5 ? 27 : 28;
+          const du = Math.abs(z - SDOOR[0]);
+          if (x > 0.12 - hl || du > SDOOR[1] + 0.09 || y > SDOOR[2] + 0.09) return undefined;
+          // (this end takes the most light of the four, so the door is darker than its boards and the frame paler, to be seen)
+          return du > SDOOR[1] || y > SDOOR[2] ? 23 : hash(Math.floor(z * 6), 4) > 0.5 ? 26 : 27;
         }
       });
-      S.box([cx + SDOOR[0], YS + 0.02, cz + hl + 0.2], [0.55, 0.05, 0.2], PLANK, { res: 0.12 });
+      S.box([cx - hl - 0.2, YS + 0.02, cz + SDOOR[0]], [0.2, 0.05, 0.5], PLANK, { res: 0.12 });
       // a plank left lying on the ground before it
-      S.box([cx - 1.5, height(cx - 1.5, cz + hl + 1.4) + 0.04, cz + hl + 1.4], [0.75, 0.03, 0.1], { r: [29, 30, 30] }, { res: 0.11, ax: B.frame(0.4, 0, 0) });
+      S.box([cx - hl - 1.5, height(cx - hl - 1.5, cz + 1.5) + 0.04, cz + 1.5], [0.75, 0.03, 0.1], { r: [29, 30, 30] }, { res: 0.11, ax: B.frame(1.15, 0, 0) });
     }
     // the cistern: a square tank of rendered stone, stained and dark at the foot, with a pale low dome over it; a wooden hatch
     // on the dome's west side, propped up at a slant; an iron pump standing at its northern edge. Rain off the cottage's roof
@@ -852,6 +852,7 @@ module.exports = ({ makeBuilder, makeSculpt, KIT: K }) => ({
       if (inside(x, z) < 0.07 || y < 0.3) continue;
       if (BOXES.some(b => x > b[0] - 0.5 && x < b[1] + 0.5 && z > b[2] - 0.5 && z < b[3] + 0.5) || ROUND.some(r => Math.hypot(x - r[0], z - r[1]) < r[2] + 0.4)) continue;
       if (Math.hypot(x - SPAWN[0], z - SPAWN[1]) < 1.2) continue;
+      if (x < SHED[0] - SHED[2] && x > SHED[0] - SHED[2] - 2.4 && Math.abs(z - SHED[1]) < 1.3) continue; // nor before the shed's door
       if (rocky(x, y + 0.3, z, 0.65) || rocky(x, y + 0.9, z, 0.65)) continue; // nor out of a rock: its twigs would sway in and out of the stone
       made++;
       const ph = B.R() * TAU,
