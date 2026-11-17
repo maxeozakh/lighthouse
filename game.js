@@ -28,14 +28,25 @@
   let yaw, yawTo, zoom = 0.5, zoomTo = 1, cam = [0, 0, 0], box = { w: 1, h: 1 }, ptr = null; // it opens far off and comes in
   // 'play': he runs about. 'dead': she has him, and that is the end of it: the count of his days is all that is left on the screen
   let mode = 'play', deadT = 0, heard = 0, strides = 0;
-  // the row of hints says a thing until he has done it: then that part of it goes out (and is taken away, so the rest closes up)
+  // the row of hints says a thing until he has done it: then that part of it goes out, and the room it took closes up slowly
+  // (from the width it has to none: the page's styles say how long that takes), so the rest of the row draws together
   const learnt = new Set(),
     learn = h => {
       if (learnt.has(h)) return;
       learnt.add(h);
       for (const el of document.querySelectorAll('#hud [data-h="' + h + '"]')) {
+        // (the row that is not shown, keys' or thumbs', has nothing to close)
+        if (!el.getClientRects().length) {
+          el.remove();
+          continue;
+        }
+        el.style.width = el.getBoundingClientRect().width + 'px';
         el.classList.add('known');
-        setTimeout(() => el.remove(), 1000);
+        void el.offsetWidth; // (the width it starts from has to be taken in before the one it goes to is given)
+        el.style.width = '0px';
+        // it is taken away when it has closed, however long the page took over that (and in any case in the end)
+        el.addEventListener('transitionend', ev => ev.propertyName === 'width' && el.remove());
+        setTimeout(() => el.remove(), 8000);
       }
     };
   let softAt = 0; // when a thumb began sending him softly (0: it is not)

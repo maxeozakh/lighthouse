@@ -44,10 +44,13 @@ const html = `<!doctype html>
   #hud { position: fixed; left: 0; right: 0; bottom: calc(8px + env(safe-area-inset-bottom)); padding: 0 12px; text-align: center; letter-spacing: 0.06em; color: #8b8c87; user-select: none; pointer-events: none; text-shadow: 0 1px 2px #000; }
   #hud b { color: #d9dad4; font-weight: normal; }
   /* each thing the row says is told apart from the next by a dot. Once he has done a thing, the row stops saying it: it goes
-     out, and then it is taken away (game.js), and the dots close up over it. What stops his ears stays: it is how he unstops them */
+     out, and then the room it took is closed up slowly, so the rest of the row draws together over it and does not jump
+     (game.js gives it the width it has, to close from, and takes it away at the end). What stops his ears stays: it is how
+     he unstops them. (A part going out is cut off at its edges as it narrows: the room above and below it is for the two
+     bent arrows, which stand taller than the words) */
   #hud .keys > span:not(:last-child)::after, #hud .thumbs > span:not(:last-child)::after { content: '\\00a0·\\00a0'; color: #8b8c87; }
-  #hud [data-h] { transition: opacity 0.9s ease; }
-  #hud .known { opacity: 0; }
+  #hud [data-h] { display: inline-block; white-space: nowrap; }
+  #hud .known { overflow: hidden; vertical-align: top; padding: 6px 0; margin: -6px 0; opacity: 0; transition: opacity 0.6s ease, width 1.4s ease-in-out 0.45s; }
   #fps { position: fixed; right: calc(12px + env(safe-area-inset-right)); top: calc(10px + env(safe-area-inset-top)); color: #5c5d59; font: 11px ui-monospace, Menlo, monospace; }
   /* it opens out of black, and quickly */
   #veil { position: fixed; inset: 0; background: #000; transition: opacity 0.7s ease; pointer-events: none; }
@@ -64,7 +67,7 @@ const html = `<!doctype html>
   body.touch #hud { line-height: 1.9; }
   body.touch #hud .keys { display: none; }
   body.touch #hud .thumbs { display: inline; }
-  #hud .thumbs span { white-space: nowrap; }
+  #hud .thumbs > span { white-space: nowrap; }
   body.touch .tap { pointer-events: auto; padding: 8px 2px; color: #d9dad4; border-bottom: 1px dotted #8b8c87; }
   body.touch #pad { display: flex; position: fixed; left: 0; right: 0; box-sizing: border-box; align-items: center; justify-content: space-between; pointer-events: none; }
   #pad button { pointer-events: auto; display: grid; place-items: center; width: calc(var(--dab, 2) * ${icons.size}px + 12px); height: calc(var(--dab, 2) * ${icons.size}px + 12px); margin: 0; padding: 0; border: 0; background: none; }
@@ -83,7 +86,7 @@ const html = `<!doctype html>
 <div id="ui">
   <div id="day"></div>
 </div>
-<div id="hud"><span class="keys"><span data-h="roam"><b>WASD</b> or arrows roam the rock</span> <span data-h="soft"><b>Shift</b> tread soft</span> <span data-h="look"><b>Q</b> / <b>E</b> look about ye</span> <span data-h="zoom">wheel peer close</span> <span><b>M</b> <span class="snd">stop yer ears</span></span></span><span class="thumbs"><span data-h="roam"><b>drag</b> roam the rock</span> <span data-h="soft"><b>drag a little</b> tread soft</span> <span data-h="look">${bend(-1)}${bend(1)} look about ye</span> <span data-h="zoom"><b>pinch</b> peer close</span> <span class="snd tap">stop yer ears</span></span></div>
+<div id="hud"><span class="keys"><span data-h="roam"><b>WASD</b> or arrows roam the rock</span><span data-h="soft"><b>Shift</b> tread soft</span><span data-h="look"><b>Q</b> / <b>E</b> look about ye</span><span data-h="zoom">wheel peer close</span><span><b>M</b> <span class="snd">stop yer ears</span></span></span><span class="thumbs"><span data-h="roam"><b>drag</b> roam the rock</span><span data-h="soft"><b>drag a little</b> tread soft</span><span data-h="look">${bend(-1)}${bend(1)} look about ye</span><span data-h="zoom"><b>pinch</b> peer close</span><span class="snd tap">stop yer ears</span></span></div>
 <div id="pad"><button id="turnL" aria-label="look about ye, to the left">${bend(-1)}</button><button id="turnR" aria-label="look about ye, to the right">${bend(1)}</button></div>
 <div id="stick"><i></i></div>
 <div id="fps"></div>
