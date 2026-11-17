@@ -23,7 +23,7 @@ const fonts = [face('Redaction', 'redaction-50-latin-400-normal.woff2'), face('R
 // the two things a thumb presses to turn the view: a stone arrow each, made and drawn as the level is (icons.js), a pixel of it
 // shown as big as a pixel of the picture
 const icons = require('./icons.js')(repo),
-  bend = side => `<img class="bend" src="${side < 0 ? icons.left : icons.right}" width="${icons.size}" height="${icons.size}" alt="" draggable="false">`;
+  bend = side => `<img class="bend" src="${side < 0 ? icons.left : side > 0 ? icons.right : icons.smoke}" width="${icons.size}" height="${icons.size}" alt="" draggable="false">`; // (0: the one for his smoke)
 
 const html = `<!doctype html>
 <html lang="en">
@@ -75,6 +75,8 @@ const html = `<!doctype html>
   body.touch .tap { pointer-events: auto; padding: 8px 2px; color: #d9dad4; border-bottom: 1px dotted #8b8c87; }
   body.touch #pad { display: flex; position: fixed; left: 0; right: 0; box-sizing: border-box; align-items: center; justify-content: space-between; pointer-events: none; }
   #pad button { pointer-events: auto; display: grid; place-items: center; width: calc(var(--dab, 2) * ${icons.size}px + 12px); height: calc(var(--dab, 2) * ${icons.size}px + 12px); margin: 0; padding: 0; border: 0; background: none; }
+  /* (the one for his smoke is not in the row with the two that turn the view: game.js says where it goes) */
+  #pad #light { position: fixed; }
   .bend { width: calc(var(--dab, 2) * ${icons.size}px); height: calc(var(--dab, 2) * ${icons.size}px); image-rendering: pixelated; pointer-events: none; }
   #pad button:active .bend { transform: translateY(calc(var(--dab, 2) * 1px)); filter: brightness(0.62); }
   #hud .bend { width: ${icons.size}px; height: ${icons.size}px; margin: -6px 1px; vertical-align: middle; }
@@ -90,8 +92,8 @@ const html = `<!doctype html>
 <div id="ui">
   <div id="day"></div>
 </div>
-<div id="hud"><span class="keys"><span data-h="roam"><b>WASD</b> or arrows roam the rock</span><span data-h="soft"><b>Shift</b> tread soft</span><span data-h="look"><b>Q</b> / <b>E</b> look about ye</span><span data-h="zoom">wheel peer close</span><span data-h="ears"><b>M</b> <span class="snd">stop yer ears</span></span></span><span class="thumbs"><span data-h="roam"><b>drag</b> roam the rock</span><span data-h="soft"><b>drag a little</b> tread soft</span><span data-h="look">${bend(-1)}${bend(1)} look about ye</span><span data-h="zoom"><b>pinch</b> peer close</span><span class="snd tap">stop yer ears</span></span></div>
-<div id="pad"><button id="turnL" aria-label="look about ye, to the left">${bend(-1)}</button><button id="turnR" aria-label="look about ye, to the right">${bend(1)}</button></div>
+<div id="hud"><span class="keys"><span data-h="roam"><b>WASD</b> or arrows roam the rock</span><span data-h="soft"><b>Shift</b> tread soft</span><span data-h="look"><b>Q</b> / <b>E</b> look about ye</span><span data-h="zoom">wheel peer close</span><span data-h="smoke"><b>C</b> have a smoke</span><span data-h="ears"><b>M</b> <span class="snd">stop yer ears</span></span></span><span class="thumbs"><span data-h="roam"><b>drag</b> roam the rock</span><span data-h="soft"><b>drag a little</b> tread soft</span><span data-h="look">${bend(-1)}${bend(1)} look about ye</span><span data-h="zoom"><b>pinch</b> peer close</span><span data-h="smoke">${bend(0)} have a smoke</span><span class="snd tap">stop yer ears</span></span></div>
+<div id="pad"><button id="turnL" aria-label="look about ye, to the left">${bend(-1)}</button><button id="turnR" aria-label="look about ye, to the right">${bend(1)}</button><button id="light" aria-label="have a smoke">${bend(0)}</button></div>
 <div id="stick"><i></i></div>
 <div id="fps"></div>
 <div id="dead"><p id="lived"></p></div>

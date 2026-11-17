@@ -138,7 +138,12 @@
         fits = under >= big + 8;
       pad.style.top = (fits ? y + h : Math.round(innerHeight * 0.14)) + 'px';
       pad.style.height = (fits ? Math.min(under, big + 36) : big + 36) + 'px';
-      pad.style.padding = '0 ' + (fits ? Math.round(innerWidth * 0.05) : Math.max(4, Math.round((x - big) / 2))) + 'px'; // (at a side: in the middle of the black beside the picture)
+      const side = fits ? Math.round(innerWidth * 0.05) : Math.max(4, Math.round((x - big) / 2));
+      pad.style.padding = '0 ' + side + 'px'; // (at a side: in the middle of the black beside the picture)
+      // and the one for his smoke: between the two, where they are in a row; or else under the one at the right
+      const light = $('light');
+      light.style.left = (fits ? Math.round((innerWidth - big) / 2) : innerWidth - side - big) + 'px';
+      light.style.top = (fits ? pad.offsetTop + Math.round((pad.offsetHeight - big) / 2) : pad.offsetTop + pad.offsetHeight + 4) + 'px';
     }
   }
 
@@ -230,6 +235,7 @@
   // count had reached. Nothing follows it: he is not put back
   function die() {
     mode = 'dead';
+    G.pl.cig = 0;
     ptr = null;
     drop();
     deadT = 0;
@@ -391,6 +397,7 @@
       learn('ears'); // (the row stops saying it as it was: what it says is not changed as it goes out)
       ears();
     }
+    if (c === 'KeyC' && once) light();
     if (mode === 'play' && once) {
       if (c === 'KeyQ') yawTo += Math.PI / 2;
       else if (c === 'KeyE') yawTo -= Math.PI / 2;
@@ -441,6 +448,10 @@
     stick = pinch = null;
     knob();
   }
+  // his smoke: he lights one, standing (and the row stops saying how, once he has); or, having one, is done with it
+  function light() {
+    if (mode === 'play' && G.smoke()) learn('smoke');
+  }
   function ears() {
     const label = Sound.mute() ? 'unstop yer ears' : 'stop yer ears';
     for (const el of document.querySelectorAll('.snd')) if (!el.closest('.known')) el.textContent = label;
@@ -485,6 +496,7 @@
       yawTo += (way * Math.PI) / 2;
       learn('look');
     });
+  $('light').addEventListener('pointerdown', light);
   for (const el of document.querySelectorAll('.tap')) el.addEventListener('click', ears);
   if (TOUCH) {
     // nothing of the page itself moves under a finger: no scrolling, no zooming, no menu on a long press

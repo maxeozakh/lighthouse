@@ -898,6 +898,16 @@ module.exports = ({ makeBuilder, makeSculpt, KIT: K }) => ({
     // smoke out of the two chimneys: thin, going up and thinning as it goes
     for (const [top, n] of [[STACK, 7], [FLUE, 9]])
       for (let k = 0; k < n; k++) B.iso(top[0] + B.rr(-0.06, 0.06), top[1] + 0.1, top[2] + B.rr(-0.06, 0.06), B.rr(0.11, 0.16), B.P[B.R() < 0.5 ? 17 : 52], 0.2, { k: 3, ph: k / n + B.R() * 0.05, sp: 0.55, rg: 3.2, ex: 1.5, nd: true });
+    // the young man's smoke. A cigarette in his right hand, where the hand hangs, and its lit end (which is of the light's
+    // white: the night leaves it alone); and a few dabs of smoke, kept under his feet (PARK: it is how they are found again)
+    // until one is wanted. None of it is to be seen until he lights up (smoke(), below)
+    const SPY = height(SPAWN[0], SPAWN[1]),
+      HAND = [SPAWN[0] + 0.29, SPY + 0.54, SPAWN[1] + 0.035],
+      PARK = -0.4321,
+      PUFFS = 14;
+    B.stick(HAND[0], HAND[1] - 0.025, HAND[2] + 0.09, B.norm([0, -0.15, 1]), 0.028, 0.009, B.P[25], 3, { nd: true });
+    B.iso(HAND[0], HAND[1] - 0.033, HAND[2] + 0.14, 0.014, B.P[37], 3, { em: true, nd: true });
+    for (let k = 0; k < PUFFS; k++) B.iso(SPAWN[0], SPY + PARK, SPAWN[1], 0.05, B.P[k % 2 ? 17 : 52], 0, { nd: true });
     // dead brush: bare twigs standing out of the turf all over the rock, moving a little in the wind (he goes through them)
     for (let k = 0, made = 0; k < 1400 && made < 170; k++) {
       const x = east((B.R() * 2 - 1) * IX),
@@ -973,7 +983,9 @@ module.exports = ({ makeBuilder, makeSculpt, KIT: K }) => ({
         }
         return false;
       },
-      pl = { x: SPAWN[0], z: SPAWN[1], y: height(SPAWN[0], SPAWN[1]), face: 0.6, go: 0, phase: 0, speed: 0 },
+      // (cig: how long he has been at his smoke, in seconds, 0 when he has none; lit: how much of it there is to see; raise: how
+      // far his hand is up to his mouth; wisp: how long since the last of its smoke came off it)
+      pl = { x: SPAWN[0], z: SPAWN[1], y: height(SPAWN[0], SPAWN[1]), face: 0.6, go: 0, phase: 0, speed: 0, cig: 0, lit: 0, raise: 0, wisp: 0 },
       SY = pl.y,
       turnTo = (a, b, k) => {
         let d = (b - a) % TAU;
@@ -987,6 +999,7 @@ module.exports = ({ makeBuilder, makeSculpt, KIT: K }) => ({
           want = l > 0.01 ? (walk ? 1.7 : 4.2) : 0;
         pl.speed += (want - pl.speed) * Math.min(1, dt * 10);
         if (l > 0.01) {
+          pl.cig = 0; // (he does not smoke as he goes: it is dropped)
           const ux = mx / l,
             uz = mz / l,
             d = pl.speed * dt,
@@ -1034,6 +1047,12 @@ module.exports = ({ makeBuilder, makeSculpt, KIT: K }) => ({
         pl.go += ((l > 0.01 ? 1 : 0) - pl.go) * Math.min(1, dt * 12);
         pl.phase += dt * (2.2 + pl.speed * 2.3);
         pl.y = height(pl.x, pl.z);
+      },
+      // he lights a cigarette, if he is standing; or, if he has one, he is done with it. -> whether he has one now
+      smoke = () => {
+        if (pl.cig) pl.cig = 0;
+        else if (pl.go < 0.3) pl.cig = 1e-3;
+        return pl.cig > 0;
       },
       // turn him to face a place (the one he is speaking with)
       turn = (x, z, dt) => {
@@ -1228,9 +1247,108 @@ module.exports = ({ makeBuilder, makeSculpt, KIT: K }) => ({
         p.pose[n + 'body'] = { rot: [lean, go * o.twist * s, go * o.roll * s], stretch: o.breath };
         p.pose[n + 'head'] = { rot: [-0.75 * lean, (o.look || 0) - 0.8 * go * o.twist * s, -0.6 * go * o.roll * s] };
       };
+    // his smoke: the dabs of the cigarette (they ride his hand) and of what comes off it, found by where they were put
+    const cig = [],
+      puffs = [];
+    let ember = -1;
+    for (let i = 0; i < W.count; i++) {
+      const o = i * 16,
+        c = W.data[o + 7];
+      if (Math.abs(W.data[o + 1] - (SPY + PARK)) < 1e-4 && Math.abs(W.data[o] - SPAWN[0]) < 1e-3 && Math.abs(W.data[o + 2] - SPAWN[1]) < 1e-3) puffs.push({ o, age: 1, life: 1, gone: true });
+      else if ((c === pack(B.P[25]) || c === pack(B.P[37])) && Math.abs(W.data[o] - HAND[0]) < 0.02 && Math.abs(W.data[o + 1] - HAND[1]) < 0.08 && W.data[o + 2] > HAND[2] + 0.05 && W.data[o + 2] < HAND[2] + 0.2) {
+        cig.push(i);
+        if (c === pack(B.P[37])) ember = i;
+      }
+    }
+    // a dab of smoke let go at a place (x, y, z), going (vx, vy, vz): it grows from s0 to s1 across and thins from a to nothing
+    // over its life. (If all of them are out already, it is not let go)
+    const puff = (at, v, s0, s1, a, life) => {
+        const q = puffs.find(q => q.age >= q.life);
+        if (q) Object.assign(q, { x: at[0], y: at[1], z: at[2], vx: v[0], vy: v[1], vz: v[2], s0, s1, a, life, age: 0, gone: false });
+      },
+      drift = dt => {
+        for (const q of puffs) {
+          if (q.age >= q.life) {
+            if (!q.gone) W.data[q.o + 3] = 0;
+            q.gone = true;
+            continue;
+          }
+          q.age += dt;
+          const k = Math.min(1, q.age / q.life),
+            s = q.s0 + (q.s1 - q.s0) * Math.sqrt(k),
+            slow = Math.exp(-dt * 1.2);
+          // (what sent it is soon spent; the wind and its own rising are not)
+          q.vx = WIND[0] + (q.vx - WIND[0]) * slow;
+          q.vy = WIND[1] + (q.vy - WIND[1]) * slow;
+          q.vz = WIND[2] + (q.vz - WIND[2]) * slow;
+          W.data[q.o] = q.x += q.vx * dt;
+          W.data[q.o + 1] = q.y += q.vy * dt;
+          W.data[q.o + 2] = q.z += q.vz * dt;
+          W.data[q.o + 4] = W.data[q.o + 8] = W.data[q.o + 10] = s * s;
+          W.data[q.o + 3] = q.a * (1 - k) * Math.min(1, k * 10);
+        }
+      },
+      WIND = [0.16, 0.26, 0.07], // where smoke goes when nothing else sends it: up, and off down the wind
+      DRAG = 6.5, // seconds from one pull at it to the next
+      LASTS = 6, // pulls, and it is done
+      // his arm, up at his mouth: the arm from the shoulder, the fore from the elbow, and the cigarette turned in the hand so
+      // that it is at his lips and its lit end out ahead of him (degrees; found by trying, with the hand beside his chin)
+      ARM = [-60, -65, 25],
+      FORE = [-100, 26, 0],
+      HELD = [123, 36, -179],
+      // a place given in his own measure (to his right, up, the way he faces), on the rock
+      from = (lx, ly, lz) => {
+        const sn = Math.sin(pl.face),
+          cs = Math.cos(pl.face);
+        return [pl.x + lx * cs + lz * sn, pl.y + ly, pl.z - lx * sn + lz * cs];
+      },
+      // He lights it and it is in his hand at his side, a thread of smoke coming off the end. Every so often (DRAG) the hand
+      // comes up to his mouth, the end glows as he pulls at it, the hand goes down again and he lets the smoke out ahead of
+      // him. After so many pulls (LASTS) it is finished. Going anywhere, he has dropped it (step())
+      fag = (p, dt) => {
+        let up = 0,
+          glow = 0,
+          u = -1;
+        if (pl.cig) {
+          pl.cig += dt;
+          if (pl.cig > DRAG * LASTS) pl.cig = 0;
+          else {
+            u = pl.cig % DRAG;
+            up = sm(u / 0.9) * (1 - sm((u - 2.1) / 0.8));
+            glow = sm((u - 1.0) / 0.8) * (1 - sm((u - 1.9) / 0.5));
+          }
+        }
+        pl.raise += (up - pl.raise) * Math.min(1, dt * 12);
+        pl.lit += ((pl.cig ? 1 : 0) - pl.lit) * Math.min(1, dt * 9);
+        const r = pl.raise,
+          mix = (a, b) => [0, 1, 2].map(j => a[j] * (1 - r) + b[j] * r);
+        if (r > 0.002) {
+          p.pose.plarmR = { rot: mix(p.pose.plarmR.rot, ARM) };
+          p.pose.plforeR = { rot: mix(p.pose.plforeR.rot, FORE) };
+          p.pose.plhead.rot[0] += 5 * r;
+        }
+        p.pose.plcig = { rot: [HELD[0] * r, HELD[1] * r, HELD[2] * r] };
+        for (const i of cig) W.data[i * 16 + 3] = (i === ember ? 1 + 2 * glow : 3) * (pl.lit < 0.02 ? 0 : pl.lit);
+        if (u >= 0) {
+          // the thread off its end, wherever the hand has it; and what he lets out, a little after the hand is down
+          const tip = from(0.29 + (0.04 - 0.29) * r, 0.5 + (1.2 - 0.5) * r, 0.18 + (0.25 - 0.18) * r),
+            j = () => (Math.random() - 0.5) * 0.08;
+          if ((pl.wisp += dt) > 0.45) {
+            pl.wisp = 0;
+            puff(tip, [j(), 0.3 + j(), j()], 0.022, 0.07, 0.3, 2.2);
+          }
+          if (u > 2.7 && u < 3.4 && Math.random() < dt / 0.11) {
+            const sn = Math.sin(pl.face),
+              cs = Math.cos(pl.face);
+            puff(from(0, 1.2, 0.2), [sn * 0.55 + j(), 0.1 + j(), cs * 0.55 + j()], 0.035, 0.15, 0.38, 2.6);
+          }
+        }
+        drift(dt);
+      };
     K.puppet(W, {
       parts: {
         ...man('pl', SPAWN[0], SY, SPAWN[1]),
+        plcig: { ids: cig, pivot: HAND, parent: 'plforeR' },
         ...man('wk', WAKE[0], WY, WAKE[1]),
         mm: { ids: tags.mm, pivot: mp(0, 0, 0) },
         mmtop: { ids: tags.mmtop, pivot: mp(0, 0.2, 0), parent: 'mm' }, // all of her above the scales: it turns at the hips
@@ -1244,6 +1362,7 @@ module.exports = ({ makeBuilder, makeSculpt, KIT: K }) => ({
           bob = (0.012 + 0.036 * k) * Math.abs(Math.cos(pl.phase)) * pl.go;
         p.pose.pl = { pos: [pl.x - SPAWN[0], pl.y - SY + bob, pl.z - SPAWN[1]], rot: [0, (pl.face * 180) / Math.PI, 0] };
         stride(p, 'pl', pl.phase, pl.go, { A: 20 + 20 * k, K0: 4, K: 24 + 44 * k, arm: 16 + 22 * k, el0: 8, el: 4 + 38 * k, el1: 8 + 14 * k, stoop: 0, lean: 2 + 9 * k, twist: 4 + 5 * k, roll: 1.5, limp: 0, breath: 1 + 0.012 * Math.sin(t * 1.6) * (1 - pl.go) });
+        fag(p, dt);
         // neither of them turns about to watch him: the old man stands as he stood and only his head follows whoever comes near
         keep(dt);
         const wk = npc.wake,
@@ -1303,7 +1422,7 @@ module.exports = ({ makeBuilder, makeSculpt, KIT: K }) => ({
     W.glass = glass.length;
     W.blocks = BLOCKS;
     W.sea = [water.length, white.length];
-    W.game = { pl, spawn: SPAWN, height, blocked, step, turn, npc, inside, spots: SPOTS, stand, home, night, grade, sea, places: { tower: TOWER, cottage: COT, engine: ENG, well: WELL, landing: [SLIP - 0.3, slipEnd - 1.2], boathouse: BOAT, shed: SHED, wake: WAKE, mermaid: MER } };
+    W.game = { pl, spawn: SPAWN, height, blocked, step, turn, npc, inside, spots: SPOTS, stand, home, smoke, night, grade, sea, places: { tower: TOWER, cottage: COT, engine: ENG, well: WELL, landing: [SLIP - 0.3, slipEnd - 1.2], boathouse: BOAT, shed: SHED, wake: WAKE, mermaid: MER } };
     return W;
   }
 });

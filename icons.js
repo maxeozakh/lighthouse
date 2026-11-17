@@ -1,14 +1,21 @@
-// The two things a thumb presses to turn the view, made the way everything else in the picture is made: a block of whitewashed
-// stone cut to an arrow that sets off upward and bends away to its side, stood on end, lit from above, and drawn by the level's
-// own renderer in as few pixels as the picture would have for a thing that size. What is not arrow is left clear.
-//   require('./icons.js')(repo)  -> { size, left, right }: each a data: URL of a PNG, size pixels square, to be shown unsmoothed
-//   node icons.js [out.png] [pixels] [--repo path]  -> the two side by side, large, on black, to look at
+// The things a thumb presses, made the way everything else in the picture is made: a block of whitewashed stone cut to a
+// shape, stood on end, lit from above, and drawn by the level's own renderer in as few pixels as the picture would have for a
+// thing that size. What is not the shape is left clear. Two of them turn the view: an arrow that sets off upward and bends away
+// to its side. The third is for his smoke: a cigarette lying, its end a little apart from it, and the smoke going up off that.
+//   require('./icons.js')(repo)  -> { size, left, right, smoke }: each a data: URL of a PNG, size pixels square, to be shown unsmoothed
+//   node icons.js [out.png] [pixels] [--repo path]  -> the three side by side, large, on black, to look at
 const path = require('path'),
   zlib = require('zlib');
 
 const ART = 24, // pixels across and down
   // the arrow's outline, facing the eye, turning right: up the shaft, round the cut corner, along the arm, the head
   SHAPE = [[-0.78, -0.8], [-0.44, -0.8], [-0.44, 0.1], [-0.24, 0.3], [0.3, 0.3], [0.3, 0.06], [0.86, 0.47], [0.3, 0.88], [0.3, 0.64], [-0.34, 0.64], [-0.78, 0.2]],
+  // the cigarette, the end of it, and its smoke: three pieces
+  SMOKE = [
+    [[-0.93, -0.6], [-0.04, -0.6], [-0.04, -0.28], [-0.93, -0.28]],
+    [[0.22, -0.6], [0.52, -0.6], [0.52, -0.28], [0.22, -0.28]],
+    [[0.295, 0.06], [0.145, 0.33], [0.395, 0.6], [0.225, 0.88], [0.355, 0.88], [0.525, 0.6], [0.275, 0.33], [0.425, 0.06]]
+  ],
   DEEP = 0.1, // half of how thick the block is
   MID = [0.07, 0.02, 0], // the middle of it, which the eye is on
   // seen from a little to its right and from above, so that it has a front, a top and a side. FAR: how many times further off
@@ -39,11 +46,12 @@ const outline = pts => (x, y) => {
   return s * Math.sqrt(d);
 };
 
-function world({ makeBuilder, makeSculpt, KIT: K }) {
+function world({ makeBuilder, makeSculpt, KIT: K }, shapes) {
   // the level's greys, from wet rock up to whitewash in the sun; 0 is what lies behind (nothing: it is cut away afterwards)
   const B = makeBuilder(7, [0x000000, 0x1f2121, 0x2d2f2f, 0x3f4141, 0x4c4e4d, 0x6c6e6c, 0x8f918e, 0xb2b4b0, 0xd3d4d0, 0xededea]),
     S = K.sculpt(makeSculpt(B)),
-    edge = outline(SHAPE);
+    edges = shapes.map(outline),
+    edge = (x, y) => Math.min(...edges.map(e => e(x, y)));
   // the level's sun, with more between light and shade than its overcast gives: the three faces are to be three greys
   S.sun = B.norm([-0.5, 0.8, 0.35]);
   S.amb = 0.38;
@@ -78,9 +86,9 @@ function world({ makeBuilder, makeSculpt, KIT: K }) {
   return B.finish({ cam: { target: MID, dist: DIST * FAR, pitch: PITCH, yaw: YAW }, detail: 12, dither: 0.3, radius: 3, ao: { k: 0, range: 0.8 }, fog: { c: 0, start: 1, max: 0 } });
 }
 
-// the arrow that turns right, art pixels square: { w, h, rgba }
-function draw(lib, R, art) {
-  const W = world(lib),
+// a block cut to shapes (each an outline; the arrow that turns right, if none are given), art pixels square: { w, h, rgba }
+function draw(lib, R, art, shapes = [SHAPE]) {
+  const W = world(lib, shapes),
     full = art * FAR,
     off = (full - art) / 2,
     view = { t: 0, w: full, h: full, px: 1 },
@@ -129,7 +137,7 @@ const tools = repo => [require(path.join(repo, 'index.js')).load(), require('./f
 module.exports = repo => {
   const right = draw(...tools(repo), ART),
     url = im => 'data:image/png;base64,' + png(im.w, im.h, im.rgba).toString('base64');
-  return { size: ART, left: url(flip(right)), right: url(right) };
+  return { size: ART, left: url(flip(right)), right: url(right), smoke: url(draw(...tools(repo), ART, SMOKE)) };
 };
 
 if (require.main === module) {
@@ -140,12 +148,12 @@ if (require.main === module) {
     art = Number(args[1]) || ART,
     k = Math.max(1, Math.round(240 / art)),
     gap = 2,
-    w = (art * 2 + gap) * k,
+    w = (art * 3 + gap * 2) * k,
     h = art * k,
     sheet = new Uint8Array(w * h * 4),
     right = draw(...tools(repo), art);
   for (let i = 3; i < sheet.length; i += 4) sheet[i] = 255;
-  [flip(right), right].forEach((im, n) => {
+  [flip(right), right, draw(...tools(repo), art, SMOKE)].forEach((im, n) => {
     for (let y = 0; y < h; y++)
       for (let x = 0; x < art * k; x++) {
         const p = (((y / k) | 0) * art + ((x / k) | 0)) * 4,
