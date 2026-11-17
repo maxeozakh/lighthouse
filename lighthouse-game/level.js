@@ -605,7 +605,7 @@ module.exports = ({ makeBuilder, makeSculpt, KIT: K }) => ({
         let d = egg(x, y, z, [-0.01, 0.012, 0], [0.092, 0.098, 0.08]);
         d = smin(d, egg(x, y, z, [0.03, -0.048, 0], [0.06, 0.062, 0.057]), 0.03);
         d = smin(d, egg(x, y, z, [0.068, -0.088, 0], [0.024, 0.02, 0.026]), 0.02);
-        return smin(d, bone(x, y, z, [0.085, 0.005, 0], [0.104, -0.03, 0], 0.01, 0.014), 0.012);
+        return smin(d, bone(x, y, z, [0.082, 0.004, 0], [0.093, -0.026, 0], 0.008, 0.0105), 0.012); // (a small one: at this size a nose that is all there reads as a beak)
       },
       PALE,
       'head',

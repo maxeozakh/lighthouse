@@ -31,7 +31,7 @@
   const mem = { deaths: 0 },
     // the old man talks to himself. How much of it is heard: none from six paces, all of it at his elbow
     mutterAt = d => Math.pow(Math.max(0, Math.min(1, (6 - d) / 4.8)), 1.6),
-    TOO_NEAR = 2.9, // of her: there is no talking to her, and no second step
+    TOO_NEAR = 1.8, // of her: there is no talking to her, and no second step (he can stand as near as 1.3: her rock stops him there)
     EARSHOT = 12, // of her: beyond this there is nothing of her to hear
     // how much of her song reaches him at a distance: nothing at the edge of earshot, a thread of it a few steps in, and all of
     // it only where it is already too late. It climbs slowly at first and fast at the end, so each step toward her is heard
