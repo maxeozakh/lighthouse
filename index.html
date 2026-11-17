@@ -17,6 +17,11 @@
   #frame { position: fixed; pointer-events: none; background: radial-gradient(ellipse at center, transparent 52%, rgba(0, 0, 0, 0.5) 100%); }
   #hud { position: fixed; left: 0; right: 0; bottom: calc(8px + env(safe-area-inset-bottom)); padding: 0 12px; text-align: center; letter-spacing: 0.06em; color: #8b8c87; user-select: none; pointer-events: none; text-shadow: 0 1px 2px #000; }
   #hud b { color: #d9dad4; font-weight: normal; }
+  /* each thing the row says is told apart from the next by a dot. Once he has done a thing, the row stops saying it: it goes
+     out, and then it is taken away (game.js), and the dots close up over it. What stops his ears stays: it is how he unstops them */
+  #hud .keys > span:not(:last-child)::after, #hud .thumbs > span:not(:last-child)::after { content: '\00a0·\00a0'; color: #8b8c87; }
+  #hud [data-h] { transition: opacity 0.9s ease; }
+  #hud .known { opacity: 0; }
   #fps { position: fixed; right: calc(12px + env(safe-area-inset-right)); top: calc(10px + env(safe-area-inset-top)); color: #5c5d59; font: 11px ui-monospace, Menlo, monospace; }
   /* it opens out of black, and quickly */
   #veil { position: fixed; inset: 0; background: #000; transition: opacity 0.7s ease; pointer-events: none; }
@@ -52,7 +57,7 @@
 <div id="ui">
   <div id="day"></div>
 </div>
-<div id="hud"><span class="keys"><b>WASD</b> or arrows roam the rock &nbsp;·&nbsp; <b>Shift</b> tread soft &nbsp;·&nbsp; <b>Q</b> / <b>E</b> look about ye &nbsp;·&nbsp; wheel peer close &nbsp;·&nbsp; <b>M</b> <span class="snd">stop yer ears</span></span><span class="thumbs"><span><b>drag</b> roam the rock</span> &nbsp;·&nbsp; <span><b>drag a little</b> tread soft</span> &nbsp;·&nbsp; <span><img class="bend" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABgAAAAYCAYAAADgdz34AAAApUlEQVR42u2V6wnAIAyE3cMB3MD/DuIiLuIgTuFUlhMCqa2p9gGlNHAUA3dffECV+nyllErOuTwWTmohWJMuhxNA0qXwGGPx3tfvHgz9YcheOGStrRDea3W4m174jLoQHno2nGsDCCFMBzvnxgEEkQKNMTCuzLgX+LgXg4oXTS+Gm9DrDUWQYUA7nbTtdvopAJXWup73YwCpfsA7Abf/NwBQf722FvYbCRRuRVuTAAAAAElFTkSuQmCC" width="24" height="24" alt="" draggable="false"><img class="bend" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABgAAAAYCAYAAADgdz34AAAAqElEQVR42u2T0Q2AIAwF3YMB2IB/BmERFmEQpmAqzDNpUrEileiPNnkxIfUOpC7LZ6uUUnPOdRpCkeCUabgULlBLAEgpiVCshxC2p1pCILwsBRDAnXO7tSHJFbyXIckdcCvhsmGB914tijEeBbQDBA0IvnfTVq21XYEIlwSAnzXTFFEvTVZ3griAn6J3XyennBfgXowxup9LI7hVv2CoHhfwehT+16u1AnwsCRR8lNaoAAAAAElFTkSuQmCC" width="24" height="24" alt="" draggable="false"> look about ye</span> &nbsp;·&nbsp; <span><b>pinch</b> peer close</span> &nbsp;·&nbsp; <span class="snd tap">stop yer ears</span></span></div>
+<div id="hud"><span class="keys"><span data-h="roam"><b>WASD</b> or arrows roam the rock</span> <span data-h="soft"><b>Shift</b> tread soft</span> <span data-h="look"><b>Q</b> / <b>E</b> look about ye</span> <span data-h="zoom">wheel peer close</span> <span><b>M</b> <span class="snd">stop yer ears</span></span></span><span class="thumbs"><span data-h="roam"><b>drag</b> roam the rock</span> <span data-h="soft"><b>drag a little</b> tread soft</span> <span data-h="look"><img class="bend" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABgAAAAYCAYAAADgdz34AAAApUlEQVR42u2V6wnAIAyE3cMB3MD/DuIiLuIgTuFUlhMCqa2p9gGlNHAUA3dffECV+nyllErOuTwWTmohWJMuhxNA0qXwGGPx3tfvHgz9YcheOGStrRDea3W4m174jLoQHno2nGsDCCFMBzvnxgEEkQKNMTCuzLgX+LgXg4oXTS+Gm9DrDUWQYUA7nbTtdvopAJXWup73YwCpfsA7Abf/NwBQf722FvYbCRRuRVuTAAAAAElFTkSuQmCC" width="24" height="24" alt="" draggable="false"><img class="bend" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABgAAAAYCAYAAADgdz34AAAAqElEQVR42u2T0Q2AIAwF3YMB2IB/BmERFmEQpmAqzDNpUrEileiPNnkxIfUOpC7LZ6uUUnPOdRpCkeCUabgULlBLAEgpiVCshxC2p1pCILwsBRDAnXO7tSHJFbyXIckdcCvhsmGB914tijEeBbQDBA0IvnfTVq21XYEIlwSAnzXTFFEvTVZ3griAn6J3XyennBfgXowxup9LI7hVv2CoHhfwehT+16u1AnwsCRR8lNaoAAAAAElFTkSuQmCC" width="24" height="24" alt="" draggable="false"> look about ye</span> <span data-h="zoom"><b>pinch</b> peer close</span> <span class="snd tap">stop yer ears</span></span></div>
 <div id="pad"><button id="turnL" aria-label="look about ye, to the left"><img class="bend" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABgAAAAYCAYAAADgdz34AAAApUlEQVR42u2V6wnAIAyE3cMB3MD/DuIiLuIgTuFUlhMCqa2p9gGlNHAUA3dffECV+nyllErOuTwWTmohWJMuhxNA0qXwGGPx3tfvHgz9YcheOGStrRDea3W4m174jLoQHno2nGsDCCFMBzvnxgEEkQKNMTCuzLgX+LgXg4oXTS+Gm9DrDUWQYUA7nbTtdvopAJXWup73YwCpfsA7Abf/NwBQf722FvYbCRRuRVuTAAAAAElFTkSuQmCC" width="24" height="24" alt="" draggable="false"></button><button id="turnR" aria-label="look about ye, to the right"><img class="bend" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABgAAAAYCAYAAADgdz34AAAAqElEQVR42u2T0Q2AIAwF3YMB2IB/BmERFmEQpmAqzDNpUrEileiPNnkxIfUOpC7LZ6uUUnPOdRpCkeCUabgULlBLAEgpiVCshxC2p1pCILwsBRDAnXO7tSHJFbyXIckdcCvhsmGB914tijEeBbQDBA0IvnfTVq21XYEIlwSAnzXTFFEvTVZ3griAn6J3XyennBfgXowxup9LI7hVv2CoHhfwehT+16u1AnwsCRR8lNaoAAAAAElFTkSuQmCC" width="24" height="24" alt="" draggable="false"></button></div>
 <div id="stick"><i></i></div>
 <div id="fps"></div>
@@ -27027,6 +27032,17 @@ const Sound = (() => {
   let yaw, yawTo, zoom = 0.5, zoomTo = 1, cam = [0, 0, 0], box = { w: 1, h: 1 }, ptr = null; // it opens far off and comes in
   // 'play': he runs about. 'dead': she has him, and that is the end of it: the count of his days is all that is left on the screen
   let mode = 'play', deadT = 0, heard = 0, strides = 0;
+  // the row of hints says a thing until he has done it: then that part of it goes out (and is taken away, so the rest closes up)
+  const learnt = new Set(),
+    learn = h => {
+      if (learnt.has(h)) return;
+      learnt.add(h);
+      for (const el of document.querySelectorAll('#hud [data-h="' + h + '"]')) {
+        el.classList.add('known');
+        setTimeout(() => el.remove(), 1000);
+      }
+    };
+  let softAt = 0; // when a thumb began sending him softly (0: it is not)
   const mem = { deaths: 0 },
     // the old man talks to himself. How much of it is heard: none from six paces, all of it at his elbow
     mutterAt = d => Math.pow(Math.max(0, Math.min(1, (6 - d) / 4.8)), 1.6),
@@ -27112,6 +27128,10 @@ const Sound = (() => {
     if (keys.has('KeyS') || keys.has('ArrowDown')) iy -= 1;
     if (keys.has('KeyD') || keys.has('ArrowRight')) ix += 1;
     if (keys.has('KeyA') || keys.has('ArrowLeft')) ix -= 1;
+    if (ix || iy) {
+      learn('roam');
+      if (keys.has('ShiftLeft') || keys.has('ShiftRight')) learn('soft');
+    }
     soft = false;
     if (!ix && !iy && ptr) {
       const r = canvas.getBoundingClientRect(),
@@ -27130,6 +27150,7 @@ const Sound = (() => {
         ix = dx;
         iy = -dy / Math.sin(W.cam.pitch);
         soft = d < SOFT;
+        learn('roam');
       }
     }
     if (!ix && !iy) return [0, 0];
@@ -27207,6 +27228,10 @@ const Sound = (() => {
     if (mode === 'play') {
       const [mx, mz] = wish();
       G.step(dt, mx, mz, keys.has('ShiftLeft') || keys.has('ShiftRight') || soft);
+      // (every drag begins as a little one: it is treading soft only if he is kept at it a while)
+      if (!soft) softAt = 0;
+      else if (!softAt) softAt = now;
+      else if (now - softAt > 800) learn('soft');
       // a boot down at every half turn of his stride
       const s = Math.floor(pl.phase / Math.PI);
       if (s !== strides && pl.go > 0.5) Sound.step();
@@ -27289,6 +27314,7 @@ const Sound = (() => {
     if (mode === 'play' && once) {
       if (c === 'KeyQ') yawTo += Math.PI / 2;
       else if (c === 'KeyE') yawTo -= Math.PI / 2;
+      if (c === 'KeyQ' || c === 'KeyE') learn('look');
     }
     keys.add(c);
     if (c.startsWith('Arrow') || c === 'Space') ev.preventDefault();
@@ -27355,7 +27381,10 @@ const Sound = (() => {
       stick.y = f.y;
       knob();
     }
-    if (pinch && fingers.size === 2) zoomTo = Math.max(0.45, Math.min(2.2, (pinch.zoom * far2()) / pinch.far));
+    if (pinch && fingers.size === 2) {
+      zoomTo = Math.max(0.45, Math.min(2.2, (pinch.zoom * far2()) / pinch.far));
+      if (Math.abs(far2() / pinch.far - 1) > 0.1) learn('zoom'); // (two fingers put down are not yet a pinch)
+    }
   });
   for (const type of ['pointerup', 'pointercancel'])
     document.addEventListener(type, ev => {
@@ -27366,8 +27395,12 @@ const Sound = (() => {
       pinch = null;
       knob();
     });
-  $('turnL').addEventListener('pointerdown', () => mode === 'play' && (yawTo += Math.PI / 2));
-  $('turnR').addEventListener('pointerdown', () => mode === 'play' && (yawTo -= Math.PI / 2));
+  for (const [id, way] of [['turnL', 1], ['turnR', -1]])
+    $(id).addEventListener('pointerdown', () => {
+      if (mode !== 'play') return;
+      yawTo += (way * Math.PI) / 2;
+      learn('look');
+    });
   for (const el of document.querySelectorAll('.tap')) el.addEventListener('click', ears);
   if (TOUCH) {
     // nothing of the page itself moves under a finger: no scrolling, no zooming, no menu on a long press
@@ -27381,6 +27414,7 @@ const Sound = (() => {
       ev.preventDefault();
       Sound.wake();
       zoomTo = Math.max(0.45, Math.min(2.2, zoomTo * Math.exp(-ev.deltaY * 0.0015)));
+      if (mode === 'play') learn('zoom');
     },
     { passive: false }
   );

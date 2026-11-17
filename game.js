@@ -28,6 +28,17 @@
   let yaw, yawTo, zoom = 0.5, zoomTo = 1, cam = [0, 0, 0], box = { w: 1, h: 1 }, ptr = null; // it opens far off and comes in
   // 'play': he runs about. 'dead': she has him, and that is the end of it: the count of his days is all that is left on the screen
   let mode = 'play', deadT = 0, heard = 0, strides = 0;
+  // the row of hints says a thing until he has done it: then that part of it goes out (and is taken away, so the rest closes up)
+  const learnt = new Set(),
+    learn = h => {
+      if (learnt.has(h)) return;
+      learnt.add(h);
+      for (const el of document.querySelectorAll('#hud [data-h="' + h + '"]')) {
+        el.classList.add('known');
+        setTimeout(() => el.remove(), 1000);
+      }
+    };
+  let softAt = 0; // when a thumb began sending him softly (0: it is not)
   const mem = { deaths: 0 },
     // the old man talks to himself. How much of it is heard: none from six paces, all of it at his elbow
     mutterAt = d => Math.pow(Math.max(0, Math.min(1, (6 - d) / 4.8)), 1.6),
@@ -113,6 +124,10 @@
     if (keys.has('KeyS') || keys.has('ArrowDown')) iy -= 1;
     if (keys.has('KeyD') || keys.has('ArrowRight')) ix += 1;
     if (keys.has('KeyA') || keys.has('ArrowLeft')) ix -= 1;
+    if (ix || iy) {
+      learn('roam');
+      if (keys.has('ShiftLeft') || keys.has('ShiftRight')) learn('soft');
+    }
     soft = false;
     if (!ix && !iy && ptr) {
       const r = canvas.getBoundingClientRect(),
@@ -131,6 +146,7 @@
         ix = dx;
         iy = -dy / Math.sin(W.cam.pitch);
         soft = d < SOFT;
+        learn('roam');
       }
     }
     if (!ix && !iy) return [0, 0];
@@ -208,6 +224,10 @@
     if (mode === 'play') {
       const [mx, mz] = wish();
       G.step(dt, mx, mz, keys.has('ShiftLeft') || keys.has('ShiftRight') || soft);
+      // (every drag begins as a little one: it is treading soft only if he is kept at it a while)
+      if (!soft) softAt = 0;
+      else if (!softAt) softAt = now;
+      else if (now - softAt > 800) learn('soft');
       // a boot down at every half turn of his stride
       const s = Math.floor(pl.phase / Math.PI);
       if (s !== strides && pl.go > 0.5) Sound.step();
@@ -290,6 +310,7 @@
     if (mode === 'play' && once) {
       if (c === 'KeyQ') yawTo += Math.PI / 2;
       else if (c === 'KeyE') yawTo -= Math.PI / 2;
+      if (c === 'KeyQ' || c === 'KeyE') learn('look');
     }
     keys.add(c);
     if (c.startsWith('Arrow') || c === 'Space') ev.preventDefault();
@@ -356,7 +377,10 @@
       stick.y = f.y;
       knob();
     }
-    if (pinch && fingers.size === 2) zoomTo = Math.max(0.45, Math.min(2.2, (pinch.zoom * far2()) / pinch.far));
+    if (pinch && fingers.size === 2) {
+      zoomTo = Math.max(0.45, Math.min(2.2, (pinch.zoom * far2()) / pinch.far));
+      if (Math.abs(far2() / pinch.far - 1) > 0.1) learn('zoom'); // (two fingers put down are not yet a pinch)
+    }
   });
   for (const type of ['pointerup', 'pointercancel'])
     document.addEventListener(type, ev => {
@@ -367,8 +391,12 @@
       pinch = null;
       knob();
     });
-  $('turnL').addEventListener('pointerdown', () => mode === 'play' && (yawTo += Math.PI / 2));
-  $('turnR').addEventListener('pointerdown', () => mode === 'play' && (yawTo -= Math.PI / 2));
+  for (const [id, way] of [['turnL', 1], ['turnR', -1]])
+    $(id).addEventListener('pointerdown', () => {
+      if (mode !== 'play') return;
+      yawTo += (way * Math.PI) / 2;
+      learn('look');
+    });
   for (const el of document.querySelectorAll('.tap')) el.addEventListener('click', ears);
   if (TOUCH) {
     // nothing of the page itself moves under a finger: no scrolling, no zooming, no menu on a long press
@@ -382,6 +410,7 @@
       ev.preventDefault();
       Sound.wake();
       zoomTo = Math.max(0.45, Math.min(2.2, zoomTo * Math.exp(-ev.deltaY * 0.0015)));
+      if (mode === 'play') learn('zoom');
     },
     { passive: false }
   );
