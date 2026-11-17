@@ -447,6 +447,38 @@ module.exports = ({ makeBuilder, makeSculpt, KIT: K }) => ({
     S.tube([[WELL[0] + 0.5, YW + 1.25, WELL[1] - 0.3], [WELL[0] + 0.5, YW + 1.1, WELL[1] + 0.25]], 0.035, 0.03, IRON, { res: 0.08 });
     ROUND.push([WELL[0], WELL[1], 1.1]);
 
+    // a boat, as a dory is built: a flat bottom, straight sides that flare from the bottom boards up to the gunwale, a sharp bow
+    // (toward +z of her own measure), a narrow flat stern, the gunwale lifting a little to both ends. She is open: a well inside
+    // her planking, and two thwarts across it. c: the middle of her, at the gunwale; h: [half her beam, her depth, half her length];
+    // o.inside: the colours inside her [bottom, sides]; o.ax: how she lies
+    const boat = (c, h, mat, o) => {
+      const [BW, BH, BL] = h,
+        ax = o.ax || [[1, 0, 0], [0, 1, 0], [0, 0, 1]],
+        own = (x, y, z) => ax.map(a => a[0] * (x - c[0]) + a[1] * (y - c[1]) + a[2] * (z - c[2])), // a place in the world, in her measure
+        out = (x, y, z) => [0, 1, 2].map(j => c[j] + ax[0][j] * x + ax[1][j] * y + ax[2][j] * z), // and the other way
+        SKIN = 0.075, // how thick her planking is drawn
+        beam = t => BW * (t > 0.15 ? 1 - Math.pow((t - 0.15) / 0.85, 1.25) : t < -0.4 ? 1 - 0.4 * ((-t - 0.4) / 0.6) : 1),
+        sheer = t => 0.14 * BH * t * t * (t > 0 ? 1.6 : 1),
+        keel = t => -BH + 0.1 * BH * t * t,
+        half = (t, y) => beam(t) * (0.6 + 0.4 * Math.max(0, Math.min(1, (y - keel(t)) / BH))),
+        floor = t => keel(t) + 0.42 * BH,
+        well = (x, y, z) => Math.max(Math.abs(x) - half(z / BL, y) + SKIN, floor(z / BL) - y, Math.abs(z) - BL + SKIN * 1.6, z - BL * 0.86),
+        sd = (x, y, z) => {
+          const t = z / BL;
+          return Math.max(Math.abs(x) - half(t, y), y - sheer(t), keel(t) - y, Math.abs(z) - BL, -well(x, y, z));
+        },
+        [low, side] = o.inside || [27, 28];
+      sdfSolid(c, [-BW, -BH, -BL], [BW, 0.25 * BH, BL], sd, {
+        r: mat.r,
+        mod: mat.mod,
+        tex: (px, py, pz) => {
+          const [x, y, z] = own(px, py, pz);
+          return well(x, y, z) < 0.045 ? (y < floor(z / BL) + 0.05 ? low : side) : undefined;
+        }
+      }, { res: o.res || 0.085, ax: o.ax });
+      for (const t of [0.3, -0.38]) S.box(out(0, -0.12 * BH, t * BL), [half(t, -0.12 * BH) - 0.03, 0.022, 0.075], { r: [28, 29, 30] }, { res: 0.075, ax: o.ax });
+    };
+
     // the landing on the south shore. The boathouse stands over it, its gable to the sea: grey shingle walls, a dark roof, a wide
     // doorway with no door in it and a boat in the dark inside. Its back sits on the slope and its front is up on short posts,
     // and from the sill of the doorway a slip of timber goes down to the water
@@ -466,13 +498,7 @@ module.exports = ({ makeBuilder, makeSculpt, KIT: K }) => ({
         Math.abs(x - BDOOR[0]) < BDOOR[1] + 0.05 && z > BOAT[3] - BDOOR[3] - 0.08 && z < BOAT[3] - 0.07 && y < BDOOR[2] + 0.05 ? (y < 0.1 ? 33 : 31) : y < 0.05 ? 27 : undefined
     });
     // the boat kept in it: her bow shows in the doorway
-    // (the lower half of a long round shape, cut off flat at the gunwale and dark inside it)
-    const KEPT = [SLIP, YB + 0.48, BOAT[1] + BOAT[3] - 1.2],
-      KH = [0.48, 0.44, 1.14];
-    sdfSolid(KEPT, [-KH[0], -KH[1], -KH[2]], [KH[0], 0.02, KH[2]], (x, y, z) => Math.max((Math.hypot(x / KH[0], y / KH[1], z / KH[2]) - 1) * KH[1], y), {
-      r: [21, 22, 22, 23],
-      tex: (x, y, z) => (y > KEPT[1] - 0.05 && Math.hypot((x - KEPT[0]) / KH[0], (z - KEPT[2]) / KH[2]) < 0.8 ? 27 : undefined)
-    }, { res: 0.1 });
+    boat([SLIP, YB + 0.47, BOAT[1] + BOAT[3] - 1.25], [0.5, 0.42, 1.2], { r: [21, 22, 22, 23] }, { inside: [27, 28] });
     // the posts it stands on, wherever the ground has fallen away under it
     for (const dx of [-1, 1])
       for (const dz of [1, 0.2, -0.6]) {
@@ -499,8 +525,7 @@ module.exports = ({ makeBuilder, makeSculpt, KIT: K }) => ({
     BOXES.push([SLIP - 0.78, SLIP + 0.78, BOAT[1] + BOAT[3], slipDown]);
     // the dory hauled up beside it
     const DORY = [SLIP + 2.3, slipEnd - 2.5];
-    S.ball([DORY[0], height(DORY[0], DORY[1]) + 0.22, DORY[1]], [0.52, 0.34, 1.3], { r: [31, 32, 33, 26, 27] }, { res: 0.16, ax: B.frame(0.5, 0, 0.12) });
-    S.ball([DORY[0], height(DORY[0], DORY[1]) + 0.5, DORY[1]], [0.38, 0.08, 1.05], { r: [26, 27, 28] }, { res: 0.16, ax: B.frame(0.5, 0, 0.12) });
+    boat([DORY[0], height(DORY[0], DORY[1]) + 0.4, DORY[1]], [0.52, 0.42, 1.3], { r: [31, 32, 33, 26, 27] }, { inside: [26, 27], ax: B.frame(0.5, 0, 0.12) });
     ROUND.push([DORY[0] - 0.3, DORY[1] - 0.5, 0.65], [DORY[0] + 0.3, DORY[1] + 0.5, 0.65]);
     // what the tender left on the stones the other side of the slip: a case with a keg on it, two barrels, a sack of meal, a box
     const GOODS = [SLIP - 2.2, slipEnd - 3.3],
