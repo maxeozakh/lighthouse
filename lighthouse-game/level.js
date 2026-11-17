@@ -961,6 +961,9 @@ module.exports = ({ makeBuilder, makeSculpt, KIT: K }) => ({
       SEES = 9,
       HAS = 4.5,
       TWIST = 0.45,
+      BODY = 0.55, // the most her shoulders turn, either way (her hands stay where they are: more than this and they would not)
+      REACH = 2.1, // and the most her head does, shoulders and neck together: well over her shoulder
+      BEHIND = 2.75, // further round than this he is at her back
       hip = (sx, dy) => [SPAWN[0] + sx, SY + dy, SPAWN[1]];
     K.puppet(W, {
       parts: {
@@ -1002,12 +1005,17 @@ module.exports = ({ makeBuilder, makeSculpt, KIT: K }) => ({
         p.pose.wkhead = { rot: [0, wk.look * deg, 0] };
         // nor does she, and her tail keeps its own slow time. But she watches him come: with nobody near she looks a little
         // aside, as she was made (AWAY); from SEES off her head begins to come round to him, and is on him by the time he is at
-        // HAS. Her shoulders come a part of the way with it (TWIST of what her head has turned from where it rests), which is
-        // what can be seen of it from where the game looks. When she screams she is up and at him
-        const sees = sm((SEES - Math.hypot(pl.x - mer.x, pl.z - mer.z)) / (SEES - HAS));
-        mer.look += (AWAY + (glance(mer, MFA, 1.1) - AWAY) * sees - mer.look) * Math.min(1, dt * 2.5);
+        // HAS. Her shoulders come a part of the way with it (TWIST of what her head has turned from where it rests, and no
+        // more than BODY), which is what can be seen of it from where the game looks. When she screams she is up and at him
+        // He comes at her from the land, which is to one side of her and behind: so she looks a long way round, over her
+        // shoulder. Right at her back she cannot see him, and keeps looking over the shoulder she was already looking over
+        // (the landward one, if she had not turned yet), rather than swinging her head all the way about to the other
+        const sees = sm((SEES - Math.hypot(pl.x - mer.x, pl.z - mer.z)) / (SEES - HAS)),
+          round = glance(mer, MFA, Math.PI),
+          at = Math.abs(round) > BEHIND ? (mer.look > AWAY + 0.1 ? REACH : -REACH) : Math.max(-REACH, Math.min(REACH, round));
+        mer.look += (AWAY + (at - AWAY) * sees - mer.look) * Math.min(1, dt * 2.5);
         const sc = mer.scream,
-          twist = (mer.look - AWAY) * TWIST;
+          twist = Math.max(-BODY, Math.min(BODY, (mer.look - AWAY) * TWIST));
         p.pose.mm = { pos: [MF[0] * 0.3 * sc, 0.28 * sc, MF[2] * 0.3 * sc], stretch: 1 + 0.4 * sc + 0.012 * Math.sin(t * 1.1) };
         p.pose.mmtop = { rot: [0, twist * deg, 0] };
         p.pose.mmhead = { rot: [0, (mer.look - twist) * deg, 0], scale: 1 + 0.35 * sc };
