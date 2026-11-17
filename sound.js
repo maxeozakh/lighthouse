@@ -6,6 +6,8 @@
 //   Sound.wake()             the rest (the drone, the glass tones, the fog signal), which wait until he does something
 //   Sound.set({ sea, song, horn, mutter })   0..1 each: how near the water he is, how near her, the engine house, the old man
 //   Sound.step() .scream() .duck(level) .mute()
+//   Sound.volume({ all, music, rest })       0..1 each: how loud he has all of it, the music (the drone and the glass tones) and
+//                            everything that is not the music (they can be given before there is anything to hear)
 //   index.html?quiet: no sound at all. index.html?deaf: all of it runs, with the ears stopped (for trying when things begin)
 //   Sound.test({ secs, only })       renders it without playing it and measures how loud each second is (for checking levels)
 const Sound = (() => {
@@ -68,15 +70,22 @@ const Sound = (() => {
     const SONG = 0.3, // her voice at its nearest
       MUTTER = 0.34; // and his
     const master = gain(0.9),
+      all = gain(1), // how loud he has it (vol())
       door = gain(1), // (open() shuts it and lets it open slowly)
       limit = ctx.createDynamicsCompressor();
-    master.connect(door);
+    master.connect(all);
+    all.connect(door);
     door.connect(limit);
     limit.connect(ctx.destination);
-    const amb = gain(1, master), // the place
-      fx = gain(1, master); // what he and they do in it
-    // a big hollow room for the horn, the tones and the voice to ring in
+    // two things he can have louder or quieter, each by itself (vol()): the music, and all the rest
+    const world = gain(1, master),
+      music = gain(1, master),
+      amb = gain(1, world), // the place
+      fx = gain(1, world), // what he and they do in it
+      tune = gain(1, music); // the music: the drone and the glass tones (hushed when the place is: duck())
+    // a big hollow room for the horn and the voice to ring in, and one like it for the music
     const verb = ctx.createConvolver(),
+      verbM = ctx.createConvolver(),
       wet = gain(0.5, amb);
     {
       const n = sr * 3,
@@ -85,8 +94,9 @@ const Sound = (() => {
         const d = buf.getChannelData(c);
         for (let i = 0; i < n; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / n, 2.6);
       }
-      verb.buffer = buf;
+      verb.buffer = verbM.buffer = buf;
       verb.connect(wet);
+      verbM.connect(gain(0.5, tune));
     }
     const white = noise(false),
       brown = noise(true);
@@ -116,9 +126,9 @@ const Sound = (() => {
     const rainG = gain(0.014, amb);
     loop(white, filter('highpass', 5000, 0.5, rainG));
     // the drone: two low reeds a hair apart, the fifth above, and something under them felt more than heard
-    const droneG = gain(0, amb),
+    const droneG = gain(0, tune),
       droneF = filter('lowpass', 240, 3, droneG);
-    droneG.connect(verb);
+    droneG.connect(verbM);
     osc('sawtooth', 73.42, droneF).detune.value = -5;
     osc('sawtooth', 73.42, droneF).detune.value = 6;
     osc('sawtooth', 110, gain(0.4, droneF));
@@ -128,9 +138,9 @@ const Sound = (() => {
     // a tone as from a wet finger round a glass: it swells, holds and goes
     const bow = (when, f, len, level) => {
       len = len || 9;
-      const g = gain(0, amb),
+      const g = gain(0, tune),
         end = when + len + 0.1;
-      g.connect(verb);
+      g.connect(verbM);
       g.gain.setValueAtTime(0, when);
       g.gain.linearRampToValueAtTime(level || 0.024, when + len * 0.4);
       g.gain.linearRampToValueAtTime(0, when + len);
@@ -395,11 +405,16 @@ const Sound = (() => {
           mutAir.frequency.setTargetAtTime(650 * Math.pow(3.4, Math.sqrt(o.mutter)), t, 0.25);
         }
       },
-      duck: (v, tc) => amb.gain.setTargetAtTime(v, now(), tc || 0.3),
+      duck: (v, tc) => [amb, tune].forEach(b => b.gain.setTargetAtTime(v, now(), tc || 0.3)),
+      vol: o => {
+        all.gain.setTargetAtTime(o.all, now(), 0.05);
+        music.gain.setTargetAtTime(o.music, now(), 0.05);
+        world.gain.setTargetAtTime(o.rest, now(), 0.05);
+      },
       mute: m => master.gain.setTargetAtTime(m ? 0 : 0.9, now(), 0.05),
       // for the test: silence what runs all the time, leaving one thing to be heard alone
       hush: () => [windG, whisG, seaG, washG, rainG, droneG].forEach(g => g.disconnect()),
-      peek: () => ({ door: +door.gain.value.toFixed(3), drone: +droneG.gain.value.toFixed(4), master: +master.gain.value.toFixed(3) })
+      peek: () => ({ door: +door.gain.value.toFixed(3), drone: +droneG.gain.value.toFixed(4), master: +master.gain.value.toFixed(3), all: +all.gain.value.toFixed(3), music: +music.gain.value.toFixed(3), rest: +world.gain.value.toFixed(3) })
     };
   }
 
@@ -414,6 +429,7 @@ const Sound = (() => {
   let ac = null,
     g = null,
     muted = false,
+    vols = { all: 1, music: 1, rest: 1 },
     woken = false,
     hornK = 0.5,
     song = 0,
@@ -436,6 +452,7 @@ const Sound = (() => {
     if (!AC || /[?&]quiet\b/.test(location.search)) return; // index.html?quiet: no sound at all (for trying things without the horn going)
     ac = new AC();
     g = make(ac);
+    g.vol(vols);
     g.open(ac.currentTime); // (a context that is held back stands at this moment until it is let go: so it opens from there)
     if (/[?&]deaf\b/.test(location.search)) g.mute((muted = true));
     if (document.hidden) {
@@ -518,6 +535,10 @@ const Sound = (() => {
     step: () => g && g.step(),
     scream: () => g && g.scream(),
     duck: (v, tc) => g && g.duck(v, tc),
+    volume: o => {
+      Object.assign(vols, o);
+      if (g) g.vol(vols);
+    },
     mute: () => {
       muted = !muted;
       if (g) g.mute(muted);

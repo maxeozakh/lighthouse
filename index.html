@@ -83,6 +83,32 @@ SOFTWARE.
   #day { position: absolute; left: 3.2%; top: 2.6%; font-size: 0.8em; letter-spacing: 0.14em; color: #e4e5df; text-shadow: 0 0 6px #000, 0 1px 2px #000; }
   #dead { position: fixed; inset: 0; display: grid; place-items: center; background: #000; text-align: center; opacity: 0; pointer-events: none; transition: opacity 0.5s; }
   #dead.on { opacity: 1; }
+  /* the ledger: laid over everything by Esc. How loud he has it, a line for each thing and ten steps to a line; and who made
+     what. (Under a thumb, where nothing else of the page is let move, it can be drawn up and down if it is longer than the
+     screen: all of it but the steps, which are dragged along) */
+  #menu { position: fixed; inset: 0; display: flex; overflow-y: auto; background: rgba(0, 0, 0, 0.86); color: #8b8c87; letter-spacing: 0.05em; line-height: 1.5; opacity: 0; visibility: hidden; pointer-events: none; transition: opacity 0.3s ease, visibility 0s 0.3s; user-select: none; -webkit-user-select: none; }
+  #menu.on { opacity: 1; visibility: visible; pointer-events: auto; transition: opacity 0.3s ease; }
+  #menu .in { box-sizing: border-box; flex: none; width: min(25em, 100vw); margin: auto; padding: 1.5em 1.2em; } /* (in the middle; and from the top, where it is longer than the screen) */
+  #menu b { color: #d9dad4; font-weight: normal; }
+  #menu .vol { display: flex; align-items: center; justify-content: space-between; min-height: 2.3em; }
+  #menu .vol.sel .name { color: #e4e5df; }
+  body.touch #menu .vol.sel .name { color: inherit; }
+  #menu .pips { display: flex; padding: 0.55em 0 0.55em 1.4em; cursor: pointer; touch-action: none; }
+  #menu .pips i { width: 0.6em; height: 1.05em; margin-left: 0.24em; background: #2e2f2b; }
+  #menu .pips i.on { background: #d9dad4; }
+  #menu .ears .name, #back { cursor: pointer; }
+  #menu .ears .name, body.touch #menu .ears.sel .name { color: #d9dad4; border-bottom: 1px dotted #8b8c87; }
+  #menu .by { margin: 1.7em 0 0; font-size: 0.86em; line-height: 1.8; }
+  #menu .by span { display: block; }
+  #menu a { color: #d9dad4; text-decoration: none; border-bottom: 1px dotted #8b8c87; }
+  #menu a:hover { color: #fff; }
+  #back { margin-top: 1.9em; font-size: 0.86em; }
+  body.touch #back b { display: none; }
+  body.touch #back { color: #d9dad4; display: inline-block; border-bottom: 1px dotted #8b8c87; }
+  body.touch #menu .vol { min-height: 2.8em; }
+  body.touch #menu .pips { padding-top: 0.85em; padding-bottom: 0.85em; }
+  body.touch #menu, body.touch #menu * { touch-action: pan-y; }
+  body.touch #menu .pips, body.touch #menu .pips * { touch-action: none; }
   /* a phone: the row of hints says what a thumb does instead of what the keys do, and has two things to press that turn the
      view. Where a thumb is put down and dragged, a ring shows, and in it which way he is being sent */
   #hud .thumbs, #pad, #stick { display: none; }
@@ -110,11 +136,26 @@ SOFTWARE.
 <div id="ui">
   <div id="day"></div>
 </div>
-<div id="hud"><span class="keys"><span data-h="roam"><b>WASD</b> or arrows roam the rock</span><span data-h="soft"><b>Shift</b> tread soft</span><span data-h="look"><b>Q</b> / <b>E</b> look about ye</span><span data-h="zoom">wheel peer close</span><span data-h="smoke"><b>C</b> have a smoke</span><span data-h="ears"><b>M</b> <span class="snd">stop yer ears</span></span></span><span class="thumbs"><span data-h="roam"><b>drag</b> roam the rock</span><span data-h="soft"><b>drag a little</b> tread soft</span><span data-h="look"><img class="bend" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABgAAAAYCAYAAADgdz34AAAApUlEQVR42u2V6wnAIAyE3cMB3MD/DuIiLuIgTuFUlhMCqa2p9gGlNHAUA3dffECV+nyllErOuTwWTmohWJMuhxNA0qXwGGPx3tfvHgz9YcheOGStrRDea3W4m174jLoQHno2nGsDCCFMBzvnxgEEkQKNMTCuzLgX+LgXg4oXTS+Gm9DrDUWQYUA7nbTtdvopAJXWup73YwCpfsA7Abf/NwBQf722FvYbCRRuRVuTAAAAAElFTkSuQmCC" width="24" height="24" alt="" draggable="false"><img class="bend" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABgAAAAYCAYAAADgdz34AAAAqElEQVR42u2T0Q2AIAwF3YMB2IB/BmERFmEQpmAqzDNpUrEileiPNnkxIfUOpC7LZ6uUUnPOdRpCkeCUabgULlBLAEgpiVCshxC2p1pCILwsBRDAnXO7tSHJFbyXIckdcCvhsmGB914tijEeBbQDBA0IvnfTVq21XYEIlwSAnzXTFFEvTVZ3griAn6J3XyennBfgXowxup9LI7hVv2CoHhfwehT+16u1AnwsCRR8lNaoAAAAAElFTkSuQmCC" width="24" height="24" alt="" draggable="false"> look about ye</span><span data-h="zoom"><b>pinch</b> peer close</span><span data-h="smoke"><img class="bend" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABgAAAAYCAYAAADgdz34AAAAvElEQVR42uWU0QnGIAyEu4cDuIHvDuIiLuIgTuFU+bkfroTSopbkqUJeKtxn7tIcxyfPGENQvXdxFWe5QCDcWpNaqz2glHKKs8whAGiIuUUEmNsEQQ2AXS7WuIgTEGOUlNIfEEKQrfme+Yl7vn7Zf7aM2SaIsLsX6nBzzrLlqy4N093BHlq0HdxT6bWArrYCXgEwXFjCHJjFUg4MbQa4fnv1J/NVM4DJLgKM3d3Zab6Lrla6bVNMkpv4t84PakKLLEizLUgAAAAASUVORK5CYII=" width="24" height="24" alt="" draggable="false"> have a smoke</span><span class="snd tap">stop yer ears</span></span></div>
+<div id="hud"><span class="keys"><span data-h="roam"><b>WASD</b> or arrows roam the rock</span><span data-h="soft"><b>Shift</b> tread soft</span><span data-h="look"><b>Q</b> / <b>E</b> look about ye</span><span data-h="zoom">wheel peer close</span><span data-h="smoke"><b>C</b> have a smoke</span><span data-h="ears"><b>M</b> <span class="snd">stop yer ears</span></span><span data-h="book"><b>Esc</b> the ledger</span></span><span class="thumbs"><span data-h="roam"><b>drag</b> roam the rock</span><span data-h="soft"><b>drag a little</b> tread soft</span><span data-h="look"><img class="bend" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABgAAAAYCAYAAADgdz34AAAApUlEQVR42u2V6wnAIAyE3cMB3MD/DuIiLuIgTuFUlhMCqa2p9gGlNHAUA3dffECV+nyllErOuTwWTmohWJMuhxNA0qXwGGPx3tfvHgz9YcheOGStrRDea3W4m174jLoQHno2nGsDCCFMBzvnxgEEkQKNMTCuzLgX+LgXg4oXTS+Gm9DrDUWQYUA7nbTtdvopAJXWup73YwCpfsA7Abf/NwBQf722FvYbCRRuRVuTAAAAAElFTkSuQmCC" width="24" height="24" alt="" draggable="false"><img class="bend" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABgAAAAYCAYAAADgdz34AAAAqElEQVR42u2T0Q2AIAwF3YMB2IB/BmERFmEQpmAqzDNpUrEileiPNnkxIfUOpC7LZ6uUUnPOdRpCkeCUabgULlBLAEgpiVCshxC2p1pCILwsBRDAnXO7tSHJFbyXIckdcCvhsmGB914tijEeBbQDBA0IvnfTVq21XYEIlwSAnzXTFFEvTVZ3griAn6J3XyennBfgXowxup9LI7hVv2CoHhfwehT+16u1AnwsCRR8lNaoAAAAAElFTkSuQmCC" width="24" height="24" alt="" draggable="false"> look about ye</span><span data-h="zoom"><b>pinch</b> peer close</span><span data-h="smoke"><img class="bend" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABgAAAAYCAYAAADgdz34AAAAvElEQVR42uWU0QnGIAyEu4cDuIHvDuIiLuIgTuFU+bkfroTSopbkqUJeKtxn7tIcxyfPGENQvXdxFWe5QCDcWpNaqz2glHKKs8whAGiIuUUEmNsEQQ2AXS7WuIgTEGOUlNIfEEKQrfme+Yl7vn7Zf7aM2SaIsLsX6nBzzrLlqy4N093BHlq0HdxT6bWArrYCXgEwXFjCHJjFUg4MbQa4fnv1J/NVM4DJLgKM3d3Zab6Lrla6bVNMkpv4t84PakKLLEizLUgAAAAASUVORK5CYII=" width="24" height="24" alt="" draggable="false"> have a smoke</span><span><span class="snd tap">stop yer ears</span></span><span><span class="book tap">the ledger</span></span></span></div>
 <div id="pad"><button id="turnL" aria-label="look about ye, to the left"><img class="bend" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABgAAAAYCAYAAADgdz34AAAApUlEQVR42u2V6wnAIAyE3cMB3MD/DuIiLuIgTuFUlhMCqa2p9gGlNHAUA3dffECV+nyllErOuTwWTmohWJMuhxNA0qXwGGPx3tfvHgz9YcheOGStrRDea3W4m174jLoQHno2nGsDCCFMBzvnxgEEkQKNMTCuzLgX+LgXg4oXTS+Gm9DrDUWQYUA7nbTtdvopAJXWup73YwCpfsA7Abf/NwBQf722FvYbCRRuRVuTAAAAAElFTkSuQmCC" width="24" height="24" alt="" draggable="false"></button><button id="turnR" aria-label="look about ye, to the right"><img class="bend" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABgAAAAYCAYAAADgdz34AAAAqElEQVR42u2T0Q2AIAwF3YMB2IB/BmERFmEQpmAqzDNpUrEileiPNnkxIfUOpC7LZ6uUUnPOdRpCkeCUabgULlBLAEgpiVCshxC2p1pCILwsBRDAnXO7tSHJFbyXIckdcCvhsmGB914tijEeBbQDBA0IvnfTVq21XYEIlwSAnzXTFFEvTVZ3griAn6J3XyennBfgXowxup9LI7hVv2CoHhfwehT+16u1AnwsCRR8lNaoAAAAAElFTkSuQmCC" width="24" height="24" alt="" draggable="false"></button><button id="light" aria-label="have a smoke"><img class="bend" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABgAAAAYCAYAAADgdz34AAAAvElEQVR42uWU0QnGIAyEu4cDuIHvDuIiLuIgTuFU+bkfroTSopbkqUJeKtxn7tIcxyfPGENQvXdxFWe5QCDcWpNaqz2glHKKs8whAGiIuUUEmNsEQQ2AXS7WuIgTEGOUlNIfEEKQrfme+Yl7vn7Zf7aM2SaIsLsX6nBzzrLlqy4N093BHlq0HdxT6bWArrYCXgEwXFjCHJjFUg4MbQa4fnv1J/NVM4DJLgKM3d3Zab6Lrla6bVNMkpv4t84PakKLLEizLUgAAAAASUVORK5CYII=" width="24" height="24" alt="" draggable="false"></button></div>
 <div id="stick"><i></i></div>
 <div id="fps"></div>
 <div id="dead"><p id="lived"></p></div>
+<div id="menu" aria-hidden="true"><div class="in">
+<div class="vol" data-v="all"><span class="name">all of it</span><span class="pips"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></span></div>
+<div class="vol" data-v="music"><span class="name">the music</span><span class="pips"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></span></div>
+<div class="vol" data-v="rest"><span class="name">wind, sea and voices</span><span class="pips"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></span></div>
+<div class="vol ears"><span class="name snd">stop yer ears</span></div>
+<p class="by">
+<span>made by <a href="https://mxz.sh/" target="_blank" rel="noopener">maxeo</a></span>
+<span>drawn with <a href="https://github.com/siliconjungle/shapeshift-labs-ink-studio" target="_blank" rel="noopener">ink-studio</a>, by James Addison</span>
+<span>set in <a href="https://www.redaction.us/" target="_blank" rel="noopener">Redaction</a>, by Forest Young and Jeremy Mickel</span>
+<span>after <i>The Lighthouse</i> (2019), a film by Robert Eggers</span>
+<span>(unofficial: no one from the film had a hand in it)</span>
+<span><a href="changelog.html" target="_blank" rel="noopener">the log</a> · <a href="licenses.txt" target="_blank" rel="noopener">the licences</a></span>
+</p>
+<div id="back"><b>Esc</b> back to the rock</div>
+</div></div>
 <div id="veil"></div>
 <script>
 /* Fixed-grid, palette-aware resolve using coverage and cluster voting.
@@ -26734,6 +26775,8 @@ module.exports = ({ makeBuilder, makeSculpt, KIT: K }) => ({
 //   Sound.wake()             the rest (the drone, the glass tones, the fog signal), which wait until he does something
 //   Sound.set({ sea, song, horn, mutter })   0..1 each: how near the water he is, how near her, the engine house, the old man
 //   Sound.step() .scream() .duck(level) .mute()
+//   Sound.volume({ all, music, rest })       0..1 each: how loud he has all of it, the music (the drone and the glass tones) and
+//                            everything that is not the music (they can be given before there is anything to hear)
 //   index.html?quiet: no sound at all. index.html?deaf: all of it runs, with the ears stopped (for trying when things begin)
 //   Sound.test({ secs, only })       renders it without playing it and measures how loud each second is (for checking levels)
 const Sound = (() => {
@@ -26796,15 +26839,22 @@ const Sound = (() => {
     const SONG = 0.3, // her voice at its nearest
       MUTTER = 0.34; // and his
     const master = gain(0.9),
+      all = gain(1), // how loud he has it (vol())
       door = gain(1), // (open() shuts it and lets it open slowly)
       limit = ctx.createDynamicsCompressor();
-    master.connect(door);
+    master.connect(all);
+    all.connect(door);
     door.connect(limit);
     limit.connect(ctx.destination);
-    const amb = gain(1, master), // the place
-      fx = gain(1, master); // what he and they do in it
-    // a big hollow room for the horn, the tones and the voice to ring in
+    // two things he can have louder or quieter, each by itself (vol()): the music, and all the rest
+    const world = gain(1, master),
+      music = gain(1, master),
+      amb = gain(1, world), // the place
+      fx = gain(1, world), // what he and they do in it
+      tune = gain(1, music); // the music: the drone and the glass tones (hushed when the place is: duck())
+    // a big hollow room for the horn and the voice to ring in, and one like it for the music
     const verb = ctx.createConvolver(),
+      verbM = ctx.createConvolver(),
       wet = gain(0.5, amb);
     {
       const n = sr * 3,
@@ -26813,8 +26863,9 @@ const Sound = (() => {
         const d = buf.getChannelData(c);
         for (let i = 0; i < n; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / n, 2.6);
       }
-      verb.buffer = buf;
+      verb.buffer = verbM.buffer = buf;
       verb.connect(wet);
+      verbM.connect(gain(0.5, tune));
     }
     const white = noise(false),
       brown = noise(true);
@@ -26844,9 +26895,9 @@ const Sound = (() => {
     const rainG = gain(0.014, amb);
     loop(white, filter('highpass', 5000, 0.5, rainG));
     // the drone: two low reeds a hair apart, the fifth above, and something under them felt more than heard
-    const droneG = gain(0, amb),
+    const droneG = gain(0, tune),
       droneF = filter('lowpass', 240, 3, droneG);
-    droneG.connect(verb);
+    droneG.connect(verbM);
     osc('sawtooth', 73.42, droneF).detune.value = -5;
     osc('sawtooth', 73.42, droneF).detune.value = 6;
     osc('sawtooth', 110, gain(0.4, droneF));
@@ -26856,9 +26907,9 @@ const Sound = (() => {
     // a tone as from a wet finger round a glass: it swells, holds and goes
     const bow = (when, f, len, level) => {
       len = len || 9;
-      const g = gain(0, amb),
+      const g = gain(0, tune),
         end = when + len + 0.1;
-      g.connect(verb);
+      g.connect(verbM);
       g.gain.setValueAtTime(0, when);
       g.gain.linearRampToValueAtTime(level || 0.024, when + len * 0.4);
       g.gain.linearRampToValueAtTime(0, when + len);
@@ -27123,11 +27174,16 @@ const Sound = (() => {
           mutAir.frequency.setTargetAtTime(650 * Math.pow(3.4, Math.sqrt(o.mutter)), t, 0.25);
         }
       },
-      duck: (v, tc) => amb.gain.setTargetAtTime(v, now(), tc || 0.3),
+      duck: (v, tc) => [amb, tune].forEach(b => b.gain.setTargetAtTime(v, now(), tc || 0.3)),
+      vol: o => {
+        all.gain.setTargetAtTime(o.all, now(), 0.05);
+        music.gain.setTargetAtTime(o.music, now(), 0.05);
+        world.gain.setTargetAtTime(o.rest, now(), 0.05);
+      },
       mute: m => master.gain.setTargetAtTime(m ? 0 : 0.9, now(), 0.05),
       // for the test: silence what runs all the time, leaving one thing to be heard alone
       hush: () => [windG, whisG, seaG, washG, rainG, droneG].forEach(g => g.disconnect()),
-      peek: () => ({ door: +door.gain.value.toFixed(3), drone: +droneG.gain.value.toFixed(4), master: +master.gain.value.toFixed(3) })
+      peek: () => ({ door: +door.gain.value.toFixed(3), drone: +droneG.gain.value.toFixed(4), master: +master.gain.value.toFixed(3), all: +all.gain.value.toFixed(3), music: +music.gain.value.toFixed(3), rest: +world.gain.value.toFixed(3) })
     };
   }
 
@@ -27142,6 +27198,7 @@ const Sound = (() => {
   let ac = null,
     g = null,
     muted = false,
+    vols = { all: 1, music: 1, rest: 1 },
     woken = false,
     hornK = 0.5,
     song = 0,
@@ -27164,6 +27221,7 @@ const Sound = (() => {
     if (!AC || /[?&]quiet\b/.test(location.search)) return; // index.html?quiet: no sound at all (for trying things without the horn going)
     ac = new AC();
     g = make(ac);
+    g.vol(vols);
     g.open(ac.currentTime); // (a context that is held back stands at this moment until it is let go: so it opens from there)
     if (/[?&]deaf\b/.test(location.search)) g.mute((muted = true));
     if (document.hidden) {
@@ -27246,6 +27304,10 @@ const Sound = (() => {
     step: () => g && g.step(),
     scream: () => g && g.scream(),
     duck: (v, tc) => g && g.duck(v, tc),
+    volume: o => {
+      Object.assign(vols, o);
+      if (g) g.vol(vols);
+    },
     mute: () => {
       muted = !muted;
       if (g) g.mute(muted);
@@ -27337,6 +27399,60 @@ const Sound = (() => {
       for (const el of document.querySelectorAll('#hud [data-h="' + h + '"]')) el.remove();
     }
   } catch (e) {}
+  // the ledger: laid over the picture by Esc (under a thumb, by pressing its name in the row of hints) and put away the same
+  // way. In it, how loud he has it: all of it, the music, and what is not the music, each in so many steps (STEPS: all of them
+  // is as loud as it was made); his ears, to stop or unstop; and who made what. What he sets the browser keeps (VOLS). While
+  // it is open he stands where he is, and the days go by as they do
+  const VOLS = 'wickie.sound',
+    STEPS = 10,
+    vol = { all: STEPS, music: STEPS, rest: STEPS },
+    lines = [...document.querySelectorAll('#menu .vol')]; // (the three of them, and under them the one for his ears)
+  let open = false, line = 0;
+  try {
+    const kept = (localStorage.getItem(VOLS) || '').split(' ').map(Number),
+      names = Object.keys(vol);
+    if (kept.length === names.length && kept.every(v => Number.isInteger(v) && v >= 0 && v <= STEPS)) names.forEach((k, i) => (vol[k] = kept[i]));
+  } catch (e) {}
+  // (a step is heard as a step: the level goes as the square of how far along he has it)
+  const loud = () => Sound.volume({ all: (vol.all / STEPS) ** 2, music: (vol.music / STEPS) ** 2, rest: (vol.rest / STEPS) ** 2 }),
+    paint = () =>
+      lines.forEach((el, i) => {
+        el.classList.toggle('sel', i === line);
+        const v = vol[el.dataset.v];
+        [...el.querySelectorAll('.pips i')].forEach((p, n) => p.classList.toggle('on', n < v));
+      }),
+    turnTo = (k, v) => {
+      v = Math.max(0, Math.min(STEPS, v));
+      if (v === vol[k]) return;
+      vol[k] = v;
+      loud();
+      paint();
+      try {
+        localStorage.setItem(VOLS, Object.values(vol).join(' '));
+      } catch (e) {}
+    };
+  function book(on) {
+    open = on;
+    $('menu').classList.toggle('on', on);
+    $('menu').setAttribute('aria-hidden', String(!on));
+    if (!on) return;
+    learn('book');
+    keys.clear();
+    ptr = held = null;
+    drop();
+    paint();
+  }
+  // the keys, while it is open: up and down among its lines, left and right to turn the one he is on down or up
+  function leaf(c) {
+    const el = lines[line],
+      k = el.dataset.v,
+      by = c === 'ArrowLeft' || c === 'KeyA' ? -1 : c === 'ArrowRight' || c === 'KeyD' ? 1 : 0;
+    if (c === 'ArrowUp' || c === 'KeyW') line = (line + lines.length - 1) % lines.length;
+    else if (c === 'ArrowDown' || c === 'KeyS') line = (line + 1) % lines.length;
+    else if (k && by) turnTo(k, vol[k] + by);
+    else if (!k && (by || c === 'Enter' || c === 'Space')) ears();
+    paint();
+  }
   let softAt = 0; // when a thumb began sending him softly (0: it is not)
   const mem = { deaths: 0 },
     // the old man talks to himself. How much of it is heard: none from six paces, all of it at his elbow
@@ -27386,6 +27502,7 @@ const Sound = (() => {
     }
     $('ui').style.fontSize = Math.max(14, Math.round(h / 31)) + 'px';
     $('hud').style.fontSize = Math.max(13, Math.round(h / 58)) + 'px';
+    $('menu').style.fontSize = Math.max(14, Math.min(22, Math.round(h / 46))) + 'px';
     if (TOUCH) {
       // the two that turn the view: in a row under the picture where there is room for one, or else one at either side of it
       // (they are drawn in pixels as big as the picture's own, as near as a thumb can do with)
@@ -27423,7 +27540,7 @@ const Sound = (() => {
     W.anim.update(0, 0);
     yaw = yawTo = W.cam.yaw;
     cam = [G.pl.x, G.pl.y + 1.6, G.pl.z];
-    window.wickie = { W, G, keys, mem, die, wish, hours, songAt, mutterAt, days: v => (v === undefined ? clock : (clock = v)), state: () => ({ mode, indoors, duskAt, dawnAt, lamp, late, touch: TOUCH, quality, soft, stick: !!stick, zoomTo, yawTo, held }) }; // for poking at from the console
+    window.wickie = { W, G, keys, mem, die, wish, hours, songAt, mutterAt, days: v => (v === undefined ? clock : (clock = v)), book, state: () => ({ book: open, vol, mode, indoors, duskAt, dawnAt, lamp, late, touch: TOUCH, quality, soft, stick: !!stick, zoomTo, yawTo, held }) }; // for poking at from the console
   }
 
   // which way he is asked to go, across the ground, from the keys or from where the pointer is held.
@@ -27586,7 +27703,7 @@ const Sound = (() => {
     let look = [pl.x, pl.y + 1.6, pl.z],
       close = 1;
     if (mode === 'play') {
-      const [mx, mz] = wish();
+      const [mx, mz] = open ? [0, 0] : wish();
       G.step(dt, mx, mz, keys.has('ShiftLeft') || keys.has('ShiftRight') || soft);
       // (every drag begins as a little one: it is treading soft only if he is kept at it a while)
       if (!soft) softAt = 0;
@@ -27655,6 +27772,12 @@ const Sound = (() => {
       learn('ears'); // (the row stops saying it as it was: what it says is not changed as it goes out)
       ears();
     }
+    if (c === 'Escape' && once) book(!open);
+    if (open) {
+      if (once || c.startsWith('Arrow')) leaf(c);
+      if (c.startsWith('Arrow') || c === 'Space') ev.preventDefault();
+      return;
+    }
     if (c === 'KeyC' && once) light();
     if (mode === 'play' && once) {
       if (c === 'KeyQ') yawTo += Math.PI / 2;
@@ -27717,7 +27840,7 @@ const Sound = (() => {
   document.addEventListener('pointerdown', ev => {
     if (ev.target.closest && ev.target.closest('.tap')) Sound.start();
     else Sound.wake();
-    if (ev.pointerType === 'mouse' || mode !== 'play' || (ev.target.closest && ev.target.closest('button, .tap'))) return;
+    if (ev.pointerType === 'mouse' || mode !== 'play' || open || (ev.target.closest && ev.target.closest('button, .tap, #menu'))) return;
     fingers.set(ev.pointerId, { x: ev.clientX, y: ev.clientY });
     // the first finger down is the stick; a second with it and the two are for bringing the picture nearer, and he stands
     stick = fingers.size === 1 ? { id: ev.pointerId, x0: ev.clientX, y0: ev.clientY, x: ev.clientX, y: ev.clientY } : null;
@@ -27755,16 +27878,42 @@ const Sound = (() => {
       learn('look');
     });
   $('light').addEventListener('pointerdown', light);
-  for (const el of document.querySelectorAll('.tap')) el.addEventListener('click', ears);
+  for (const el of document.querySelectorAll('.snd.tap, #menu .ears')) el.addEventListener('click', ears);
+  for (const el of document.querySelectorAll('.book.tap')) el.addEventListener('click', () => book(true));
+  $('back').addEventListener('click', () => book(false));
+  // a line of the ledger, pressed or dragged along: it is turned to where the pointer is (left of the first step: to nothing)
+  lines.forEach((el, i) => {
+    const pips = el.querySelector('.pips');
+    if (!pips) return;
+    const at = ev => {
+      const all = pips.querySelectorAll('i'),
+        l = all[0].getBoundingClientRect().left,
+        r = all[all.length - 1].getBoundingClientRect().right;
+      line = i;
+      turnTo(el.dataset.v, Math.ceil(((ev.clientX - l) / (r - l)) * STEPS));
+      paint();
+    };
+    let drag = null;
+    pips.addEventListener('pointerdown', ev => {
+      drag = ev.pointerId;
+      try {
+        pips.setPointerCapture(drag); // (so that it goes on being dragged when the pointer is off the line)
+      } catch (e) {}
+      at(ev);
+    });
+    pips.addEventListener('pointermove', ev => ev.pointerId === drag && at(ev));
+    for (const type of ['pointerup', 'pointercancel']) pips.addEventListener(type, () => (drag = null));
+  });
   if (TOUCH) {
     // nothing of the page itself moves under a finger: no scrolling, no zooming, no menu on a long press
     for (const type of ['gesturestart', 'gesturechange', 'dblclick', 'contextmenu']) document.addEventListener(type, ev => ev.preventDefault());
-    document.addEventListener('touchmove', ev => ev.preventDefault(), { passive: false });
+    document.addEventListener('touchmove', ev => (ev.target.closest && ev.target.closest('#menu') && !ev.target.closest('.pips')) || ev.preventDefault(), { passive: false }); // (but the ledger, where it is longer than the screen, can be drawn up and down)
     addEventListener('orientationchange', () => setTimeout(layout, 250));
   }
   addEventListener(
     'wheel',
     ev => {
+      if (open) return;
       ev.preventDefault();
       Sound.wake();
       zoomTo = Math.max(0.45, Math.min(2.2, zoomTo * Math.exp(-ev.deltaY * 0.0015)));
@@ -27775,6 +27924,8 @@ const Sound = (() => {
   addEventListener('resize', layout);
 
   layout();
+  loud();
+  paint();
   Sound.start(); // the weather, at once: or as soon as the browser lets a page be heard
   setTimeout(() => {
     build();

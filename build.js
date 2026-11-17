@@ -115,6 +115,32 @@ ${mit}
   #day { position: absolute; left: 3.2%; top: 2.6%; font-size: 0.8em; letter-spacing: 0.14em; color: #e4e5df; text-shadow: 0 0 6px #000, 0 1px 2px #000; }
   #dead { position: fixed; inset: 0; display: grid; place-items: center; background: #000; text-align: center; opacity: 0; pointer-events: none; transition: opacity 0.5s; }
   #dead.on { opacity: 1; }
+  /* the ledger: laid over everything by Esc. How loud he has it, a line for each thing and ten steps to a line; and who made
+     what. (Under a thumb, where nothing else of the page is let move, it can be drawn up and down if it is longer than the
+     screen: all of it but the steps, which are dragged along) */
+  #menu { position: fixed; inset: 0; display: flex; overflow-y: auto; background: rgba(0, 0, 0, 0.86); color: #8b8c87; letter-spacing: 0.05em; line-height: 1.5; opacity: 0; visibility: hidden; pointer-events: none; transition: opacity 0.3s ease, visibility 0s 0.3s; user-select: none; -webkit-user-select: none; }
+  #menu.on { opacity: 1; visibility: visible; pointer-events: auto; transition: opacity 0.3s ease; }
+  #menu .in { box-sizing: border-box; flex: none; width: min(25em, 100vw); margin: auto; padding: 1.5em 1.2em; } /* (in the middle; and from the top, where it is longer than the screen) */
+  #menu b { color: #d9dad4; font-weight: normal; }
+  #menu .vol { display: flex; align-items: center; justify-content: space-between; min-height: 2.3em; }
+  #menu .vol.sel .name { color: #e4e5df; }
+  body.touch #menu .vol.sel .name { color: inherit; }
+  #menu .pips { display: flex; padding: 0.55em 0 0.55em 1.4em; cursor: pointer; touch-action: none; }
+  #menu .pips i { width: 0.6em; height: 1.05em; margin-left: 0.24em; background: #2e2f2b; }
+  #menu .pips i.on { background: #d9dad4; }
+  #menu .ears .name, #back { cursor: pointer; }
+  #menu .ears .name, body.touch #menu .ears.sel .name { color: #d9dad4; border-bottom: 1px dotted #8b8c87; }
+  #menu .by { margin: 1.7em 0 0; font-size: 0.86em; line-height: 1.8; }
+  #menu .by span { display: block; }
+  #menu a { color: #d9dad4; text-decoration: none; border-bottom: 1px dotted #8b8c87; }
+  #menu a:hover { color: #fff; }
+  #back { margin-top: 1.9em; font-size: 0.86em; }
+  body.touch #back b { display: none; }
+  body.touch #back { color: #d9dad4; display: inline-block; border-bottom: 1px dotted #8b8c87; }
+  body.touch #menu .vol { min-height: 2.8em; }
+  body.touch #menu .pips { padding-top: 0.85em; padding-bottom: 0.85em; }
+  body.touch #menu, body.touch #menu * { touch-action: pan-y; }
+  body.touch #menu .pips, body.touch #menu .pips * { touch-action: none; }
   /* a phone: the row of hints says what a thumb does instead of what the keys do, and has two things to press that turn the
      view. Where a thumb is put down and dragged, a ring shows, and in it which way he is being sent */
   #hud .thumbs, #pad, #stick { display: none; }
@@ -142,11 +168,26 @@ ${mit}
 <div id="ui">
   <div id="day"></div>
 </div>
-<div id="hud"><span class="keys"><span data-h="roam"><b>WASD</b> or arrows roam the rock</span><span data-h="soft"><b>Shift</b> tread soft</span><span data-h="look"><b>Q</b> / <b>E</b> look about ye</span><span data-h="zoom">wheel peer close</span><span data-h="smoke"><b>C</b> have a smoke</span><span data-h="ears"><b>M</b> <span class="snd">stop yer ears</span></span></span><span class="thumbs"><span data-h="roam"><b>drag</b> roam the rock</span><span data-h="soft"><b>drag a little</b> tread soft</span><span data-h="look">${bend(-1)}${bend(1)} look about ye</span><span data-h="zoom"><b>pinch</b> peer close</span><span data-h="smoke">${bend(0)} have a smoke</span><span class="snd tap">stop yer ears</span></span></div>
+<div id="hud"><span class="keys"><span data-h="roam"><b>WASD</b> or arrows roam the rock</span><span data-h="soft"><b>Shift</b> tread soft</span><span data-h="look"><b>Q</b> / <b>E</b> look about ye</span><span data-h="zoom">wheel peer close</span><span data-h="smoke"><b>C</b> have a smoke</span><span data-h="ears"><b>M</b> <span class="snd">stop yer ears</span></span><span data-h="book"><b>Esc</b> the ledger</span></span><span class="thumbs"><span data-h="roam"><b>drag</b> roam the rock</span><span data-h="soft"><b>drag a little</b> tread soft</span><span data-h="look">${bend(-1)}${bend(1)} look about ye</span><span data-h="zoom"><b>pinch</b> peer close</span><span data-h="smoke">${bend(0)} have a smoke</span><span><span class="snd tap">stop yer ears</span></span><span><span class="book tap">the ledger</span></span></span></div>
 <div id="pad"><button id="turnL" aria-label="look about ye, to the left">${bend(-1)}</button><button id="turnR" aria-label="look about ye, to the right">${bend(1)}</button><button id="light" aria-label="have a smoke">${bend(0)}</button></div>
 <div id="stick"><i></i></div>
 <div id="fps"></div>
 <div id="dead"><p id="lived"></p></div>
+<div id="menu" aria-hidden="true"><div class="in">
+<div class="vol" data-v="all"><span class="name">all of it</span><span class="pips"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></span></div>
+<div class="vol" data-v="music"><span class="name">the music</span><span class="pips"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></span></div>
+<div class="vol" data-v="rest"><span class="name">wind, sea and voices</span><span class="pips"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></span></div>
+<div class="vol ears"><span class="name snd">stop yer ears</span></div>
+<p class="by">
+<span>made by <a href="https://mxz.sh/" target="_blank" rel="noopener">maxeo</a></span>
+<span>drawn with <a href="https://github.com/siliconjungle/shapeshift-labs-ink-studio" target="_blank" rel="noopener">ink-studio</a>, by James Addison</span>
+<span>set in <a href="https://www.redaction.us/" target="_blank" rel="noopener">Redaction</a>, by Forest Young and Jeremy Mickel</span>
+<span>after <i>The Lighthouse</i> (2019), a film by Robert Eggers</span>
+<span>(unofficial: no one from the film had a hand in it)</span>
+<span><a href="changelog.html" target="_blank" rel="noopener">the log</a> · <a href="licenses.txt" target="_blank" rel="noopener">the licences</a></span>
+</p>
+<div id="back"><b>Esc</b> back to the rock</div>
+</div></div>
 <div id="veil"></div>
 <script>
 ${safe(studio.bundle())}

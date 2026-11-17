@@ -79,6 +79,60 @@
       for (const el of document.querySelectorAll('#hud [data-h="' + h + '"]')) el.remove();
     }
   } catch (e) {}
+  // the ledger: laid over the picture by Esc (under a thumb, by pressing its name in the row of hints) and put away the same
+  // way. In it, how loud he has it: all of it, the music, and what is not the music, each in so many steps (STEPS: all of them
+  // is as loud as it was made); his ears, to stop or unstop; and who made what. What he sets the browser keeps (VOLS). While
+  // it is open he stands where he is, and the days go by as they do
+  const VOLS = 'wickie.sound',
+    STEPS = 10,
+    vol = { all: STEPS, music: STEPS, rest: STEPS },
+    lines = [...document.querySelectorAll('#menu .vol')]; // (the three of them, and under them the one for his ears)
+  let open = false, line = 0;
+  try {
+    const kept = (localStorage.getItem(VOLS) || '').split(' ').map(Number),
+      names = Object.keys(vol);
+    if (kept.length === names.length && kept.every(v => Number.isInteger(v) && v >= 0 && v <= STEPS)) names.forEach((k, i) => (vol[k] = kept[i]));
+  } catch (e) {}
+  // (a step is heard as a step: the level goes as the square of how far along he has it)
+  const loud = () => Sound.volume({ all: (vol.all / STEPS) ** 2, music: (vol.music / STEPS) ** 2, rest: (vol.rest / STEPS) ** 2 }),
+    paint = () =>
+      lines.forEach((el, i) => {
+        el.classList.toggle('sel', i === line);
+        const v = vol[el.dataset.v];
+        [...el.querySelectorAll('.pips i')].forEach((p, n) => p.classList.toggle('on', n < v));
+      }),
+    turnTo = (k, v) => {
+      v = Math.max(0, Math.min(STEPS, v));
+      if (v === vol[k]) return;
+      vol[k] = v;
+      loud();
+      paint();
+      try {
+        localStorage.setItem(VOLS, Object.values(vol).join(' '));
+      } catch (e) {}
+    };
+  function book(on) {
+    open = on;
+    $('menu').classList.toggle('on', on);
+    $('menu').setAttribute('aria-hidden', String(!on));
+    if (!on) return;
+    learn('book');
+    keys.clear();
+    ptr = held = null;
+    drop();
+    paint();
+  }
+  // the keys, while it is open: up and down among its lines, left and right to turn the one he is on down or up
+  function leaf(c) {
+    const el = lines[line],
+      k = el.dataset.v,
+      by = c === 'ArrowLeft' || c === 'KeyA' ? -1 : c === 'ArrowRight' || c === 'KeyD' ? 1 : 0;
+    if (c === 'ArrowUp' || c === 'KeyW') line = (line + lines.length - 1) % lines.length;
+    else if (c === 'ArrowDown' || c === 'KeyS') line = (line + 1) % lines.length;
+    else if (k && by) turnTo(k, vol[k] + by);
+    else if (!k && (by || c === 'Enter' || c === 'Space')) ears();
+    paint();
+  }
   let softAt = 0; // when a thumb began sending him softly (0: it is not)
   const mem = { deaths: 0 },
     // the old man talks to himself. How much of it is heard: none from six paces, all of it at his elbow
@@ -128,6 +182,7 @@
     }
     $('ui').style.fontSize = Math.max(14, Math.round(h / 31)) + 'px';
     $('hud').style.fontSize = Math.max(13, Math.round(h / 58)) + 'px';
+    $('menu').style.fontSize = Math.max(14, Math.min(22, Math.round(h / 46))) + 'px';
     if (TOUCH) {
       // the two that turn the view: in a row under the picture where there is room for one, or else one at either side of it
       // (they are drawn in pixels as big as the picture's own, as near as a thumb can do with)
@@ -165,7 +220,7 @@
     W.anim.update(0, 0);
     yaw = yawTo = W.cam.yaw;
     cam = [G.pl.x, G.pl.y + 1.6, G.pl.z];
-    window.wickie = { W, G, keys, mem, die, wish, hours, songAt, mutterAt, days: v => (v === undefined ? clock : (clock = v)), state: () => ({ mode, indoors, duskAt, dawnAt, lamp, late, touch: TOUCH, quality, soft, stick: !!stick, zoomTo, yawTo, held }) }; // for poking at from the console
+    window.wickie = { W, G, keys, mem, die, wish, hours, songAt, mutterAt, days: v => (v === undefined ? clock : (clock = v)), book, state: () => ({ book: open, vol, mode, indoors, duskAt, dawnAt, lamp, late, touch: TOUCH, quality, soft, stick: !!stick, zoomTo, yawTo, held }) }; // for poking at from the console
   }
 
   // which way he is asked to go, across the ground, from the keys or from where the pointer is held.
@@ -328,7 +383,7 @@
     let look = [pl.x, pl.y + 1.6, pl.z],
       close = 1;
     if (mode === 'play') {
-      const [mx, mz] = wish();
+      const [mx, mz] = open ? [0, 0] : wish();
       G.step(dt, mx, mz, keys.has('ShiftLeft') || keys.has('ShiftRight') || soft);
       // (every drag begins as a little one: it is treading soft only if he is kept at it a while)
       if (!soft) softAt = 0;
@@ -397,6 +452,12 @@
       learn('ears'); // (the row stops saying it as it was: what it says is not changed as it goes out)
       ears();
     }
+    if (c === 'Escape' && once) book(!open);
+    if (open) {
+      if (once || c.startsWith('Arrow')) leaf(c);
+      if (c.startsWith('Arrow') || c === 'Space') ev.preventDefault();
+      return;
+    }
     if (c === 'KeyC' && once) light();
     if (mode === 'play' && once) {
       if (c === 'KeyQ') yawTo += Math.PI / 2;
@@ -459,7 +520,7 @@
   document.addEventListener('pointerdown', ev => {
     if (ev.target.closest && ev.target.closest('.tap')) Sound.start();
     else Sound.wake();
-    if (ev.pointerType === 'mouse' || mode !== 'play' || (ev.target.closest && ev.target.closest('button, .tap'))) return;
+    if (ev.pointerType === 'mouse' || mode !== 'play' || open || (ev.target.closest && ev.target.closest('button, .tap, #menu'))) return;
     fingers.set(ev.pointerId, { x: ev.clientX, y: ev.clientY });
     // the first finger down is the stick; a second with it and the two are for bringing the picture nearer, and he stands
     stick = fingers.size === 1 ? { id: ev.pointerId, x0: ev.clientX, y0: ev.clientY, x: ev.clientX, y: ev.clientY } : null;
@@ -497,16 +558,42 @@
       learn('look');
     });
   $('light').addEventListener('pointerdown', light);
-  for (const el of document.querySelectorAll('.tap')) el.addEventListener('click', ears);
+  for (const el of document.querySelectorAll('.snd.tap, #menu .ears')) el.addEventListener('click', ears);
+  for (const el of document.querySelectorAll('.book.tap')) el.addEventListener('click', () => book(true));
+  $('back').addEventListener('click', () => book(false));
+  // a line of the ledger, pressed or dragged along: it is turned to where the pointer is (left of the first step: to nothing)
+  lines.forEach((el, i) => {
+    const pips = el.querySelector('.pips');
+    if (!pips) return;
+    const at = ev => {
+      const all = pips.querySelectorAll('i'),
+        l = all[0].getBoundingClientRect().left,
+        r = all[all.length - 1].getBoundingClientRect().right;
+      line = i;
+      turnTo(el.dataset.v, Math.ceil(((ev.clientX - l) / (r - l)) * STEPS));
+      paint();
+    };
+    let drag = null;
+    pips.addEventListener('pointerdown', ev => {
+      drag = ev.pointerId;
+      try {
+        pips.setPointerCapture(drag); // (so that it goes on being dragged when the pointer is off the line)
+      } catch (e) {}
+      at(ev);
+    });
+    pips.addEventListener('pointermove', ev => ev.pointerId === drag && at(ev));
+    for (const type of ['pointerup', 'pointercancel']) pips.addEventListener(type, () => (drag = null));
+  });
   if (TOUCH) {
     // nothing of the page itself moves under a finger: no scrolling, no zooming, no menu on a long press
     for (const type of ['gesturestart', 'gesturechange', 'dblclick', 'contextmenu']) document.addEventListener(type, ev => ev.preventDefault());
-    document.addEventListener('touchmove', ev => ev.preventDefault(), { passive: false });
+    document.addEventListener('touchmove', ev => (ev.target.closest && ev.target.closest('#menu') && !ev.target.closest('.pips')) || ev.preventDefault(), { passive: false }); // (but the ledger, where it is longer than the screen, can be drawn up and down)
     addEventListener('orientationchange', () => setTimeout(layout, 250));
   }
   addEventListener(
     'wheel',
     ev => {
+      if (open) return;
       ev.preventDefault();
       Sound.wake();
       zoomTo = Math.max(0.45, Math.min(2.2, zoomTo * Math.exp(-ev.deltaY * 0.0015)));
@@ -517,6 +604,8 @@
   addEventListener('resize', layout);
 
   layout();
+  loud();
+  paint();
   Sound.start(); // the weather, at once: or as soon as the browser lets a page be heard
   setTimeout(() => {
     build();

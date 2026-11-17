@@ -2,7 +2,7 @@
 // greys. build.js writes it beside index.html.
 //   require('./log.js')(fonts, head)  -> the page, fonts being the @font-face rules the game's page has and head what else
 //   goes in its head (what a link to it is shown with)
-// Each entry: when (the hour it was done, Central European Time, on the day at the top of its run), what it is called, and what
+// Each entry: when (the hour it was done, Central European Time, on DAY unless it says another day), what it is called, and what
 // changed. They are kept oldest first and shown newest first, and are numbered as the game numbers its days: from 1898.
 const FIRST = 1898,
   DAY = '17 Nov 2026',
@@ -159,7 +159,7 @@ const FIRST = 1898,
       ]
     },
     {
-      at: '23:33',
+      at: '23:45',
       name: 'A smoke',
       did: [
         '<b>C</b>, standing still: he lights a cigarette. It hangs in his hand with a thread of smoke off it; every few seconds the hand comes up, the end glows, and he lets the smoke out ahead of him.',
@@ -167,6 +167,17 @@ const FIRST = 1898,
         'Six pulls and it is done. Going anywhere, or <b>C</b> again, and he has dropped it.',
         'The lit end keeps its white after dark.',
         'Under a thumb: a third stone thing to press, beside the two that turn the view.'
+      ]
+    },
+    {
+      day: '18 Nov 2026',
+      at: '00:10',
+      name: 'The ledger',
+      did: [
+        '<b>Esc</b> lays a ledger over the picture; under a thumb, its name is there to be pressed in the row of hints.',
+        'In it, how loud you have it: all of it, the music, and the wind, sea and voices, each by itself. The browser keeps what you set.',
+        'And who made what.',
+        'A link to the game is shown with a picture where it is posted, and the tab has the lantern for a mark.'
       ]
     }
   ];
@@ -224,7 +235,7 @@ ${head}
 </header>
 ${ENTRIES.map(
   (e, i) => `<article>
-<div><div class="n">${FIRST + i}</div><div class="at"><span>${DAY}</span> <span>${e.at}</span></div></div>
+<div><div class="n">${FIRST + i}</div><div class="at"><span>${e.day || DAY}</span> <span>${e.at}</span></div></div>
 <div><h2>${e.name}</h2>
 <ul>
 ${e.did.map(d => `<li>${d}</li>`).join('\n')}
