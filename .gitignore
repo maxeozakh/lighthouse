@@ -1,0 +1,7 @@
+# This repo keeps versions of the lighthouse game ("wickie") only: the game's folder and the renderer wrapper it needs.
+# The other demos in this folder are left out.
+/*
+!/.gitignore
+!/lighthouse-game/
+!/fast-render.js
+.DS_Store
