@@ -25790,7 +25790,7 @@ module.exports = ({ makeBuilder, makeSculpt, KIT: K }) => ({
         return d;
       },
       PALE,
-      '',
+      'top',
       0.036
     );
     // her head: the skull, the jaw under it and forward, a chin, a nose
@@ -25843,7 +25843,7 @@ module.exports = ({ makeBuilder, makeSculpt, KIT: K }) => ({
         return smin(d, tress, 0.02);
       },
       TRESS,
-      '',
+      'top',
       0.036
     );
     // a gull on the cistern's lid, watching
@@ -26156,6 +26156,10 @@ module.exports = ({ makeBuilder, makeSculpt, KIT: K }) => ({
         return Math.max(-most, Math.min(most, a));
       },
       MFA = Math.atan2(MF[0], MF[2]),
+      AWAY = -0.3,
+      SEES = 9,
+      HAS = 4.5,
+      TWIST = 0.45,
       hip = (sx, dy) => [SPAWN[0] + sx, SY + dy, SPAWN[1]];
     K.puppet(W, {
       parts: {
@@ -26167,7 +26171,8 @@ module.exports = ({ makeBuilder, makeSculpt, KIT: K }) => ({
         wk: { ids: tags.wk, pivot: [WAKE[0], height(WAKE[0], WAKE[1]), WAKE[1]] },
         wkhead: { ids: tags.wkhead, pivot: [WAKE[0], height(WAKE[0], WAKE[1]) + 1.1, WAKE[1]], parent: 'wk' },
         mm: { ids: tags.mm, pivot: mp(0, 0, 0) },
-        mmhead: { ids: tags.mmhead, pivot: mp(0.02, 0.77, -LEAN * 0.6), parent: 'mm' },
+        mmtop: { ids: tags.mmtop, pivot: mp(0, 0.2, 0), parent: 'mm' }, // all of her above the scales: it turns at the hips
+        mmhead: { ids: tags.mmhead, pivot: mp(0.02, 0.77, -LEAN * 0.6), parent: 'mmtop' },
         mmtail: { ids: tags.mmtail, pivot: TAIL, parent: 'mm' }
       },
       pose(t, dt, p) {
@@ -26194,11 +26199,17 @@ module.exports = ({ makeBuilder, makeSculpt, KIT: K }) => ({
           stretch: 1 + 0.012 * Math.sin(t * 1.3)
         };
         p.pose.wkhead = { rot: [0, wk.look * deg, 0] };
-        // nor does she, and her tail keeps its own slow time. When she screams she is up and at him
-        mer.look += ((Math.hypot(pl.x - mer.x, pl.z - mer.z) < 9 ? glance(mer, MFA, 1.1) : -0.3) - mer.look) * ease;
-        const sc = mer.scream;
+        // nor does she, and her tail keeps its own slow time. But she watches him come: with nobody near she looks a little
+        // aside, as she was made (AWAY); from SEES off her head begins to come round to him, and is on him by the time he is at
+        // HAS. Her shoulders come a part of the way with it (TWIST of what her head has turned from where it rests), which is
+        // what can be seen of it from where the game looks. When she screams she is up and at him
+        const sees = sm((SEES - Math.hypot(pl.x - mer.x, pl.z - mer.z)) / (SEES - HAS));
+        mer.look += (AWAY + (glance(mer, MFA, 1.1) - AWAY) * sees - mer.look) * Math.min(1, dt * 2.5);
+        const sc = mer.scream,
+          twist = (mer.look - AWAY) * TWIST;
         p.pose.mm = { pos: [MF[0] * 0.3 * sc, 0.28 * sc, MF[2] * 0.3 * sc], stretch: 1 + 0.4 * sc + 0.012 * Math.sin(t * 1.1) };
-        p.pose.mmhead = { rot: [0, mer.look * deg, 0], scale: 1 + 0.35 * sc };
+        p.pose.mmtop = { rot: [0, twist * deg, 0] };
+        p.pose.mmhead = { rot: [0, (mer.look - twist) * deg, 0], scale: 1 + 0.35 * sc };
         p.pose.mmtail = { rot: [0, 12 * Math.sin(t * 0.9) + 26 * sc * Math.sin(t * 23), 7 * Math.sin(t * 0.9 + 1)] };
       }
     });
