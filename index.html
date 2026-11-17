@@ -26687,7 +26687,7 @@ module.exports = ({ makeBuilder, makeSculpt, KIT: K }) => ({
       ATBOX = [[-42, -54, 0], [-54, -11, 0], [0, 0, 0]],
       STRUCK = [[-19, -22, 5], [-54, -4, 0], [0, 0, 0]],
       LIGHTS = [[-60, -50, 5], [-66, -2, 0], [17, 9, 14]],
-      SHAKEN = [[-30, -19, 21], [-65, -6, 0], [0, 0, 0]],
+      SHAKEN = [[-40, -30, 15], [-65, -5, 0], [0, 0, 0]],
       MOUTH = [ARM, FORE, [0, 0, 0]],
       mix = (a, b, k) => [0, 1, 2].map(j => a[j] * (1 - k) + b[j] * k),
       // what he does and when: where each arm is to be at each time (L, R); when the match that lights it is struck (S), when
@@ -26794,7 +26794,7 @@ module.exports = ({ makeBuilder, makeSculpt, KIT: K }) => ({
           pl.look = [8 * win(s, 0.5, 1.4, 0.3) + 12 * win(s, 1.4, q.S + 0.2, 0.3) + 7 * win(b, 0.2, BURNS, 0.4) - 9 * win(d, GUTTER, 0.95, 0.15), -14 * win(s, 0.5, 1.4, 0.3)];
           // (the left hand is busy in the pocket; the right takes a match from the box, and at the last shakes it out)
           pl.jigL = 7 * Math.sin(s * 23) * win(s, 1.0, 1.3);
-          pl.jigR = 5 * Math.sin(s * 31) * (win(s, 1.62, 1.8) + win(d, 1.14, 1.3)) + 12 * Math.sin((b - BURNS) * 42) * win(b - BURNS, 0.03, 0.42);
+          pl.jigR = 5 * Math.sin(s * 31) * (win(s, 1.62, 1.8) + win(d, 1.14, 1.3)) + 7 * Math.sin((b - BURNS) * 30) * win(b - BURNS, 0.03, 0.42);
           if (on(STRIKE - 0.1) || (q.dud && on(q.S - 0.1))) pl.flare = true; // (the rasp of it first)
           if (b >= 0) fire = b > BURNS + 0.05 ? 0 : b < 0.14 ? 1 : 0.42 + 0.06 * Math.sin(b * 43) + 0.05 * Math.sin(b * 71);
           else if (d >= 0 && d < GUTTER) fire = d < 0.12 ? 1 : Math.max(0.03, (0.36 + 0.14 * Math.sin(d * 67)) * (1 - (d - 0.12) / (GUTTER - 0.12)));
