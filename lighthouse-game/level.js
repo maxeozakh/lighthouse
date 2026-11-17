@@ -148,8 +148,9 @@ module.exports = ({ makeBuilder, makeSculpt, KIT: K }) => ({
       PASS = [(TR - 0.5 + COT[0] - COT[2]) / 2, 0, (COT[0] - COT[2] - TR + 0.5) / 2, 0.62 * BIG], // (it begins inside the tower's wall)
       ENG = [-9.8, 4.0, 1.7 * BIG, 1.7 * BIG], // the fog signal's engine house: square, under a roof that comes to a point
       PRIVY = [COT[0] + 4.7, -4.6, 0.5, 0.5],
-      // the cistern: in the corner the passage makes with the cottage's west gable, on the south side, a step off both walls
-      WELL = [COT[0] - COT[2] - 1.75, PASS[1] + PASS[3] + 1.5],
+      // the cistern: out in the open off the cottage's south-west corner (the corner nearest the tower on the side the door is
+      // on): a stride south of the house's front and reaching back west of its gable, so there is room to walk between them
+      WELL = [COT[0] - COT[2] - 0.9, COT[1] + COT[3] + 2.0],
       SPAWN = [PASS[0], 5.6],
       // the shed: out at the west point by itself, low down among the rocks and near the water, its door toward the station.
       // It is where the young man goes to be alone
@@ -175,7 +176,7 @@ module.exports = ({ makeBuilder, makeSculpt, KIT: K }) => ({
       YC = pad(COT[0], COT[1], COT[2] + 0.6, COT[3] + 0.6),
       YE = pad(ENG[0], ENG[1], ENG[2] + 0.5, ENG[3] + 0.5),
       YP = pad(PRIVY[0], PRIVY[1], 0.8, 0.8),
-      YW = YC, // (the cistern stands on the cottage's ground)
+      YW = height(WELL[0], WELL[1]), // (the ground where the cistern stands)
       YS = pad(SHED[0], SHED[1], SHED[2] + 0.4, SHED[3] + 0.4);
     // the passage runs down from the tower's ground to the cottage's, and the ground under it is cut to go down with it: one
     // even slope from the edge of the tower's level ground (PX0) to the edge of the cottage's (PX1). PFALL is how much it
@@ -398,10 +399,12 @@ module.exports = ({ makeBuilder, makeSculpt, KIT: K }) => ({
     // the keepers' cottage: white boards under a shingle roof, a door and two windows to the south, a window in the east gable,
     // two dormers in the roof and one brick chimney on the ridge
     // (the door and the windows are a man's: they did not grow as much as the walls they are in)
+    // (the west gable is wider than the passage that runs into it, and has a window in what shows of it south of the passage)
+    const CWEST = (PASS[3] + COT[3]) / 2;
     house(COT, YC, 2.0 * BIG, 1.25 * BIG, {
       mat: CLAP,
       roof: SLATE,
-      marks: [['S', CDOOR, 0.86, 0.38, 0.86, 31], ['S', -1.7 * BIG, 1.15 * BIG, 0.4, 0.46, 31], ['S', 1.9 * BIG, 1.15 * BIG, 0.4, 0.46, 31], ['E', 0, 1.2 * BIG, 0.4, 0.46, 31], ['E', 0, 2.55 * BIG, 0.24, 0.26, 31]]
+      marks: [['S', CDOOR, 0.86, 0.38, 0.86, 31], ['S', -1.7 * BIG, 1.15 * BIG, 0.4, 0.46, 31], ['S', 1.9 * BIG, 1.15 * BIG, 0.4, 0.46, 31], ['E', 0, 1.2 * BIG, 0.4, 0.46, 31], ['E', 0, 2.55 * BIG, 0.24, 0.26, 31], ['W', CWEST, 1.15 * BIG, 0.36, 0.46, 31]]
     });
     for (const dx of [-1.5 * BIG, 1.6 * BIG]) {
       const c = [COT[0] + dx, YC + 2.7 * BIG, COT[1] + 1.18 * BIG];
@@ -479,24 +482,23 @@ module.exports = ({ makeBuilder, makeSculpt, KIT: K }) => ({
       // a plank left lying on the ground before it
       S.box([cx + hl + 1.5, height(cx + hl + 1.5, cz + 1.7) + 0.04, cz + 1.7], [0.75, 0.03, 0.1], { r: [29, 30, 30] }, { res: 0.11, ax: B.frame(1.15, 0, 0) });
     }
-    // the cistern: a square tank of rendered stone with a low dome over it, a wooden hatch on the dome, and an iron pump
-    // standing on it. Rain off the cottage's roof comes down a pipe at the corner of the house and along to it
+    // the cistern: a square tank of rendered stone, stained and dark at the foot, with a pale low dome over it; a wooden hatch
+    // on the dome's west side, propped up at a slant; an iron pump standing at its northern edge. Rain off the cottage's roof
+    // comes down a pipe at the corner of the house, and from there a pipe goes across over the gap to the top of the pump
     {
       const [wx, wz] = WELL,
-        TANK = { r: [20, 21, 21, 22, 22, 23], mod: (x, y, z) => 0.45 * (n3(x * 1.7, y * 1.7, z * 1.7) - 0.5) - 0.3 * sm((YW + 0.25 - y) / 0.4) },
-        wall = COT[0] - COT[2], // the cottage's west wall
-        PUMP = [wx + 0.5, wz + 0.1],
-        PT = YW + 1.78, // the top of the pump
-        DOWN = [wall - 0.07, COT[1] + COT[3] - 0.1]; // where the pipe comes down the house
+        TANK = { r: [20, 20, 21, 21, 22, 22], mod: (x, y, z) => 0.45 * (n3(x * 1.7, y * 1.7, z * 1.7) - 0.5) - 0.35 * sm((YW + 0.3 - y) / 0.45) },
+        PUMP = [wx - 0.3, wz - 0.62],
+        PT = YW + 1.8, // the top of the pump
+        DOWN = [COT[0] - COT[2] - 0.06, COT[1] + COT[3] + 0.06]; // where the pipe comes down the house: at its corner
       S.box([wx, YW + 0.2, wz], [1.0, 0.55, 1.0], TANK, { res: 0.16 });
       S.box([wx, YW + 0.76, wz], [1.07, 0.06, 1.07], { r: [21, 22, 22, 23] }, { res: 0.15 }); // the course round its top
-      S.ball([wx, YW + 0.8, wz], [0.97, 0.34, 0.97], { r: [21, 22, 23, 23] }, { res: 0.14 });
-      S.box([wx - 0.42, YW + 1.06, wz + 0.34], [0.3, 0.035, 0.27], { r: [26, 27, 28] }, { res: 0.1 }); // the hatch
-      S.lathe([PUMP[0], YW + 1.0, PUMP[1]], PT - YW - 1.0, t => (t < 0.12 || t > 0.86 ? 0.14 : 0.1), IRON, { res: 0.07 });
-      S.tube([[PUMP[0], PT - 0.03, PUMP[1]], [PUMP[0], PT + 0.2, PUMP[1]], [PUMP[0] + 0.14, PT + 0.3, PUMP[1] + 0.02], [DOWN[0], PT + 0.3, DOWN[1]]], 0.05, 0.05, IRON, { res: 0.07 });
+      S.ball([wx, YW + 0.8, wz], [0.97, 0.42, 0.97], { r: [22, 23, 23, 24] }, { res: 0.13 });
+      S.box([wx - 0.5, YW + 1.1, wz + 0.2], [0.34, 0.04, 0.3], { r: [26, 27, 28] }, { res: 0.1, ax: B.frame(0, 0, 0.32) }); // the hatch
+      S.lathe([PUMP[0], YW + 0.95, PUMP[1]], PT - YW - 0.95, t => (t < 0.12 || t > 0.86 ? 0.14 : 0.1), IRON, { res: 0.07 });
+      S.tube([[PUMP[0], PT - 0.03, PUMP[1]], [PUMP[0], PT + 0.2, PUMP[1]], [PUMP[0] + 0.12, PT + 0.3, PUMP[1] - 0.1], [DOWN[0], PT + 0.3, DOWN[1]]], 0.05, 0.05, IRON, { res: 0.07 });
       S.tube([[DOWN[0], YC, DOWN[1]], [DOWN[0], YC + 2.0 * BIG - 0.1, DOWN[1]]], 0.05, 0.05, IRON, { res: 0.07 });
-      // (nobody gets between it and either wall)
-      BOXES.push([wx - 1.07, wall, PASS[1] + PASS[3], wz + 1.07]);
+      BOXES.push([wx - 1.07, wx + 1.07, wz - 1.07, wz + 1.07]);
     }
 
     // a boat, as a dory is built: a flat bottom, straight sides that flare from the bottom boards up to the gunwale, a sharp bow
@@ -814,9 +816,9 @@ module.exports = ({ makeBuilder, makeSculpt, KIT: K }) => ({
       0.036
     );
     // a gull on the cistern's dome, watching
-    S.ball([WELL[0] + 0.15, YW + 1.18, WELL[1] + 0.55], [0.1, 0.1, 0.2], { r: [49, 50, 51] }, { res: 0.05, ax: B.frame(0.9, -0.3, 0) });
-    S.ball([WELL[0] + 0.26, YW + 1.33, WELL[1] + 0.64], 0.065, { r: [50, 51] }, { res: 0.045 });
-    S.tube([[WELL[0] + 0.3, YW + 1.32, WELL[1] + 0.68], [WELL[0] + 0.38, YW + 1.29, WELL[1] + 0.74]], 0.025, 0.008, { r: [46, 47] }, { res: 0.035 });
+    S.ball([WELL[0] + 0.15, YW + 1.24, WELL[1] + 0.55], [0.1, 0.1, 0.2], { r: [49, 50, 51] }, { res: 0.05, ax: B.frame(0.9, -0.3, 0) });
+    S.ball([WELL[0] + 0.26, YW + 1.39, WELL[1] + 0.64], 0.065, { r: [50, 51] }, { res: 0.045 });
+    S.tube([[WELL[0] + 0.3, YW + 1.38, WELL[1] + 0.68], [WELL[0] + 0.38, YW + 1.35, WELL[1] + 0.74]], 0.025, 0.008, { r: [46, 47] }, { res: 0.035 });
 
     S.bake();
 
@@ -1056,6 +1058,7 @@ module.exports = ({ makeBuilder, makeSculpt, KIT: K }) => ({
         [COT[0] - 1.7 * BIG, YC + 1.15 * BIG, COT[1] + COT[3], 0.48, 0.54, 0.2],
         [COT[0] + 1.9 * BIG, YC + 1.15 * BIG, COT[1] + COT[3], 0.48, 0.54, 0.2],
         [COT[0] + COT[2], YC + 1.2 * BIG, COT[1], 0.2, 0.54, 0.48],
+        [COT[0] - COT[2], YC + 1.15 * BIG, COT[1] + CWEST, 0.2, 0.54, 0.44],
         ...[[0, 2.9, 1.2, 0.25, 0.4, 1], [1.2, 4.7, 0, 1, 0.4, 0.25], [0, 6.3, 1.2, 0.25, 0.4, 1]].map(w => w.map((v, i) => v * BIG + (i === 1 ? Y0 : 0))) // and the three up the tower's stair
       ],
       pack = c => c[0] + c[1] * 256 + c[2] * 65536,
