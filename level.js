@@ -1012,7 +1012,7 @@ module.exports = ({ makeBuilder, makeSculpt, KIT: K }) => ({
       },
       // (cig: how long he has been at his smoke, in seconds, 0 when he has none; lit: how much of it there is to see; raise: how
       // far his hand is up to his mouth; wisp: how long since the last of its smoke came off it)
-      pl = { x: SPAWN[0], z: SPAWN[1], y: height(SPAWN[0], SPAWN[1]), face: 0.6, go: 0, phase: 0, speed: 0, cig: 0, pull: 0, pulls: 0, was: 0, rest: 0, out: 0, ash: false, ashed: false, pop: 0, sparks: 0, hot: false, toss: 0, flick: false, thrown: false, lit: 0, raise: 0, wisp: 0, strike: 0, cup: 0, busy: 0, plan: null, dud: false, aimL: null, aimR: null, look: [0, 0], lips: 0, mouth: false, jigL: 0, jigR: 0, flare: false, murk: 0, smoked: 0 },
+      pl = { x: SPAWN[0], z: SPAWN[1], y: height(SPAWN[0], SPAWN[1]), face: 0.6, go: 0, phase: 0, speed: 0, cig: 0, pull: 0, pulls: 0, was: 0, rest: 0, out: 0, ash: false, ashed: false, pop: 0, sparks: 0, eager: false, hot: false, toss: 0, flick: false, thrown: false, lit: 0, raise: 0, wisp: 0, strike: 0, cup: 0, busy: 0, plan: null, dud: false, aimL: null, aimR: null, look: [0, 0], lips: 0, mouth: false, jigL: 0, jigR: 0, flare: false, murk: 0, smoked: 0 },
       SY = pl.y,
       turnTo = (a, b, k) => {
         let d = (b - a) % TAU;
@@ -1530,6 +1530,7 @@ module.exports = ({ makeBuilder, makeSculpt, KIT: K }) => ({
       // After a pull, now and then, he knocks the ash off it: a small jerk of the hand, and a few sparks off the end, gone
       // down the wind (pl.ash: he will, after this pull; pl.ashed: he has; pl.sparks: how many times, this cigarette).
       // And, less often, a spark goes from it while he is drawing on it (pl.pop: when in this pull, or 0).
+      // (pl.eager: both of them at every pull, from the next one on. It is for looking at them: the ledger has a tick for it)
       // Done with it (it is finished; or C; or he goes somewhere), he throws it down: a small turn of the hand, and it goes
       // a little way ahead of his foot, and lies there, its end going out and a last thread of smoke off it (toss()). Going
       // somewhere, he does not stop for that: it is let fall as he goes.
@@ -1615,9 +1616,9 @@ module.exports = ({ makeBuilder, makeSculpt, KIT: K }) => ({
               while (Math.abs(pl.pull - pl.was) < 0.5);
               pl.was = pl.pull;
               pl.rest = REST[0] + (REST[1] - REST[0]) * Math.random(); // (and how long he stands with it after)
-              pl.ash = Math.random() < ASHES || (pl.pulls === LASTS - 1 && !pl.sparks); // (the last, if never before)
+              pl.ash = pl.eager || Math.random() < ASHES || (pl.pulls === LASTS - 1 && !pl.sparks); // (the last, if never before)
               pl.ashed = false;
-              pl.pop = Math.random() < POPS ? UP + pl.pull * (0.3 + 0.5 * Math.random()) : 0; // (when in the pull, if at all)
+              pl.pop = pl.eager || Math.random() < POPS ? UP + pl.pull * (0.3 + 0.5 * Math.random()) : 0; // (when in the pull, if at all)
               pl.out = 0;
             }
             u = pl.cig;

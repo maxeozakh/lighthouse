@@ -107,10 +107,17 @@
   const VOLS = 'wickie.sound',
     STEPS = 10,
     vol = { all: STEPS, music: 7, rest: STEPS }, // (the music, and the horn with it, a little under the rest until he says otherwise)
-    lines = [...document.querySelectorAll('#menu .vol')], // (the three of them, and under them the two to tick)
-    ticked = c => (c === 'keep' ? always : Sound.deaf()),
-    tick = c => (c === 'keep' ? keep(!always) : ears());
-  let open = false, line = 0;
+    lines = [...document.querySelectorAll('#menu .vol')], // (the three of them, and under them the ones to tick)
+    // (the last of those is for looking at the sparks off his cigarette: ticked, they go at every pull. It is not kept)
+    ticked = c => (c === 'keep' ? always : c === 'spark' ? eager : Sound.deaf()),
+    tick = c => {
+      if (c === 'keep') keep(!always);
+      else if (c === 'spark') {
+        G.pl.eager = eager = !eager;
+        paint();
+      } else ears();
+    };
+  let open = false, line = 0, eager = false;
   try {
     const kept = (localStorage.getItem(VOLS) || '').split(' ').map(Number),
       names = Object.keys(vol);

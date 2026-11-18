@@ -192,6 +192,7 @@ ${mit}
 <div class="vol" data-v="rest"><span class="name">wind, sea and voices</span><span class="pips"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></span></div>
 <div class="vol tick" data-c="ears" role="checkbox" aria-checked="false"><span class="name">stop yer ears</span><span class="box"></span></div>
 <div class="vol tick" data-c="keep" role="checkbox" aria-checked="false"><span class="name">keep the controls in sight</span><span class="box"></span></div>
+<div class="vol tick" data-c="spark" role="checkbox" aria-checked="false"><span class="name">debug: always spark</span><span class="box"></span></div>
 <p class="by">
 <span>made by <a href="https://x.com/maxeozakh" target="_blank" rel="noopener">@maxeozakh</a></span>
 <span>drawn with <a href="https://github.com/siliconjungle/shapeshift-labs-ink-studio" target="_blank" rel="noopener">ink-studio</a>, by <a href="https://x.com/JungleSilicon" target="_blank" rel="noopener">@JungleSilicon</a></span>
