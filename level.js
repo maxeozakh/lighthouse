@@ -674,7 +674,8 @@ module.exports = ({ makeBuilder, makeSculpt, KIT: K }) => ({
         // a cap with a peak
         S.ball(at(0, 1.37, -0.01), [0.16, 0.075, 0.165], { r: [42, 43, 44] }, g('head'));
         S.ball(at(0, 1.34, 0.14), [0.11, 0.02, 0.07], { r: [42, 42, 43] }, g('head'));
-        // (he had a shadow to stand on, a dark round under him. It is gone: under this sky nothing else has one)
+        // what he stands on: his own shadow (thinned, further on, so that the ground shows through it: SHADE)
+        S.ball(at(0, 0.015, 0), [0.2 + st, 0.01, 0.2 + st], { r: [7] }, { res: 0.1, tag: o.tag, ghost: true });
       };
     figure(SPAWN[0], SPAWN[1], { tag: 'pl', coat: [45, 46, 47, 48, 48] });
     figure(OLDMAN[0], OLDMAN[1], { tag: 'om', stout: 0.045, coat: [42, 42, 43, 44], beard: true });
@@ -1250,7 +1251,7 @@ module.exports = ({ makeBuilder, makeSculpt, KIT: K }) => ({
       // leg at the knee, a fore from its arm at the elbow
       man = (n, ox, oy, oz) => {
         const parts = {
-          [n]: { ids: tags[n] || [], pivot: [ox, oy, oz] }, // (nothing of him is carried by the whole of him alone)
+          [n]: { ids: tags[n], pivot: [ox, oy, oz] },
           [n + 'body']: { ids: tags[n + 'body'], pivot: [ox, oy + 0.58, oz], parent: n },
           [n + 'head']: { ids: tags[n + 'head'], pivot: [ox, oy + 1.1, oz], parent: n + 'body' }
         };
@@ -1740,6 +1741,16 @@ module.exports = ({ makeBuilder, makeSculpt, KIT: K }) => ({
         lie(dt);
         fly(dt);
       };
+    // the dark round under each of the two men is not solid: each dab of it is thin (SHADE), so that a little of the
+    // ground shows through it. (A dab that is not solid is drawn wider than a solid one, out to where it fades: so each
+    // is drawn in as well (DRAWN, of its size squared), and the round stays as big as it was)
+    const SHADE = 0.7,
+      DRAWN = 0.4;
+    for (const n of ['pl', 'om'])
+      for (const i of tags[n]) {
+        W.data[i * 16 + 3] = SHADE;
+        for (const k of [4, 5, 6, 8, 9, 10]) W.data[i * 16 + k] *= DRAWN;
+      }
     K.puppet(W, {
       parts: {
         ...man('pl', SPAWN[0], SY, SPAWN[1]),
