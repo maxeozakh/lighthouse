@@ -15,7 +15,7 @@
     // (index.html?touch shows the same on any machine)
     TOUCH = matchMedia('(hover: none) and (pointer: coarse)').matches || /[?&]touch\b/.test(location.search);
   if (TOUCH) document.body.classList.add('touch');
-  let W, G, rest, posedBuf, holder, img, t = 0, last = 0, frames = 0, fpsAt = 0;
+  let W, G, rest, posedBuf, holder, img, t = 0, last = 0;
   // fingers. One of them put down and dragged is a stick: he goes the way it is dragged from where it was put down, softly
   // for a short drag and at a run for a longer one. Two of them, drawn apart or together, bring the picture nearer or further
   const fingers = new Map(),
@@ -542,7 +542,6 @@
     const k = 1 - Math.exp(-dt * 6);
     for (let i = 0; i < 3; i++) cam[i] += (look[i] - cam[i]) * k;
     draw();
-    frames++;
     // what the frame cost to make (not how long it was until the next: a page that is not looked at is not drawn at all).
     // Over 36 thousandths of a second each, a second or so running, and the picture is made a step coarser; never finer again
     if (t > 4 && mode === 'play') {
@@ -551,11 +550,6 @@
         if (spent / counted > 36 && quality > 0.6) quality = Math.max(0.6, quality * 0.86);
         spent = counted = 0;
       }
-    }
-    if (now - fpsAt > 500) {
-      $('fps').textContent = Math.round((frames * 1000) / (now - fpsAt)) + ' fps';
-      frames = 0;
-      fpsAt = now;
     }
     if (mode === 'dead' && deadT > 2.6) return; // the black is up and the picture under it is not drawn again
     requestAnimationFrame(frame);

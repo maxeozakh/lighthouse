@@ -73,7 +73,6 @@ SOFTWARE.
   #hud .known { overflow: hidden; vertical-align: top; padding: 6px 0; margin: -6px 0; opacity: 0; transition: opacity 0.6s ease, width 1.4s ease-in-out 0.45s; }
   #hud .keys > span.end::after, #hud .thumbs > span.end::after { display: inline-block; overflow: hidden; vertical-align: top; width: var(--dot); opacity: 0; transition: opacity 0.6s ease, width 1.4s ease-in-out 0.45s; }
   #hud .keys > span.bare::after, #hud .thumbs > span.bare::after { display: none; }
-  #fps { position: fixed; right: calc(12px + env(safe-area-inset-right)); top: calc(10px + env(safe-area-inset-top)); color: #5c5d59; font: 11px ui-monospace, Menlo, monospace; }
   /* it opens out of black, and quickly */
   #veil { position: fixed; inset: 0; background: #000; transition: opacity 0.7s ease; pointer-events: none; }
   #veil.gone { opacity: 0; }
@@ -151,7 +150,6 @@ SOFTWARE.
 <div id="hud"><span class="keys"><span data-h="roam"><b>WASD</b> or arrows roam the rock</span><span data-h="soft"><b>Shift</b> tread soft</span><span data-h="look"><b>Q</b> / <b>E</b> look about ye</span><span data-h="zoom">wheel peer close</span><span data-h="smoke"><b>C</b> have a smoke</span><span data-h="ears"><b>M</b> <span class="snd">stop yer ears</span></span><span data-h="book"><b>Esc</b> the ledger</span></span><span class="thumbs"><span data-h="roam"><b>drag</b> roam the rock</span><span data-h="soft"><b>drag a little</b> tread soft</span><span data-h="look"><img class="bend" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABgAAAAYCAYAAADgdz34AAAApUlEQVR42u2V6wnAIAyE3cMB3MD/DuIiLuIgTuFUlhMCqa2p9gGlNHAUA3dffECV+nyllErOuTwWTmohWJMuhxNA0qXwGGPx3tfvHgz9YcheOGStrRDea3W4m174jLoQHno2nGsDCCFMBzvnxgEEkQKNMTCuzLgX+LgXg4oXTS+Gm9DrDUWQYUA7nbTtdvopAJXWup73YwCpfsA7Abf/NwBQf722FvYbCRRuRVuTAAAAAElFTkSuQmCC" width="24" height="24" alt="" draggable="false"><img class="bend" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABgAAAAYCAYAAADgdz34AAAAqElEQVR42u2T0Q2AIAwF3YMB2IB/BmERFmEQpmAqzDNpUrEileiPNnkxIfUOpC7LZ6uUUnPOdRpCkeCUabgULlBLAEgpiVCshxC2p1pCILwsBRDAnXO7tSHJFbyXIckdcCvhsmGB914tijEeBbQDBA0IvnfTVq21XYEIlwSAnzXTFFEvTVZ3griAn6J3XyennBfgXowxup9LI7hVv2CoHhfwehT+16u1AnwsCRR8lNaoAAAAAElFTkSuQmCC" width="24" height="24" alt="" draggable="false"> look about ye</span><span data-h="zoom"><b>pinch</b> peer close</span><span data-h="smoke"><img class="bend" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABgAAAAYCAYAAADgdz34AAAAvElEQVR42uWU0QnGIAyEu4cDuIHvDuIiLuIgTuFU+bkfroTSopbkqUJeKtxn7tIcxyfPGENQvXdxFWe5QCDcWpNaqz2glHKKs8whAGiIuUUEmNsEQQ2AXS7WuIgTEGOUlNIfEEKQrfme+Yl7vn7Zf7aM2SaIsLsX6nBzzrLlqy4N093BHlq0HdxT6bWArrYCXgEwXFjCHJjFUg4MbQa4fnv1J/NVM4DJLgKM3d3Zab6Lrla6bVNMkpv4t84PakKLLEizLUgAAAAASUVORK5CYII=" width="24" height="24" alt="" draggable="false"> have a smoke</span><span><span class="snd tap">stop yer ears</span></span><span><span class="book tap">the ledger</span></span></span></div>
 <div id="pad"><button id="turnL" aria-label="look about ye, to the left"><img class="bend" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABgAAAAYCAYAAADgdz34AAAApUlEQVR42u2V6wnAIAyE3cMB3MD/DuIiLuIgTuFUlhMCqa2p9gGlNHAUA3dffECV+nyllErOuTwWTmohWJMuhxNA0qXwGGPx3tfvHgz9YcheOGStrRDea3W4m174jLoQHno2nGsDCCFMBzvnxgEEkQKNMTCuzLgX+LgXg4oXTS+Gm9DrDUWQYUA7nbTtdvopAJXWup73YwCpfsA7Abf/NwBQf722FvYbCRRuRVuTAAAAAElFTkSuQmCC" width="24" height="24" alt="" draggable="false"></button><button id="turnR" aria-label="look about ye, to the right"><img class="bend" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABgAAAAYCAYAAADgdz34AAAAqElEQVR42u2T0Q2AIAwF3YMB2IB/BmERFmEQpmAqzDNpUrEileiPNnkxIfUOpC7LZ6uUUnPOdRpCkeCUabgULlBLAEgpiVCshxC2p1pCILwsBRDAnXO7tSHJFbyXIckdcCvhsmGB914tijEeBbQDBA0IvnfTVq21XYEIlwSAnzXTFFEvTVZ3griAn6J3XyennBfgXowxup9LI7hVv2CoHhfwehT+16u1AnwsCRR8lNaoAAAAAElFTkSuQmCC" width="24" height="24" alt="" draggable="false"></button><button id="light" aria-label="have a smoke"><img class="bend" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABgAAAAYCAYAAADgdz34AAAAvElEQVR42uWU0QnGIAyEu4cDuIHvDuIiLuIgTuFU+bkfroTSopbkqUJeKtxn7tIcxyfPGENQvXdxFWe5QCDcWpNaqz2glHKKs8whAGiIuUUEmNsEQQ2AXS7WuIgTEGOUlNIfEEKQrfme+Yl7vn7Zf7aM2SaIsLsX6nBzzrLlqy4N093BHlq0HdxT6bWArrYCXgEwXFjCHJjFUg4MbQa4fnv1J/NVM4DJLgKM3d3Zab6Lrla6bVNMkpv4t84PakKLLEizLUgAAAAASUVORK5CYII=" width="24" height="24" alt="" draggable="false"></button></div>
 <div id="stick"><i></i></div>
-<div id="fps"></div>
 <div id="dead"><div><p id="lived"></p></div></div>
 <div id="menu" aria-hidden="true" data-step="11"><div class="in">
 <div class="vol" data-v="all"><span class="name">all of it</span><span class="pips"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></span></div>
@@ -27791,7 +27789,7 @@ const Sound = (() => {
     // (index.html?touch shows the same on any machine)
     TOUCH = matchMedia('(hover: none) and (pointer: coarse)').matches || /[?&]touch\b/.test(location.search);
   if (TOUCH) document.body.classList.add('touch');
-  let W, G, rest, posedBuf, holder, img, t = 0, last = 0, frames = 0, fpsAt = 0;
+  let W, G, rest, posedBuf, holder, img, t = 0, last = 0;
   // fingers. One of them put down and dragged is a stick: he goes the way it is dragged from where it was put down, softly
   // for a short drag and at a run for a longer one. Two of them, drawn apart or together, bring the picture nearer or further
   const fingers = new Map(),
@@ -28318,7 +28316,6 @@ const Sound = (() => {
     const k = 1 - Math.exp(-dt * 6);
     for (let i = 0; i < 3; i++) cam[i] += (look[i] - cam[i]) * k;
     draw();
-    frames++;
     // what the frame cost to make (not how long it was until the next: a page that is not looked at is not drawn at all).
     // Over 36 thousandths of a second each, a second or so running, and the picture is made a step coarser; never finer again
     if (t > 4 && mode === 'play') {
@@ -28327,11 +28324,6 @@ const Sound = (() => {
         if (spent / counted > 36 && quality > 0.6) quality = Math.max(0.6, quality * 0.86);
         spent = counted = 0;
       }
-    }
-    if (now - fpsAt > 500) {
-      $('fps').textContent = Math.round((frames * 1000) / (now - fpsAt)) + ' fps';
-      frames = 0;
-      fpsAt = now;
     }
     if (mode === 'dead' && deadT > 2.6) return; // the black is up and the picture under it is not drawn again
     requestAnimationFrame(frame);
