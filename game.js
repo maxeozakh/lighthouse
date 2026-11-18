@@ -13,9 +13,13 @@
     keys = new Set(),
     // a phone or a tablet has no keys: there a thumb does all of it, and the page shows what it needs for that
     // (index.html?touch shows the same on any machine)
-    TOUCH = matchMedia('(hover: none) and (pointer: coarse)').matches || /[?&]touch\b/.test(location.search);
+    TOUCH = matchMedia('(hover: none) and (pointer: coarse)').matches || /[?&]touch\b/.test(location.search),
+    // index.html?debug: what is not for everyone. A tick in the ledger for looking at the sparks, and up in the corner how
+    // many pictures a second are shown, what one costs to make (thousandths of a second), and how coarse it is made (1: as designed)
+    DEBUG = /[?&]debug\b/.test(location.search),
+    meter = DEBUG ? document.body.appendChild(Object.assign(document.createElement('div'), { id: 'fps' })) : null;
   if (TOUCH) document.body.classList.add('touch');
-  let W, G, rest, posedBuf, holder, img, t = 0, last = 0;
+  let W, G, rest, posedBuf, holder, img, t = 0, last = 0, frames = 0, fpsAt = 0, cost = 0;
   // fingers. One of them put down and dragged is a stick: he goes the way it is dragged from where it was put down, softly
   // for a short drag and at a run for a longer one. Two of them, drawn apart or together, bring the picture nearer or further
   const fingers = new Map(),
@@ -106,7 +110,7 @@
   // made what. What he sets the browser keeps (VOLS). While it is open he stands where he is, and the days go by as they do
   // (the tick for looking at the sparks is not for everyone: it is in the ledger only when the page's address asks for it,
   // with ?debug)
-  if (!/[?&]debug\b/.test(location.search)) for (const el of document.querySelectorAll('#menu .vol[data-c="spark"]')) el.remove();
+  if (!DEBUG) for (const el of document.querySelectorAll('#menu .vol[data-c="spark"]')) el.remove();
   const VOLS = 'wickie.sound',
     STEPS = 10,
     vol = { all: STEPS, music: 7, rest: STEPS }, // (the music, and the horn with it, a little under the rest until he says otherwise)
@@ -542,6 +546,15 @@
     const k = 1 - Math.exp(-dt * 6);
     for (let i = 0; i < 3; i++) cam[i] += (look[i] - cam[i]) * k;
     draw();
+    if (DEBUG) {
+      frames++;
+      cost += performance.now() - began;
+      if (now - fpsAt > 500) {
+        meter.textContent = Math.round((frames * 1000) / (now - fpsAt)) + ' fps \u00b7 ' + (cost / frames).toFixed(1) + ' ms \u00b7 q ' + quality.toFixed(2);
+        frames = cost = 0;
+        fpsAt = now;
+      }
+    }
     // what the frame cost to make (not how long it was until the next: a page that is not looked at is not drawn at all).
     // Over 36 thousandths of a second each, a second or so running, and the picture is made a step coarser; never finer again
     if (t > 4 && mode === 'play') {

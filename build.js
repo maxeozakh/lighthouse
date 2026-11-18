@@ -106,6 +106,7 @@ ${mit}
   #hud .known { overflow: hidden; vertical-align: top; padding: 6px 0; margin: -6px 0; opacity: 0; transition: opacity 0.6s ease, width 1.4s ease-in-out 0.45s; }
   #hud .keys > span.end::after, #hud .thumbs > span.end::after { display: inline-block; overflow: hidden; vertical-align: top; width: var(--dot); opacity: 0; transition: opacity 0.6s ease, width 1.4s ease-in-out 0.45s; }
   #hud .keys > span.bare::after, #hud .thumbs > span.bare::after { display: none; }
+  #fps { position: fixed; right: calc(12px + env(safe-area-inset-right)); top: calc(10px + env(safe-area-inset-top)); color: #8a8b86; font: 11px ui-monospace, Menlo, monospace; }
   /* it opens out of black, and quickly */
   #veil { position: fixed; inset: 0; background: #000; transition: opacity 0.7s ease; pointer-events: none; }
   #veil.gone { opacity: 0; }
