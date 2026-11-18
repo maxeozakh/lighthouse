@@ -79,17 +79,15 @@ SOFTWARE.
   #veil.gone { opacity: 0; }
   /* what is laid over the picture, inside its frame: sized from the frame's height, so it reads the same in any window */
   #ui { position: fixed; pointer-events: none; }
-  /* the count of days, which nobody explains */
-  #day { position: absolute; left: 3.2%; top: 2.6%; font-size: 0.8em; letter-spacing: 0.14em; color: #e4e5df; text-shadow: 0 0 6px #000, 0 1px 2px #000; }
-  /* and under it, smaller, the count of his cigarettes: not there until he has lit one */
-  #cigs { position: absolute; left: 3.2%; top: calc(2.6% + 1.75em); font-size: max(0.6em, 10px); line-height: 1.3; letter-spacing: 0.14em; white-space: nowrap; color: #b9bab4; filter: drop-shadow(0 0 6px #000) drop-shadow(0 1px 2px #000); opacity: 0; transition: opacity 0.8s ease; }
+  /* the count of his cigarettes, which nobody explains: not there until he has lit one */
+  #cigs { position: absolute; left: 3.2%; top: 2.6%; font-size: 0.8em; line-height: 1.4; letter-spacing: 0.14em; white-space: nowrap; color: #e4e5df; filter: drop-shadow(0 0 6px #000) drop-shadow(0 1px 2px #000); opacity: 0; transition: opacity 0.8s ease; }
   #cigs.on { opacity: 1; }
   /* its figures are on reels, one each, as a scoreboard's are: a figure that changes is wound up out of its window as the
      next comes up from under it, and stops with a little overrun (game.js: roll()). (The shadow is the whole count's, and
      not each figure's, so that the windows do not cut it) */
-  #cigs .reel { display: inline-block; height: 1.3em; overflow: hidden; vertical-align: top; }
+  #cigs .reel { display: inline-block; height: 1.4em; overflow: hidden; vertical-align: top; }
   #cigs .reel > span { display: block; }
-  #cigs .reel i { display: block; width: max-content; height: 1.3em; font-style: normal; }
+  #cigs .reel i { display: block; width: max-content; height: 1.4em; font-style: normal; }
   #cigs .reel.go { transition: width 0.8s ease-in-out var(--wait, 0s); }
   #cigs .reel.go > span { transform: translateY(-50%); transition: transform 0.8s cubic-bezier(0.5, 0, 0.25, 1.5) var(--wait, 0s); }
   #dead { position: fixed; inset: 0; display: grid; place-items: center; background: #000; text-align: center; opacity: 0; pointer-events: none; transition: opacity 0.5s; }
@@ -140,9 +138,7 @@ SOFTWARE.
   #hud .bend { width: 24px; height: 24px; margin: -6px 1px; vertical-align: middle; }
   #stick { position: fixed; width: 96px; height: 96px; margin: -48px 0 0 -48px; border-radius: 50%; border: 1px solid rgba(217, 218, 212, 0.3); pointer-events: none; }
   #stick i { position: absolute; left: 50%; top: 50%; width: 30px; height: 30px; margin: -15px 0 0 -15px; border-radius: 50%; background: rgba(217, 218, 212, 0.35); }
-  /* the end: the count where it stopped (and the count of what he smoked, if he did), and nothing else */
-  #smoked { margin: 0.5em 0 0; padding-left: 0.16em; font: 3.2vh/1 'Redaction', Georgia, serif; letter-spacing: 0.16em; color: #b9bab4; }
-  #smoked:empty { display: none; }
+  /* the end: the count where it stopped, and nothing else */
   #lived { margin: 0; padding-left: 0.16em; font: 5vh/1 'Redaction', Georgia, serif; letter-spacing: 0.16em; color: #e4e5df; }
 </style>
 </head>
@@ -150,14 +146,13 @@ SOFTWARE.
 <canvas id="view"></canvas>
 <div id="frame"></div>
 <div id="ui">
-  <div id="day"></div>
   <div id="cigs"></div>
 </div>
 <div id="hud"><span class="keys"><span data-h="roam"><b>WASD</b> or arrows roam the rock</span><span data-h="soft"><b>Shift</b> tread soft</span><span data-h="look"><b>Q</b> / <b>E</b> look about ye</span><span data-h="zoom">wheel peer close</span><span data-h="smoke"><b>C</b> have a smoke</span><span data-h="ears"><b>M</b> <span class="snd">stop yer ears</span></span><span data-h="book"><b>Esc</b> the ledger</span></span><span class="thumbs"><span data-h="roam"><b>drag</b> roam the rock</span><span data-h="soft"><b>drag a little</b> tread soft</span><span data-h="look"><img class="bend" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABgAAAAYCAYAAADgdz34AAAApUlEQVR42u2V6wnAIAyE3cMB3MD/DuIiLuIgTuFUlhMCqa2p9gGlNHAUA3dffECV+nyllErOuTwWTmohWJMuhxNA0qXwGGPx3tfvHgz9YcheOGStrRDea3W4m174jLoQHno2nGsDCCFMBzvnxgEEkQKNMTCuzLgX+LgXg4oXTS+Gm9DrDUWQYUA7nbTtdvopAJXWup73YwCpfsA7Abf/NwBQf722FvYbCRRuRVuTAAAAAElFTkSuQmCC" width="24" height="24" alt="" draggable="false"><img class="bend" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABgAAAAYCAYAAADgdz34AAAAqElEQVR42u2T0Q2AIAwF3YMB2IB/BmERFmEQpmAqzDNpUrEileiPNnkxIfUOpC7LZ6uUUnPOdRpCkeCUabgULlBLAEgpiVCshxC2p1pCILwsBRDAnXO7tSHJFbyXIckdcCvhsmGB914tijEeBbQDBA0IvnfTVq21XYEIlwSAnzXTFFEvTVZ3griAn6J3XyennBfgXowxup9LI7hVv2CoHhfwehT+16u1AnwsCRR8lNaoAAAAAElFTkSuQmCC" width="24" height="24" alt="" draggable="false"> look about ye</span><span data-h="zoom"><b>pinch</b> peer close</span><span data-h="smoke"><img class="bend" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABgAAAAYCAYAAADgdz34AAAAvElEQVR42uWU0QnGIAyEu4cDuIHvDuIiLuIgTuFU+bkfroTSopbkqUJeKtxn7tIcxyfPGENQvXdxFWe5QCDcWpNaqz2glHKKs8whAGiIuUUEmNsEQQ2AXS7WuIgTEGOUlNIfEEKQrfme+Yl7vn7Zf7aM2SaIsLsX6nBzzrLlqy4N093BHlq0HdxT6bWArrYCXgEwXFjCHJjFUg4MbQa4fnv1J/NVM4DJLgKM3d3Zab6Lrla6bVNMkpv4t84PakKLLEizLUgAAAAASUVORK5CYII=" width="24" height="24" alt="" draggable="false"> have a smoke</span><span><span class="snd tap">stop yer ears</span></span><span><span class="book tap">the ledger</span></span></span></div>
 <div id="pad"><button id="turnL" aria-label="look about ye, to the left"><img class="bend" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABgAAAAYCAYAAADgdz34AAAApUlEQVR42u2V6wnAIAyE3cMB3MD/DuIiLuIgTuFUlhMCqa2p9gGlNHAUA3dffECV+nyllErOuTwWTmohWJMuhxNA0qXwGGPx3tfvHgz9YcheOGStrRDea3W4m174jLoQHno2nGsDCCFMBzvnxgEEkQKNMTCuzLgX+LgXg4oXTS+Gm9DrDUWQYUA7nbTtdvopAJXWup73YwCpfsA7Abf/NwBQf722FvYbCRRuRVuTAAAAAElFTkSuQmCC" width="24" height="24" alt="" draggable="false"></button><button id="turnR" aria-label="look about ye, to the right"><img class="bend" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABgAAAAYCAYAAADgdz34AAAAqElEQVR42u2T0Q2AIAwF3YMB2IB/BmERFmEQpmAqzDNpUrEileiPNnkxIfUOpC7LZ6uUUnPOdRpCkeCUabgULlBLAEgpiVCshxC2p1pCILwsBRDAnXO7tSHJFbyXIckdcCvhsmGB914tijEeBbQDBA0IvnfTVq21XYEIlwSAnzXTFFEvTVZ3griAn6J3XyennBfgXowxup9LI7hVv2CoHhfwehT+16u1AnwsCRR8lNaoAAAAAElFTkSuQmCC" width="24" height="24" alt="" draggable="false"></button><button id="light" aria-label="have a smoke"><img class="bend" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABgAAAAYCAYAAADgdz34AAAAvElEQVR42uWU0QnGIAyEu4cDuIHvDuIiLuIgTuFU+bkfroTSopbkqUJeKtxn7tIcxyfPGENQvXdxFWe5QCDcWpNaqz2glHKKs8whAGiIuUUEmNsEQQ2AXS7WuIgTEGOUlNIfEEKQrfme+Yl7vn7Zf7aM2SaIsLsX6nBzzrLlqy4N093BHlq0HdxT6bWArrYCXgEwXFjCHJjFUg4MbQa4fnv1J/NVM4DJLgKM3d3Zab6Lrla6bVNMkpv4t84PakKLLEizLUgAAAAASUVORK5CYII=" width="24" height="24" alt="" draggable="false"></button></div>
 <div id="stick"><i></i></div>
 <div id="fps"></div>
-<div id="dead"><div><p id="lived"></p><p id="smoked"></p></div></div>
+<div id="dead"><div><p id="lived"></p></div></div>
 <div id="menu" aria-hidden="true" data-step="11"><div class="in">
 <div class="vol" data-v="all"><span class="name">all of it</span><span class="pips"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></span></div>
 <div class="vol" data-v="music"><span class="name">the music</span><span class="pips"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></span></div>
@@ -27581,7 +27576,7 @@ const Sound = (() => {
   // a slow machine: when a frame takes too long to make, the picture is made of fewer, bigger points (1: as designed)
   let quality = 1, spent = 0, counted = 0;
   let yaw, yawTo, zoom = 0.5, zoomTo = 1, cam = [0, 0, 0], box = { w: 1, h: 1 }, ptr = null; // it opens far off and comes in
-  // 'play': he runs about. 'dead': she has him, and that is the end of it: the count of his days is all that is left on the screen
+  // 'play': he runs about. 'dead': she has him, and that is the end of it: the count of his cigarettes is all that is left on the screen
   let mode = 'play', deadT = 0, heard = 0, strides = 0;
   // the row of hints says a thing until he has done it: then that part of it goes out, and the room it took closes up slowly
   // (from the width it has to none: the page's styles say how long that takes), so the rest of the row draws together.
@@ -27728,8 +27723,9 @@ const Sound = (() => {
     songAt = d => Math.pow(Math.max(0, Math.min(1, (EARSHOT - d) / (EARSHOT - TOO_NEAR))), 2.4),
     DAY = 90, // seconds from one sunrise to the next
     lut = new Uint8Array(256);
-  // the days: clock counts them from the first sunrise and never goes back. What is shown is a bare number, and it begins at the
-  // same one every time: 1898, which can be read as a count of days or as the year
+  // the days: clock counts them from the first sunrise and never goes back. (They are not shown.)
+  // What is shown is a bare number, the count of his cigarettes, and it begins at the same one every time: 1898, which
+  // can be read as the year until it is seen to go up as he smokes
   const FIRST = 1898;
   // The count of his cigarettes is kept as a scoreboard keeps a score: each figure on a reel of its own, and one that
   // changes is wound up out of sight as the next comes up from under it, the right-hand one first. A reel is as wide as
@@ -27958,8 +27954,7 @@ const Sound = (() => {
     }
     if (at(1.8)) {
       canvas.style.filter = canvas.style.transform = '';
-      $('lived').textContent = $('day').textContent; // the count stopped where it was
-      $('smoked').textContent = G.pl.smoked ? FIRST + G.pl.smoked : ''; // (and the other)
+      $('lived').textContent = FIRST + G.pl.smoked; // the count stopped where it was (and is shown now, if he never lit one)
       $('dead').classList.add('on');
       Sound.set({ song: 0, mutter: 0 }); // she has what she sang for
       Sound.duck(0.2, 0.2);
@@ -27994,12 +27989,10 @@ const Sound = (() => {
     ctx.putImageData(img, 0, 0);
   }
 
-  // the days go by, whatever he is doing, until she has him: the count of them, the old man's hours, the lamp, and how dark it is
+  // the days go by, whatever he is doing, until she has him: the old man's hours, the lamp, and how dark it is
   function hours(dt) {
     if (mode !== 'dead') {
       clock += dt / DAY;
-      const label = String(FIRST + Math.floor(clock));
-      if ($('day').textContent !== label) $('day').textContent = label;
       const f = clock % 1,
         nightly = f >= duskAt && f < dawnAt;
       if (nightly !== late) {
@@ -28070,8 +28063,8 @@ const Sound = (() => {
       pl.flare = false; // (his match has taken)
       Sound.strike();
     }
-    // how many he has smoked: a bare number under the count of days, and not there until he has lit the first. It does
-    // not begin at nothing, any more than the days do: he had smoked as many as that before he came
+    // how many he has smoked: a bare number, and not there until he has lit the first. It does not begin at nothing: he
+    // had smoked as many as that before he came
     // It is put up as it stood before this one, and then turned (roll()), so that it is seen what it is a count of
     if (pl.smoked) {
       const now = performance.now();

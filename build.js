@@ -112,17 +112,15 @@ ${mit}
   #veil.gone { opacity: 0; }
   /* what is laid over the picture, inside its frame: sized from the frame's height, so it reads the same in any window */
   #ui { position: fixed; pointer-events: none; }
-  /* the count of days, which nobody explains */
-  #day { position: absolute; left: 3.2%; top: 2.6%; font-size: 0.8em; letter-spacing: 0.14em; color: #e4e5df; text-shadow: 0 0 6px #000, 0 1px 2px #000; }
-  /* and under it, smaller, the count of his cigarettes: not there until he has lit one */
-  #cigs { position: absolute; left: 3.2%; top: calc(2.6% + 1.75em); font-size: max(0.6em, 10px); line-height: 1.3; letter-spacing: 0.14em; white-space: nowrap; color: #b9bab4; filter: drop-shadow(0 0 6px #000) drop-shadow(0 1px 2px #000); opacity: 0; transition: opacity 0.8s ease; }
+  /* the count of his cigarettes, which nobody explains: not there until he has lit one */
+  #cigs { position: absolute; left: 3.2%; top: 2.6%; font-size: 0.8em; line-height: 1.4; letter-spacing: 0.14em; white-space: nowrap; color: #e4e5df; filter: drop-shadow(0 0 6px #000) drop-shadow(0 1px 2px #000); opacity: 0; transition: opacity 0.8s ease; }
   #cigs.on { opacity: 1; }
   /* its figures are on reels, one each, as a scoreboard's are: a figure that changes is wound up out of its window as the
      next comes up from under it, and stops with a little overrun (game.js: roll()). (The shadow is the whole count's, and
      not each figure's, so that the windows do not cut it) */
-  #cigs .reel { display: inline-block; height: 1.3em; overflow: hidden; vertical-align: top; }
+  #cigs .reel { display: inline-block; height: 1.4em; overflow: hidden; vertical-align: top; }
   #cigs .reel > span { display: block; }
-  #cigs .reel i { display: block; width: max-content; height: 1.3em; font-style: normal; }
+  #cigs .reel i { display: block; width: max-content; height: 1.4em; font-style: normal; }
   #cigs .reel.go { transition: width 0.8s ease-in-out var(--wait, 0s); }
   #cigs .reel.go > span { transform: translateY(-50%); transition: transform 0.8s cubic-bezier(0.5, 0, 0.25, 1.5) var(--wait, 0s); }
   #dead { position: fixed; inset: 0; display: grid; place-items: center; background: #000; text-align: center; opacity: 0; pointer-events: none; transition: opacity 0.5s; }
@@ -173,9 +171,7 @@ ${mit}
   #hud .bend { width: ${icons.size}px; height: ${icons.size}px; margin: -6px 1px; vertical-align: middle; }
   #stick { position: fixed; width: 96px; height: 96px; margin: -48px 0 0 -48px; border-radius: 50%; border: 1px solid rgba(217, 218, 212, 0.3); pointer-events: none; }
   #stick i { position: absolute; left: 50%; top: 50%; width: 30px; height: 30px; margin: -15px 0 0 -15px; border-radius: 50%; background: rgba(217, 218, 212, 0.35); }
-  /* the end: the count where it stopped (and the count of what he smoked, if he did), and nothing else */
-  #smoked { margin: 0.5em 0 0; padding-left: 0.16em; font: 3.2vh/1 'Redaction', Georgia, serif; letter-spacing: 0.16em; color: #b9bab4; }
-  #smoked:empty { display: none; }
+  /* the end: the count where it stopped, and nothing else */
   #lived { margin: 0; padding-left: 0.16em; font: 5vh/1 'Redaction', Georgia, serif; letter-spacing: 0.16em; color: #e4e5df; }
 </style>
 </head>
@@ -183,14 +179,13 @@ ${mit}
 <canvas id="view"></canvas>
 <div id="frame"></div>
 <div id="ui">
-  <div id="day"></div>
   <div id="cigs"></div>
 </div>
 <div id="hud"><span class="keys"><span data-h="roam"><b>WASD</b> or arrows roam the rock</span><span data-h="soft"><b>Shift</b> tread soft</span><span data-h="look"><b>Q</b> / <b>E</b> look about ye</span><span data-h="zoom">wheel peer close</span><span data-h="smoke"><b>C</b> have a smoke</span><span data-h="ears"><b>M</b> <span class="snd">stop yer ears</span></span><span data-h="book"><b>Esc</b> the ledger</span></span><span class="thumbs"><span data-h="roam"><b>drag</b> roam the rock</span><span data-h="soft"><b>drag a little</b> tread soft</span><span data-h="look">${bend(-1)}${bend(1)} look about ye</span><span data-h="zoom"><b>pinch</b> peer close</span><span data-h="smoke">${bend(0)} have a smoke</span><span><span class="snd tap">stop yer ears</span></span><span><span class="book tap">the ledger</span></span></span></div>
 <div id="pad"><button id="turnL" aria-label="look about ye, to the left">${bend(-1)}</button><button id="turnR" aria-label="look about ye, to the right">${bend(1)}</button><button id="light" aria-label="have a smoke">${bend(0)}</button></div>
 <div id="stick"><i></i></div>
 <div id="fps"></div>
-<div id="dead"><div><p id="lived"></p><p id="smoked"></p></div></div>
+<div id="dead"><div><p id="lived"></p></div></div>
 <div id="menu" aria-hidden="true" data-step="${icons.pip.w + 2}"><div class="in">
 <div class="vol" data-v="all"><span class="name">all of it</span><span class="pips"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></span></div>
 <div class="vol" data-v="music"><span class="name">the music</span><span class="pips"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></span></div>

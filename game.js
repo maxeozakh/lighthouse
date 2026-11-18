@@ -26,7 +26,7 @@
   // a slow machine: when a frame takes too long to make, the picture is made of fewer, bigger points (1: as designed)
   let quality = 1, spent = 0, counted = 0;
   let yaw, yawTo, zoom = 0.5, zoomTo = 1, cam = [0, 0, 0], box = { w: 1, h: 1 }, ptr = null; // it opens far off and comes in
-  // 'play': he runs about. 'dead': she has him, and that is the end of it: the count of his days is all that is left on the screen
+  // 'play': he runs about. 'dead': she has him, and that is the end of it: the count of his cigarettes is all that is left on the screen
   let mode = 'play', deadT = 0, heard = 0, strides = 0;
   // the row of hints says a thing until he has done it: then that part of it goes out, and the room it took closes up slowly
   // (from the width it has to none: the page's styles say how long that takes), so the rest of the row draws together.
@@ -173,8 +173,9 @@
     songAt = d => Math.pow(Math.max(0, Math.min(1, (EARSHOT - d) / (EARSHOT - TOO_NEAR))), 2.4),
     DAY = 90, // seconds from one sunrise to the next
     lut = new Uint8Array(256);
-  // the days: clock counts them from the first sunrise and never goes back. What is shown is a bare number, and it begins at the
-  // same one every time: 1898, which can be read as a count of days or as the year
+  // the days: clock counts them from the first sunrise and never goes back. (They are not shown.)
+  // What is shown is a bare number, the count of his cigarettes, and it begins at the same one every time: 1898, which
+  // can be read as the year until it is seen to go up as he smokes
   const FIRST = 1898;
   // The count of his cigarettes is kept as a scoreboard keeps a score: each figure on a reel of its own, and one that
   // changes is wound up out of sight as the next comes up from under it, the right-hand one first. A reel is as wide as
@@ -403,8 +404,7 @@
     }
     if (at(1.8)) {
       canvas.style.filter = canvas.style.transform = '';
-      $('lived').textContent = $('day').textContent; // the count stopped where it was
-      $('smoked').textContent = G.pl.smoked ? FIRST + G.pl.smoked : ''; // (and the other)
+      $('lived').textContent = FIRST + G.pl.smoked; // the count stopped where it was (and is shown now, if he never lit one)
       $('dead').classList.add('on');
       Sound.set({ song: 0, mutter: 0 }); // she has what she sang for
       Sound.duck(0.2, 0.2);
@@ -439,12 +439,10 @@
     ctx.putImageData(img, 0, 0);
   }
 
-  // the days go by, whatever he is doing, until she has him: the count of them, the old man's hours, the lamp, and how dark it is
+  // the days go by, whatever he is doing, until she has him: the old man's hours, the lamp, and how dark it is
   function hours(dt) {
     if (mode !== 'dead') {
       clock += dt / DAY;
-      const label = String(FIRST + Math.floor(clock));
-      if ($('day').textContent !== label) $('day').textContent = label;
       const f = clock % 1,
         nightly = f >= duskAt && f < dawnAt;
       if (nightly !== late) {
@@ -515,8 +513,8 @@
       pl.flare = false; // (his match has taken)
       Sound.strike();
     }
-    // how many he has smoked: a bare number under the count of days, and not there until he has lit the first. It does
-    // not begin at nothing, any more than the days do: he had smoked as many as that before he came
+    // how many he has smoked: a bare number, and not there until he has lit the first. It does not begin at nothing: he
+    // had smoked as many as that before he came
     // It is put up as it stood before this one, and then turned (roll()), so that it is seen what it is a count of
     if (pl.smoked) {
       const now = performance.now();
