@@ -165,7 +165,7 @@ function render(world, o) {`
     `    const solid = al >= 1,
       wd = solid && !(flags & 1),
       glass = (flags & 16) !== 0,
-      thins = wd && glassy;`
+      thins = wd && glassy,`
   ],
   [
     `    drawn++;`,
@@ -714,6 +714,78 @@ const LEAN = [
       out[q + 2] = INK[bi * 3 + 2];`
   ]
 ];
+// And last, the one long function that draws a picture is cut into four that it calls, each of its long loops in a function of
+// its own (what goes between them goes in one object, F, made new for each picture). Nothing else is changed by it: the same
+// sums in the same order, the same picture to the last bit. It is for a phone's browser, which works a function up into a
+// quick form by stages, and was a long while over one this long: seconds at a time, every so often, with the picture stalled.
+function split(s) {
+  const cut = (from, to) => {
+    const a = s.indexOf(from), b = s.indexOf(to, a);
+    if (a < 0 || b < 0 || s.indexOf(from, a + 1) >= 0) throw new Error('fast-render: the renderer has changed, this was not found once: ' + (a < 0 || s.indexOf(from, a + 1) >= 0 ? from : to).slice(0, 60));
+    const body = s.slice(a, b);
+    return { body, put: now => (s = s.slice(0, s.indexOf(from)) + now + s.slice(s.indexOf(from) + body.length)) };
+  };
+  const made = [];
+  // 1. where each splat is at this moment, and which of them can reach the picture
+  let r = cut('  const { X, Y, Z, AL, SC, depth, add, wet } = lent;\n  add.fill(0);', '  if (world.back) for (');
+  made.push(`// where each splat is at this moment, what it looks like, and which of them can reach the picture at all (F.nv of them, in lent.seen)
+function moved(F) {
+  const { world, o, t, V, focal, near, tp, asp, W, H, limx, limy, N, d } = F;
+${r.body}  F.nv = nv;
+  F.mn = mn;
+  F.anyGlass = anyGlass;
+}`);
+  r.put(`  // (what the parts of the work pass between them)
+  const F = { world, o, t, V, focal, near, tp, asp, W, H, limx, limy, N, d, R, dist, fog, px, hex, nv: 0, mn: 0, anyGlass: false, order: null, ftb: false, deep: false, col: null, dep: null, gls: null, thru: null, open: null, OW: 0, drawn: 0, glassy: false };
+  moved(F);
+  const { depth } = lent,
+    nv = F.nv,
+    mn = F.mn,
+    anyGlass = F.anyGlass;
+`);
+  // 2. the sort
+  r = cut('  const order = lent.order;\n  {\n    const bits = ', '  if (!o.samples && (!lentPic');
+  made.push(`// those that can reach the picture, put in order: far to near
+function sorted(F) {
+  const { N, nv } = F,
+    { depth, seen } = lent;
+${r.body}}`);
+  r.put(`  sorted(F);
+  const order = lent.order;
+`);
+  // 3. the splats drawn
+  r = cut('  let drawn = 0,\n    alWas = NaN,', '  // (and behind all of it, the sky');
+  made.push(`// each splat put into the picture
+function splats(F) {
+  const { world, o, t, V, focal, near, tp, asp, W, H, limx, limy, N, d, R, dist, fog, hex, nv, order, ftb, deep, col, dep, gls, thru, open, OW } = F,
+    { X, Y, Z, AL, SC, add, wet } = lent;
+  let glassy = false;
+${r.body}  F.drawn = drawn;
+  F.glassy = glassy;
+}`);
+  r.put(`  F.order = order;
+  F.ftb = ftb;
+  F.deep = deep;
+  F.col = col;
+  F.dep = dep;
+  F.gls = gls;
+  F.thru = thru;
+  F.open = open;
+  F.OW = OW;
+  splats(F);
+  const drawn = F.drawn;
+  glassy = F.glassy;
+`);
+  // 4. the second pass, and what is given back
+  r = cut('  // the second pass: an outline where the picture steps back sharply', '}\n// make every art pixel');
+  made.push(`function finish(F) {
+  const { world, o, W, H, R, px, hex, col, dep, gls, drawn, glassy } = F;
+${r.body}}`);
+  r.put(`  return finish(F);
+`);
+  const at = s.indexOf('// make every art pixel');
+  return s.slice(0, at) + made.join('\n') + '\n' + s.slice(at);
+}
 function source(repo) {
   let s = fs.readFileSync(path.join(repo, 'cli', 'render.js'), 'utf8');
   if (!s.includes(SORT_OLD)) throw new Error('fast-render: the renderer has changed, the sort was not found');
@@ -722,7 +794,7 @@ function source(repo) {
     if (s.split(old).length !== 2) throw new Error('fast-render: the renderer has changed, this was not found once: ' + old.slice(0, 80));
     s = s.replace(old, () => now);
   }
-  return s.replace(/^const PixelLook = require\([^\n]*\n/m, '').replace(/^module\.exports = ([^\n]*);\s*$/m, 'return $1;');
+  return split(s.replace(/^const PixelLook = require\([^\n]*\n/m, '').replace(/^module\.exports = ([^\n]*);\s*$/m, 'return $1;'));
 }
 function load(repo) {
   const PixelLook = require(path.join(repo, 'src', 'pixel-look.js'));

@@ -24815,6 +24815,98 @@ function render(world, o) {
       u = () => new Uint32Array(N);
     lent = { N, X: f(), Y: f(), Z: f(), AL: f(), SC: f(), depth: f(), add: f(), wet: f(), order: u(), ks: u(), kd: u(), dst: u(), seen: u(), cnt: new Uint32Array(2049) };
   }
+  // (what the parts of the work pass between them)
+  const F = { world, o, t, V, focal, near, tp, asp, W, H, limx, limy, N, d, R, dist, fog, px, hex, nv: 0, mn: 0, anyGlass: false, order: null, ftb: false, deep: false, col: null, dep: null, gls: null, thru: null, open: null, OW: 0, drawn: 0, glassy: false };
+  moved(F);
+  const { depth } = lent,
+    nv = F.nv,
+    mn = F.mn,
+    anyGlass = F.anyGlass;
+  if (world.back) for (let j = 0; j < world.back.length; j++) depth[world.back[j]] = mn;
+  sorted(F);
+  const order = lent.order;
+  if (!o.samples && (!lentPic || lentPic.n !== W * H)) lentPic = { n: W * H, col: new Float32Array(W * H * 3), dep: new Float32Array(W * H), gls: new Float32Array(W * H), thru: new Float32Array(W * H), open: new Int32Array(((W + 31) >> 5) * H) };
+  const col = o.samples ? new Float32Array(W * H * 3) : lentPic.col,
+    dep = o.samples ? new Float32Array(W * H) : lentPic.dep,
+    gls = o.samples ? new Float32Array(W * H) : lentPic.gls;
+  if (!o.samples) gls.fill(0);
+  // (does anything read the depths afterward: an outline, a contact shade, the clean-up, or whoever asked for samples)
+  const deep = !!(o.samples || o.clean || (world.outline && world.outline.edge) || (world.ao && (world.ao.k === undefined ? 0.5 : world.ao.k) > 0));
+  const ftb = !o.samples && !deep && !anyGlass && !o.back2front;
+  let glassy = false; // (has any glass been drawn yet: until it has, there is none anywhere to be thinned or bent through)
+  const open = ftb ? lentPic.open : null, // (a bit for each point, a row's bits in words of thirty-two: set till the point is covered)
+    OW = (W + 31) >> 5;
+  const thru = ftb ? lentPic.thru : null; // (how much of what is behind still shows at each point: all of it, to begin with)
+  if (ftb) {
+    col.fill(0);
+    thru.fill(1);
+    dep.fill(1);
+    open.fill(-1);
+  } else
+    for (let i = 0; i < W * H; i++) {
+      col[i * 3] = bg[0];
+      col[i * 3 + 1] = bg[1];
+      col[i * 3 + 2] = bg[2];
+      dep[i] = 1;
+    }
+  F.order = order;
+  F.ftb = ftb;
+  F.deep = deep;
+  F.col = col;
+  F.dep = dep;
+  F.gls = gls;
+  F.thru = thru;
+  F.open = open;
+  F.OW = OW;
+  splats(F);
+  const drawn = F.drawn;
+  glassy = F.glassy;
+  // (and behind all of it, the sky: as much of it as still shows)
+  if (ftb)
+    for (let p = 0; p < W * H; p++) {
+      const th = thru[p];
+      col[p * 3] += bg[0] * th;
+      col[p * 3 + 1] += bg[1] * th;
+      col[p * 3 + 2] += bg[2] * th;
+    }
+  if (o.samples) {
+    // (the picture the contour look takes its insides from is worked on first, as the page does: glass bends it, contact shade darkens it)
+    let c2 = col;
+    if (o.worked) {
+      const bend = world.refract === undefined ? 6 : world.refract,
+        aoK = world.ao ? (world.ao.k === undefined ? 0.5 : world.ao.k) : 0,
+        aoR = world.ao ? (world.ao.range || 0.6) / (2 * R) : 1,
+        at = (x, y) => clamp(y, 0, H - 1) * W + clamp(x, 0, W - 1),
+        TAPS = [2, 0, -2, 0, 0, 2, 0, -2, 1, 1, -1, 1, 1, -1, -1, -1];
+      c2 = new Float32Array(col.length);
+      for (let y = 0; y < H; y++)
+        for (let x = 0; x < W; x++) {
+          const p = y * W + x,
+            gx = gls[at(x + 1, y)] - gls[at(x - 1, y)],
+            gy = gls[at(x, y + 1)] - gls[at(x, y - 1)];
+          let q = p;
+          if (gls[p] + Math.abs(gx) + Math.abs(gy) > 0) q = at(x + Math.round(gx * bend), y + Math.round(gy * bend));
+          let k = 1;
+          if (aoK > 0) {
+            let occ = 0;
+            for (let i = 0; i < 16; i += 2) {
+              const dd = (dep[p] - dep[at(x + TAPS[i], y + TAPS[i + 1])]) / aoR;
+              if (dd > 0.08 && dd < 3) occ += Math.min(1, dd);
+            }
+            k = 1 - aoK * Math.min(1, occ / 4);
+          }
+          c2[p * 3] = col[q * 3] * k;
+          c2[p * 3 + 1] = col[q * 3 + 1] * k;
+          c2[p * 3 + 2] = col[q * 3 + 2] * k;
+        }
+    }
+    return { w: W, h: H, color: Uint8Array.from(c2, v => Math.round(clamp(v, 0, 1) * 255)), depth: dep, drawn };
+  }
+  return finish(F);
+}
+// where each splat is at this moment, what it looks like, and which of them can reach the picture at all (F.nv of them, in lent.seen)
+function moved(F) {
+  const { world, o, t, V, focal, near, tp, asp, W, H, limx, limy, N, d } = F;
   const { X, Y, Z, AL, SC, depth, add, wet } = lent;
   add.fill(0);
   wet.fill(0);
@@ -24927,7 +25019,14 @@ function render(world, o) {
     }
     seen[nv++] = i;
   }
-  if (world.back) for (let j = 0; j < world.back.length; j++) depth[world.back[j]] = mn;
+  F.nv = nv;
+  F.mn = mn;
+  F.anyGlass = anyGlass;
+}
+// those that can reach the picture, put in order: far to near
+function sorted(F) {
+  const { N, nv } = F,
+    { depth, seen } = lent;
   const order = lent.order;
   {
     const bits = new Uint32Array(depth.buffer, depth.byteOffset, N);
@@ -24959,30 +25058,12 @@ function render(world, o) {
     }
     if (src !== order) for (let i = 0; i < nv; i++) order[i] = src[i];
   }
-  if (!o.samples && (!lentPic || lentPic.n !== W * H)) lentPic = { n: W * H, col: new Float32Array(W * H * 3), dep: new Float32Array(W * H), gls: new Float32Array(W * H), thru: new Float32Array(W * H), open: new Int32Array(((W + 31) >> 5) * H) };
-  const col = o.samples ? new Float32Array(W * H * 3) : lentPic.col,
-    dep = o.samples ? new Float32Array(W * H) : lentPic.dep,
-    gls = o.samples ? new Float32Array(W * H) : lentPic.gls;
-  if (!o.samples) gls.fill(0);
-  // (does anything read the depths afterward: an outline, a contact shade, the clean-up, or whoever asked for samples)
-  const deep = !!(o.samples || o.clean || (world.outline && world.outline.edge) || (world.ao && (world.ao.k === undefined ? 0.5 : world.ao.k) > 0));
-  const ftb = !o.samples && !deep && !anyGlass && !o.back2front;
-  let glassy = false; // (has any glass been drawn yet: until it has, there is none anywhere to be thinned or bent through)
-  const open = ftb ? lentPic.open : null, // (a bit for each point, a row's bits in words of thirty-two: set till the point is covered)
-    OW = (W + 31) >> 5;
-  const thru = ftb ? lentPic.thru : null; // (how much of what is behind still shows at each point: all of it, to begin with)
-  if (ftb) {
-    col.fill(0);
-    thru.fill(1);
-    dep.fill(1);
-    open.fill(-1);
-  } else
-    for (let i = 0; i < W * H; i++) {
-      col[i * 3] = bg[0];
-      col[i * 3 + 1] = bg[1];
-      col[i * 3 + 2] = bg[2];
-      dep[i] = 1;
-    }
+}
+// each splat put into the picture
+function splats(F) {
+  const { world, o, t, V, focal, near, tp, asp, W, H, limx, limy, N, d, R, dist, fog, hex, nv, order, ftb, deep, col, dep, gls, thru, open, OW } = F,
+    { X, Y, Z, AL, SC, add, wet } = lent;
+  let glassy = false;
   let drawn = 0,
     alWas = NaN, // (the strength of the splat before, and what was worked out from it)
     loWas = 0,
@@ -25077,7 +25158,7 @@ function render(world, o) {
     const solid = al >= 1,
       wd = solid && !(flags & 1),
       glass = (flags & 16) !== 0,
-      thins = wd && glassy;
+      thins = wd && glassy,
       x0 = Math.max(0, Math.floor(sx - ex)),
       x1 = Math.min(W - 1, Math.ceil(sx + ex)),
       y0 = Math.max(0, Math.floor(sy - ey)),
@@ -25205,47 +25286,11 @@ function render(world, o) {
       }
     }
   }
-  // (and behind all of it, the sky: as much of it as still shows)
-  if (ftb)
-    for (let p = 0; p < W * H; p++) {
-      const th = thru[p];
-      col[p * 3] += bg[0] * th;
-      col[p * 3 + 1] += bg[1] * th;
-      col[p * 3 + 2] += bg[2] * th;
-    }
-  if (o.samples) {
-    // (the picture the contour look takes its insides from is worked on first, as the page does: glass bends it, contact shade darkens it)
-    let c2 = col;
-    if (o.worked) {
-      const bend = world.refract === undefined ? 6 : world.refract,
-        aoK = world.ao ? (world.ao.k === undefined ? 0.5 : world.ao.k) : 0,
-        aoR = world.ao ? (world.ao.range || 0.6) / (2 * R) : 1,
-        at = (x, y) => clamp(y, 0, H - 1) * W + clamp(x, 0, W - 1),
-        TAPS = [2, 0, -2, 0, 0, 2, 0, -2, 1, 1, -1, 1, 1, -1, -1, -1];
-      c2 = new Float32Array(col.length);
-      for (let y = 0; y < H; y++)
-        for (let x = 0; x < W; x++) {
-          const p = y * W + x,
-            gx = gls[at(x + 1, y)] - gls[at(x - 1, y)],
-            gy = gls[at(x, y + 1)] - gls[at(x, y - 1)];
-          let q = p;
-          if (gls[p] + Math.abs(gx) + Math.abs(gy) > 0) q = at(x + Math.round(gx * bend), y + Math.round(gy * bend));
-          let k = 1;
-          if (aoK > 0) {
-            let occ = 0;
-            for (let i = 0; i < 16; i += 2) {
-              const dd = (dep[p] - dep[at(x + TAPS[i], y + TAPS[i + 1])]) / aoR;
-              if (dd > 0.08 && dd < 3) occ += Math.min(1, dd);
-            }
-            k = 1 - aoK * Math.min(1, occ / 4);
-          }
-          c2[p * 3] = col[q * 3] * k;
-          c2[p * 3 + 1] = col[q * 3 + 1] * k;
-          c2[p * 3 + 2] = col[q * 3 + 2] * k;
-        }
-    }
-    return { w: W, h: H, color: Uint8Array.from(c2, v => Math.round(clamp(v, 0, 1) * 255)), depth: dep, drawn };
-  }
+  F.drawn = drawn;
+  F.glassy = glassy;
+}
+function finish(F) {
+  const { world, o, W, H, R, px, hex, col, dep, gls, drawn, glassy } = F;
   // the second pass: an outline where the picture steps back sharply, a little ordered noise, then the nearest colour of the palette
   const out = new Uint8Array(W * H * 3),
     np = world.pal.length,

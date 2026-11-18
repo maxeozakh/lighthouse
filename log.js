@@ -195,7 +195,8 @@ const FIRST = 1898,
         'The picture is drawn in half the time it took, and is the same picture to the last point of it.',
         'The two men stand a little higher: their boots were in the ground. And the dark round each has under him is thinner: a little of the ground shows through it.',
         'The small count of pictures a second, up in the corner, is gone: it is there only for who asks for it.',
-        'The picture is drawn quicker again, by near half, for the sake of a phone: what is nearest is drawn first, and what it hides is not drawn at all.'
+        'The picture is drawn quicker again, by near half, for the sake of a phone: what is nearest is drawn first, and what it hides is not drawn at all.',
+        'On a phone the picture would stall every half minute or so, and come back coarser each time. Four numbers had been left lying where the whole page could get at them, and the drawing was all one long piece of work: the numbers are put away, and the work is cut in four.'
       ]
     }
   ];
