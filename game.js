@@ -32,10 +32,6 @@
   let yaw, yawTo, zoom = 0.5, zoomTo = 1, cam = [0, 0, 0], box = { w: 1, h: 1 }, ptr = null; // it opens far off and comes in
   // 'play': he runs about. 'dead': she has him, and that is the end of it: the count of his cigarettes is all that is left on the screen
   let mode = 'play', deadT = 0, heard = 0, strides = 0;
-  // (or the sea has him, for a count that was tampered with: foul. alone: he died of that where he stood, and not of her.
-  // sure: the last count that was honestly his; ended: what the black at the end has on it, once it is up; first: what
-  // the text of the counting came to when the page opened, and looked: when it was last gone over)
-  let foul = false, alone = false, sure = 0, ended = '', first = 0, looked = 0;
   // the row of hints says a thing until he has done it: then that part of it goes out, and the room it took closes up slowly
   // (from the width it has to none: the page's styles say how long that takes), so the rest of the row draws together.
   // What he has done the browser keeps (KNOWN), so that he is not told it again the next time he comes
@@ -255,45 +251,6 @@
   $('cigs').addEventListener('transitionend', ev => {
     if (ev.propertyName === 'transform') still(ev.target.parentNode);
   });
-  // The count is his to make, and it is watched. Three things are gone over: the count against the mark the level keeps of
-  // it apart (G.fair(): at every picture); the figures on the screen against the figures that were put there (whenever
-  // anything under them is changed: and they are put back as they were); and the text of what does the counting against
-  // what it was when the page opened (every couple of seconds: a browser's tools can change a function as it runs).
-  // Whoever has put a hand to any of them is found out, and dies of it (cheat()).
-  // What is not looked for: a thing that only plays for him, or plays faster. That is his own business.
-  // (It is a watch kept from inside the page, and no more: who takes the page apart before it runs can take this out too)
-  const apply = Reflect.apply,
-    said = Function.prototype.toString,
-    imul = Math.imul,
-    sum = fs => {
-      let h = 2166136261;
-      for (const f of fs) {
-        const s = apply(said, f, []);
-        for (let i = 0; i < s.length; i++) h = imul(h ^ s.charCodeAt(i), 16777619);
-      }
-      return h >>> 0;
-    },
-    counting = () => sum([frame, dying, die, cheat, straight, mend, put, roll, settle, still, sum, counting, ...G.kept()]),
-    // is what the screen says what was put on it
-    straight = () => {
-      const reels = $('cigs').children;
-      if (reels.length !== tally.n.length) return false;
-      for (let k = 0; k < reels.length; k++) if (reels[k].textContent.slice(-1) !== tally.n[k]) return false;
-      return $('lived').textContent === ended && $('dead').classList.contains('foul') === foul;
-    },
-    // and it is made to say it again
-    mend = () => {
-      put(tally.n);
-      $('lived').textContent = ended;
-      $('dead').classList.toggle('foul', foul);
-    },
-    watch = new MutationObserver(() => {
-      if (straight()) return;
-      cheat();
-      mend();
-      watch.takeRecords(); // (the mending is not a thing to be looked into)
-    });
-  for (const id of ['ui', 'dead']) watch.observe($(id), { subtree: true, childList: true, characterData: true, attributes: true, attributeFilter: ['class'] });
   let clock = 0.03, dark = -1;
   // the old man's hours. Before the light begins to go he goes in, every night; and in the morning he comes out: but one
   // morning in seven or so (KEEPS) he does not, and is not seen for the whole of that day.
@@ -440,19 +397,6 @@
 
   // he came too near. She is up off her rock: the picture goes to its negative and shakes, and then there is only the number the
   // count had reached. Nothing follows it: he is not put back
-  // (Or the count was not his own: then it is the same end, wherever he stands, and with nobody but him in the picture; and
-  // the number on the black is the last that was honestly his, struck through, with a line under it to say whose count stands)
-  function cheat() {
-    if (foul) return;
-    foul = true;
-    $('dead').classList.add('foul');
-    if (ended) $('lived').textContent = ended = String(FIRST + sure); // (the black is up already: it is put right there)
-    else if (mode === 'play') {
-      alone = true;
-      if (open) book(false);
-      die();
-    }
-  }
   function die() {
     mode = 'dead';
     G.pl.cig = 0;
@@ -467,13 +411,13 @@
     deadT += dt;
     const at = s => was < s && deadT >= s;
     if (deadT < 1.8) {
-      if (!alone) G.npc.mer.scream = Math.min(1, deadT / 0.2);
+      G.npc.mer.scream = Math.min(1, deadT / 0.2);
       canvas.style.filter = 'invert(1) contrast(1.5)';
       canvas.style.transform = 'translate(' + ((Math.random() * 12 - 6) | 0) + 'px,' + ((Math.random() * 12 - 6) | 0) + 'px)';
     }
     if (at(1.8)) {
       canvas.style.filter = canvas.style.transform = '';
-      $('lived').textContent = ended = String(FIRST + (foul ? sure : G.pl.smoked)); // the count stopped where it was (and is shown now, if he never lit one)
+      $('lived').textContent = FIRST + G.pl.smoked; // the count stopped where it was (and is shown now, if he never lit one)
       $('dead').classList.add('on');
       Sound.set({ song: 0, mutter: 0 }); // she has what she sang for
       Sound.duck(0.2, 0.2);
@@ -545,16 +489,6 @@
       far = id => Math.hypot(pl.x - G.npc[id].x, pl.z - G.npc[id].z);
     let look = [pl.x, pl.y + 1.6, pl.z],
       close = 1;
-    // is the count still his own (and, now and then, is what counts it what it was)
-    if (!foul) {
-      if (G.fair()) sure = pl.smoked;
-      else cheat();
-      if (t - looked > 2) {
-        looked = t;
-        if (counting() !== first) cheat();
-      }
-    }
-    const had = foul ? sure : pl.smoked;
     if (mode === 'play') {
       const [mx, mz] = open ? [0, 0] : wish();
       G.step(dt, mx, mz, keys.has('ShiftLeft') || keys.has('ShiftRight') || soft);
@@ -570,7 +504,7 @@
     } else {
       G.step(dt, 0, 0);
       dying(dt);
-      if (deadT < 1.8 && !alone) {
+      if (deadT < 1.8) {
         // the two of them, and coming in on them
         const o = G.npc.mer;
         G.turn(o.x, o.z, dt);
@@ -595,13 +529,13 @@
     // how many he has smoked: a bare number, and not there until he has lit the first. It does not begin at nothing: he
     // had smoked as many as that before he came
     // It is put up as it stood before this one, and then turned (roll()), so that it is seen what it is a count of
-    if (had) {
+    if (pl.smoked) {
       const now = performance.now();
       if (!tally.on) {
         tally.on = now;
         put(FIRST);
         $('cigs').classList.add('on');
-      } else if (now - tally.on > 900 && tally.n !== String(FIRST + had)) roll(FIRST + had, now);
+      } else if (now - tally.on > 900 && tally.n !== String(FIRST + pl.smoked)) roll(FIRST + pl.smoked, now);
       else if (tally.till && now > tally.till) settle();
     }
     G.sea(t); // the swell comes on
@@ -813,7 +747,6 @@
   Sound.start(); // the weather, at once: or as soon as the browser lets a page be heard
   setTimeout(() => {
     build();
-    first = counting();
     $('veil').classList.add('gone'); // it opens out of black
     requestAnimationFrame(frame);
   }, 60);

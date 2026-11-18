@@ -1401,22 +1401,6 @@ module.exports = ({ makeBuilder, makeSculpt, KIT: K }) => ({
           W.data[q.o + 3] = 1.5 * (1 - k * k);
         }
       };
-    // The count of his cigarettes (pl.smoked) is his own to make, and nobody's to set. So a mark is kept of it apart (told),
-    // which nothing moves on but one of them catching, and then by a rule (tell()). Whether the count is an honest one can
-    // be asked at any time (fair()): it is, if the mark worked out again from the first, for as many as the count says, is
-    // the mark that is kept. The page asks at every picture, and he does not outlive the answer no (game.js).
-    // (kept(): what does the counting here, for the page to see that it is not changed under it as it runs)
-    const TOLD = 0x6b656570,
-      tell = h => (Math.imul(h, 1664525) + 1013904223) >>> 0,
-      fair = () => {
-        const n = pl.smoked;
-        if (!Number.isInteger(n) || n < 0 || n > 1e5) return false;
-        let h = TOLD;
-        for (let i = 0; i < n; i++) h = tell(h);
-        return h === told;
-      },
-      kept = () => [tell, fair, fag, smoke];
-    let told = TOLD;
     // a dab of smoke let go at a place (x, y, z), going (vx, vy, vz): it grows from s0 to s1 across and thins from a to nothing
     // over its life. (If all of them are out already, it is not let go)
     const puff = (at, v, s0, s1, a, life) => {
@@ -1611,10 +1595,7 @@ module.exports = ({ makeBuilder, makeSculpt, KIT: K }) => ({
           if (q.dud && on(STRIKE + GUTTER)) puff(from(0.13, 0.9, 0.36), [WIND[0] * 2 + j(), 0.3, WIND[2] * 2 + j()], 0.02, 0.09, 0.34, 1.4);
           burn = sm((b - CATCH) / 0.4);
           if (b >= CATCH) pl.mouth = false; // (lit, it is as any other: left off now, it is dropped)
-          if (on(q.S + CATCH)) {
-            pl.smoked++; // (one more of them: it is counted as it catches, whatever he does with it after)
-            told = tell(told);
-          }
+          if (on(q.S + CATCH)) pl.smoked++; // (one more of them: it is counted as it catches, whatever he does with it after)
           glow = burn * (1 - sm((b - BURNS + 0.1) / 0.5)); // (he draws on it to light it, and it glows as he does)
           if (on(q.OUT + 0.05)) for (let k = 0; k < 2; k++) puff(from(0.02, 1.13, 0.31), [j(), 0.34 + k * 0.1, j()], 0.02, 0.085, 0.32, 1.5);
           // (and once it has caught, the thread off its end, at his lips)
@@ -1850,7 +1831,7 @@ module.exports = ({ makeBuilder, makeSculpt, KIT: K }) => ({
     W.glass = glass.length;
     W.blocks = BLOCKS;
     W.sea = [water.length, white.length];
-    W.game = { pl, spawn: SPAWN, height, blocked, step, turn, npc, inside, spots: SPOTS, stand, home, smoke, fair, kept, night, grade, sea, places: { tower: TOWER, cottage: COT, engine: ENG, well: WELL, landing: [SLIP - 0.3, slipEnd - 1.2], boathouse: BOAT, shed: SHED, old: OLDMAN, mermaid: MER } };
+    W.game = { pl, spawn: SPAWN, height, blocked, step, turn, npc, inside, spots: SPOTS, stand, home, smoke, night, grade, sea, places: { tower: TOWER, cottage: COT, engine: ENG, well: WELL, landing: [SLIP - 0.3, slipEnd - 1.2], boathouse: BOAT, shed: SHED, old: OLDMAN, mermaid: MER } };
     return W;
   }
 });
