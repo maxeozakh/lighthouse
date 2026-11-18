@@ -24752,6 +24752,11 @@ function viewMatrix(yaw, pitch, dist, T) {
 // o: t (seconds), yaw, pitch, dist, target, w, h (the size of the stage in screen pixels), zoom (1 = the diorama's own distance), raw (skip the palette)
 let lent = null,
   lentPic = null;
+// a solid splat's strength across its edge: from where it is all there (0) out to where there is nothing of it (-EDGE_W), in EDGE_N steps
+const EDGE_W = 0.47,
+  EDGE_N = 2048,
+  EDGE = new Float64Array(EDGE_N + 2);
+for (let j = 0; j < EDGE_N + 2; j++) EDGE[j] = 0.99 * sstep(0.38, 0.62, 0.6201 * Math.exp(-EDGE_W + (j * EDGE_W) / EDGE_N));
 function render(world, o) {
   o = o || {};
   const c = world.cam,
@@ -24808,11 +24813,15 @@ function render(world, o) {
   if (!lent || lent.N !== N) {
     const f = () => new Float32Array(N),
       u = () => new Uint32Array(N);
-    lent = { N, X: f(), Y: f(), Z: f(), AL: f(), SC: f(), depth: f(), add: f(), wet: f(), order: u(), ks: u(), kd: u(), dst: u(), cnt: new Uint32Array(2049) };
+    lent = { N, X: f(), Y: f(), Z: f(), AL: f(), SC: f(), depth: f(), add: f(), wet: f(), order: u(), ks: u(), kd: u(), dst: u(), seen: u(), cnt: new Uint32Array(2049) };
   }
   const { X, Y, Z, AL, SC, depth, add, wet } = lent;
   add.fill(0);
   wet.fill(0);
+  const seen = lent.seen;
+  let nv = 0,
+    mn = Infinity,
+    anyGlass = false;
   for (let i = 0, q = 0; i < N; i++, q += 16) {
     let x = d[q],
       y = d[q + 1],
@@ -24890,9 +24899,34 @@ function render(world, o) {
     AL[i] = al;
     SC[i] = sc;
     depth[i] = V[2] * x + V[6] * y + V[10] * z + V[14];
+    if (depth[i] < mn) mn = depth[i];
+    if (kraw & 256) anyGlass = true;
+    // can it reach the picture at all (asked here just as it is asked again below, of the same numbers: those kept, not these)
+    {
+      const xk = X[i],
+        yk = Y[i],
+        zk = Z[i];
+      if (AL[i] <= 0 || yk < -30) continue;
+      const cx = V[0] * xk + V[4] * yk + V[8] * zk + V[12],
+        cy = V[1] * xk + V[5] * yk + V[9] * zk + V[13],
+        cz = V[2] * xk + V[6] * yk + V[10] * zk + V[14];
+      if (cz > -near) continue;
+      const mx = ((((tp / asp) * cx) / -cz) * 0.5 + 0.5) * W,
+        my = (((tp * cy) / -cz) * 0.5 + 0.5) * H;
+      if (!(mx >= 0 && mx <= W && my >= 0 && my <= H)) {
+        const s2 = SC[i] * SC[i],
+          iz = -1 / cz,
+          j00 = focal * iz,
+          j02 = focal * (clamp(cx * iz, -limx, limx) / iz) * iz * iz,
+          j12 = focal * (clamp(cy * iz, -limy, limy) / iz) * iz * iz,
+          most = (d[q + 4] + d[q + 8] + d[q + 10]) * s2,
+          bx = 3.01 * Math.sqrt((j00 * j00 + j02 * j02) * most + 0.15) + 1,
+          by = 3.01 * Math.sqrt((j00 * j00 + j12 * j12) * most + 0.15) + 1;
+        if (mx + bx < 0 || mx - bx > W || my + by < 0 || my - by > H) continue;
+      }
+    }
+    seen[nv++] = i;
   }
-  let mn = Infinity;
-  for (let i = 0; i < N; i++) if (depth[i] < mn) mn = depth[i];
   if (world.back) for (let j = 0; j < world.back.length; j++) depth[world.back[j]] = mn;
   const order = lent.order;
   {
@@ -24901,17 +24935,17 @@ function render(world, o) {
       kd = lent.kd,
       src = order,
       dst = lent.dst;
-    for (let i = 0; i < N; i++) {
-      const b = bits[i];
-      ks[i] = b >>> 31 ? ~b : b | 0x80000000; // a float's bits, made to count upward as the float does
-      order[i] = i;
+    for (let k = 0; k < nv; k++) {
+      const b = bits[seen[k]];
+      ks[k] = b >>> 31 ? ~b : b | 0x80000000; // a float's bits, made to count upward as the float does
+      order[k] = seen[k];
     }
     const cnt = lent.cnt;
     for (let shift = 0; shift < 33; shift += 11) {
       cnt.fill(0);
-      for (let i = 0; i < N; i++) cnt[((ks[i] >>> shift) & 2047) + 1]++;
+      for (let i = 0; i < nv; i++) cnt[((ks[i] >>> shift) & 2047) + 1]++;
       for (let k = 0; k < 2048; k++) cnt[k + 1] += cnt[k];
-      for (let i = 0; i < N; i++) {
+      for (let i = 0; i < nv; i++) {
         const p = cnt[(ks[i] >>> shift) & 2047]++;
         dst[p] = src[i];
         kd[p] = ks[i];
@@ -24923,50 +24957,50 @@ function render(world, o) {
       ks = kd;
       kd = w;
     }
-    if (src !== order) order.set(src);
+    if (src !== order) for (let i = 0; i < nv; i++) order[i] = src[i];
   }
-  if (!o.samples && (!lentPic || lentPic.n !== W * H)) lentPic = { n: W * H, col: new Float32Array(W * H * 3), dep: new Float32Array(W * H), gls: new Float32Array(W * H) };
+  if (!o.samples && (!lentPic || lentPic.n !== W * H)) lentPic = { n: W * H, col: new Float32Array(W * H * 3), dep: new Float32Array(W * H), gls: new Float32Array(W * H), thru: new Float32Array(W * H), open: new Int32Array(((W + 31) >> 5) * H) };
   const col = o.samples ? new Float32Array(W * H * 3) : lentPic.col,
     dep = o.samples ? new Float32Array(W * H) : lentPic.dep,
     gls = o.samples ? new Float32Array(W * H) : lentPic.gls;
   if (!o.samples) gls.fill(0);
   // (does anything read the depths afterward: an outline, a contact shade, the clean-up, or whoever asked for samples)
   const deep = !!(o.samples || o.clean || (world.outline && world.outline.edge) || (world.ao && (world.ao.k === undefined ? 0.5 : world.ao.k) > 0));
+  const ftb = !o.samples && !deep && !anyGlass && !o.back2front;
   let glassy = false; // (has any glass been drawn yet: until it has, there is none anywhere to be thinned or bent through)
-  for (let i = 0; i < W * H; i++) {
-    col[i * 3] = bg[0];
-    col[i * 3 + 1] = bg[1];
-    col[i * 3 + 2] = bg[2];
-    dep[i] = 1;
-  }
-  let drawn = 0;
+  const open = ftb ? lentPic.open : null, // (a bit for each point, a row's bits in words of thirty-two: set till the point is covered)
+    OW = (W + 31) >> 5;
+  const thru = ftb ? lentPic.thru : null; // (how much of what is behind still shows at each point: all of it, to begin with)
+  if (ftb) {
+    col.fill(0);
+    thru.fill(1);
+    dep.fill(1);
+    open.fill(-1);
+  } else
+    for (let i = 0; i < W * H; i++) {
+      col[i * 3] = bg[0];
+      col[i * 3 + 1] = bg[1];
+      col[i * 3 + 2] = bg[2];
+      dep[i] = 1;
+    }
+  let drawn = 0,
+    alWas = NaN, // (the strength of the splat before, and what was worked out from it)
+    loWas = 0,
+    hiWas = 0,
+    ringWas = 0;
   const FN = o.fine && world.fine && world.fine.length >= N * 12 ? world.fine : null,
     FPAL = FN ? world.pal.map((h, i) => hex(i)) : null;
-  for (let n = 0; n < N; n++) {
-    const i = order[n],
+  for (let n = 0; n < nv; n++) {
+    const i = order[ftb ? nv - 1 - n : n],
       q = i * 16,
       al = AL[i],
       x = X[i],
       y = Y[i],
       z = Z[i];
-    if (al <= 0 || y < -30) continue;
     const cx = V[0] * x + V[4] * y + V[8] * z + V[12],
       cy = V[1] * x + V[5] * y + V[9] * z + V[13],
       cz = V[2] * x + V[6] * y + V[10] * z + V[14];
-    if (cz > -near) continue;
     const s2 = SC[i] * SC[i];
-    {
-      const iz = -1 / cz,
-        j00 = focal * iz,
-        j02 = focal * (clamp(cx * iz, -limx, limx) / iz) * iz * iz,
-        j12 = focal * (clamp(cy * iz, -limy, limy) / iz) * iz * iz,
-        most = (d[q + 4] + d[q + 8] + d[q + 10]) * s2,
-        bx = 3.01 * Math.sqrt((j00 * j00 + j02 * j02) * most + 0.15) + 1,
-        by = 3.01 * Math.sqrt((j00 * j00 + j12 * j12) * most + 0.15) + 1,
-        mx = ((((tp / asp) * cx) / -cz) * 0.5 + 0.5) * W,
-        my = (((tp * cy) / -cz) * 0.5 + 0.5) * H;
-      if (mx + bx < 0 || mx - bx > W || my + by < 0 || my - by > H) continue;
-    }
     const kraw = Math.round(d[q + 11]),
       kind = kraw & 15,
       flags = kraw >> 4,
@@ -25017,13 +25051,19 @@ function render(world, o) {
       C = b0 * w0 + b1 * w1 + b2 * w2 + 0.15,
       det = A * C - Bq * Bq;
     if (det <= 0) continue;
+    const hard = al >= 1 && !o.soft;
+    if (al !== alWas) {
+      alWas = al;
+      loWas = Math.max(-4.5, Math.log((hard ? 0.388 : 0.00399) / al)); // (how far out, as the points are tried, there is still something)
+      hiWas = Math.log((hard ? 0.6201 : 0.9901) / al); // (and how far in it is all one strength)
+      ringWas = Math.sqrt(-2 * loWas) + 1e-3;
+    }
     const k0 = C / det,
       k1 = -Bq / det,
       k2 = A / det,
-      hard = al >= 1 && !o.soft,
-      lo = Math.max(-4.5, Math.log((hard ? 0.388 : 0.00399) / al)), // (how far out, as the points are tried, there is still something)
-      hi = Math.log((hard ? 0.6201 : 0.9901) / al), // (and how far in it is all one strength)
-      ring = Math.sqrt(-2 * lo) + 1e-3,
+      lo = loWas,
+      hi = hiWas,
+      ring = ringWas,
       ex = Math.min(ring * Math.sqrt(A), 2048),
       ey = Math.min(ring * Math.sqrt(C), 2048);
     if (lo > 0) continue; // (so faint that there is nothing of it anywhere)
@@ -25072,6 +25112,61 @@ function render(world, o) {
         fk = flags & 2 ? 0 : sstep(world.fog.start, 1, dn) * world.fog.max;
       }
     }
+    if (ftb) {
+      const w0 = x0 >> 5,
+        w1 = x1 >> 5,
+        m0 = -1 << (x0 & 31),
+        m1 = (-1 >>> (31 - (x1 & 31))) | 0;
+      for (let iy = y0; iy <= y1; iy++) {
+        const dy = iy + 0.5 - sy,
+          row = iy * W,
+          orow = iy * OW;
+        for (let wi = w0; wi <= w1; wi++) {
+        let m = open[orow + wi];
+        if (wi === w0) m &= m0;
+        if (wi === w1) m &= m1;
+        while (m !== 0) {
+          const bit = m & -m,
+            ix = (wi << 5) + 31 - Math.clz32(bit),
+            p = row + ix;
+          m ^= bit;
+          const dx = ix + 0.5 - sx,
+            pw = -0.5 * (k0 * dx * dx + k2 * dy * dy) - k1 * dx * dy;
+          if (pw > 0 || pw < lo) continue;
+          let a = 0.99;
+          if (pw < hi) {
+            if (hard) {
+              const u = (pw - hi + EDGE_W) * (EDGE_N / EDGE_W),
+                j = u | 0;
+              a = EDGE[j] + (EDGE[j + 1] - EDGE[j]) * (u - j);
+            } else a = Math.min(0.99, al * Math.exp(pw));
+            if (a < 0.004) continue;
+          }
+          const p3 = p * 3,
+            th = thru[p],
+            k = th * a;
+          let pr = r,
+            pg = g,
+            pb = b;
+          if (fi >= 0) {
+            const u = clamp(Math.floor((i00 * dx + i01 * dy) * 2 + 2), 0, 3),
+              v = clamp(Math.floor((i10 * dx + i11 * dy) * 2 + 2), 0, 3),
+              c = FPAL[Math.floor(FN[fi + v] / (u === 0 ? 1 : u === 1 ? 64 : u === 2 ? 4096 : 262144)) % 64];
+            if (c) {
+              pr = c[0] + (fog[0] - c[0]) * fk;
+              pg = c[1] + (fog[1] - c[1]) * fk;
+              pb = c[2] + (fog[2] - c[2]) * fk;
+            }
+          }
+          col[p3] += pr * k;
+          col[p3 + 1] += pg * k;
+          col[p3 + 2] += pb * k;
+          thru[p] = th * (1 - a);
+          if (thru[p] < 5e-6) open[orow + wi] &= ~bit; // (covered three deep: nothing put here now would show)
+        }
+        }
+      }
+    } else
     for (let iy = y0; iy <= y1; iy++) {
       const dy = iy + 0.5 - sy;
       for (let ix = x0; ix <= x1; ix++) {
@@ -25110,6 +25205,14 @@ function render(world, o) {
       }
     }
   }
+  // (and behind all of it, the sky: as much of it as still shows)
+  if (ftb)
+    for (let p = 0; p < W * H; p++) {
+      const th = thru[p];
+      col[p * 3] += bg[0] * th;
+      col[p * 3 + 1] += bg[1] * th;
+      col[p * 3 + 2] += bg[2] * th;
+    }
   if (o.samples) {
     // (the picture the contour look takes its insides from is worked on first, as the page does: glass bends it, contact shade darkens it)
     let c2 = col;
@@ -25151,6 +25254,24 @@ function render(world, o) {
   const PAL = new Float64Array(np * 3);
   for (let i = 0; i < np; i++) PAL.set(pal[i], i * 3);
   let was = 0;
+  const INK = new Uint8Array(np * 3);
+  {
+    const gr = world.anim && world.anim.grade;
+    for (let i = 0; i < np; i++) {
+      const h = world.pal[i];
+      INK[i * 3] = gr ? Math.round(gr[i * 3] * 255) : (h >> 16) & 255;
+      INK[i * 3 + 1] = gr ? Math.round(gr[i * 3 + 1] * 255) : (h >> 8) & 255;
+      INK[i * 3 + 2] = gr ? Math.round(gr[i * 3 + 2] * 255) : h & 255;
+    }
+  }
+  // the palette in order of its reds (RED), which colour of it each of those is (ORD), and where each colour is in that order (POS)
+  const ORD = Int32Array.from(Array.from({ length: np }, (v, i) => i).sort((a, b) => PAL[a * 3] - PAL[b * 3] || a - b)),
+    RED = new Float64Array(np),
+    POS = new Int32Array(np);
+  for (let k = 0; k < np; k++) {
+    RED[k] = PAL[ORD[k] * 3];
+    POS[ORD[k]] = k;
+  }
   const edge = world.outline && world.outline.edge ? world.outline.edge / (2 * R) : 0,
     line = hex(world.outline ? world.outline.c : 0),
     dith = (o.dither === undefined ? 0.35 : o.dither) * 0.3 * world.dither,
@@ -25227,31 +25348,46 @@ function render(world, o) {
           db = b - PAL[bi * 3 + 2];
         bd = dr * dr * 0.3 + dg * dg * 0.55 + db * db * 0.15;
       }
-      for (let i = 0; i < np; i++) {
-        const dr = r - PAL[i * 3],
-          d0 = dr * dr * 0.3;
-        if (d0 > bd) continue;
-        const dg = g - PAL[i * 3 + 1],
-          db = b - PAL[i * 3 + 2],
-          dd = d0 + dg * dg * 0.55 + db * db * 0.15;
-        if (dd < bd || (dd === bd && i < bi)) {
-          bd = dd;
-          bi = i;
+      {
+        const at = POS[bi];
+        for (let k = at - 1; k >= 0; k--) {
+          const dr = r - RED[k],
+            d0 = dr * dr * 0.3;
+          if (d0 > bd) {
+            if (dr > 0) break; // (redder than any of the rest by more than the best is off altogether)
+            continue;
+          }
+          const i = ORD[k],
+            dg = g - PAL[i * 3 + 1],
+            db = b - PAL[i * 3 + 2],
+            dd = d0 + dg * dg * 0.55 + db * db * 0.15;
+          if (dd < bd || (dd === bd && i < bi)) {
+            bd = dd;
+            bi = i;
+          }
+        }
+        for (let k = at + 1; k < np; k++) {
+          const dr = r - RED[k],
+            d0 = dr * dr * 0.3;
+          if (d0 > bd) {
+            if (dr < 0) break;
+            continue;
+          }
+          const i = ORD[k],
+            dg = g - PAL[i * 3 + 1],
+            db = b - PAL[i * 3 + 2],
+            dd = d0 + dg * dg * 0.55 + db * db * 0.15;
+          if (dd < bd || (dd === bd && i < bi)) {
+            bd = dd;
+            bi = i;
+          }
         }
       }
       was = bi;
       use[bi]++;
-      const h = world.pal[bi],
-        gr = world.anim && world.anim.grade;
-      if (gr) {
-        out[q] = Math.round(gr[bi * 3] * 255);
-        out[q + 1] = Math.round(gr[bi * 3 + 1] * 255);
-        out[q + 2] = Math.round(gr[bi * 3 + 2] * 255);
-      } else {
-        out[q] = (h >> 16) & 255;
-        out[q + 1] = (h >> 8) & 255;
-        out[q + 2] = h & 255;
-      }
+      out[q] = INK[bi * 3];
+      out[q + 1] = INK[bi * 3 + 1];
+      out[q + 2] = INK[bi * 3 + 2];
     }
   /* pixel clean-up (an option): a lone pixel, unlike all eight round it, on the same surface as they are (not a mote in the air in
      front of something far off), takes the colour most of its four neighbours have. Checkered shading is left alone: there every
