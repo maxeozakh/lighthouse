@@ -1439,7 +1439,7 @@ module.exports = ({ makeBuilder, makeSculpt, KIT: K }) => ({
       // his hand down again, he knocks the ash off: so long after the hand is down (TAP), and sparks go from the end of it
       ASHES = 0.3,
       TAP = 1.3,
-      POPS = 0.12, // and in a few of his pulls a spark goes from it as he draws, at his mouth
+      POPS = 0.25, // and in a few of his pulls a spark goes from it as he draws, at his mouth
       LET = 0.22, // thrown down, it leaves his hand so long after he begins (seconds); and his hand is back so long after
       FLICK = 0.62,
       // his arm, up at his mouth: the arm from the shoulder, the fore from the elbow, and the cigarette turned in the hand so

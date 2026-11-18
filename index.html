@@ -26762,7 +26762,7 @@ module.exports = ({ makeBuilder, makeSculpt, KIT: K }) => ({
       // his hand down again, he knocks the ash off: so long after the hand is down (TAP), and sparks go from the end of it
       ASHES = 0.3,
       TAP = 1.3,
-      POPS = 0.12, // and in a few of his pulls a spark goes from it as he draws, at his mouth
+      POPS = 0.25, // and in a few of his pulls a spark goes from it as he draws, at his mouth
       LET = 0.22, // thrown down, it leaves his hand so long after he begins (seconds); and his hand is back so long after
       FLICK = 0.62,
       // his arm, up at his mouth: the arm from the shoulder, the fore from the elbow, and the cigarette turned in the hand so
@@ -27828,6 +27828,9 @@ const Sound = (() => {
   // way. In it, how loud he has it: all of it, the music (the horn is of it), and what is not the music, each in so many steps (STEPS: all of them
   // is as loud as it was made); two things to tick, his ears stopped and the row of hints kept whole (keep(), above); and who
   // made what. What he sets the browser keeps (VOLS). While it is open he stands where he is, and the days go by as they do
+  // (the tick for looking at the sparks is not for everyone: it is in the ledger only when the page's address asks for it,
+  // with ?debug)
+  if (!/[?&]debug\b/.test(location.search)) for (const el of document.querySelectorAll('#menu .vol[data-c="spark"]')) el.remove();
   const VOLS = 'wickie.sound',
     STEPS = 10,
     vol = { all: STEPS, music: 7, rest: STEPS }, // (the music, and the horn with it, a little under the rest until he says otherwise)

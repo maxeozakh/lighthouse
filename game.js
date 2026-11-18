@@ -104,6 +104,9 @@
   // way. In it, how loud he has it: all of it, the music (the horn is of it), and what is not the music, each in so many steps (STEPS: all of them
   // is as loud as it was made); two things to tick, his ears stopped and the row of hints kept whole (keep(), above); and who
   // made what. What he sets the browser keeps (VOLS). While it is open he stands where he is, and the days go by as they do
+  // (the tick for looking at the sparks is not for everyone: it is in the ledger only when the page's address asks for it,
+  // with ?debug)
+  if (!/[?&]debug\b/.test(location.search)) for (const el of document.querySelectorAll('#menu .vol[data-c="spark"]')) el.remove();
   const VOLS = 'wickie.sound',
     STEPS = 10,
     vol = { all: STEPS, music: 7, rest: STEPS }, // (the music, and the horn with it, a little under the rest until he says otherwise)
