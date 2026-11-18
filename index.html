@@ -24751,6 +24751,8 @@ function viewMatrix(yaw, pitch, dist, T) {
   ];
 }
 // o: t (seconds), yaw, pitch, dist, target, w, h (the size of the stage in screen pixels), zoom (1 = the diorama's own distance), raw (skip the palette)
+let lent = null,
+  lentPic = null;
 function render(world, o) {
   o = o || {};
   const c = world.cam,
@@ -24804,14 +24806,14 @@ function render(world, o) {
     limx = (1.3 * 0.5 * W) / focal,
     limy = (1.3 * 0.5 * H) / focal;
   // where each splat is at this moment, and what it looks like
-  const X = new Float32Array(N),
-    Y = new Float32Array(N),
-    Z = new Float32Array(N),
-    AL = new Float32Array(N),
-    SC = new Float32Array(N),
-    depth = new Float32Array(N),
-    add = new Float32Array(N),
-    wet = new Float32Array(N);
+  if (!lent || lent.N !== N) {
+    const f = () => new Float32Array(N),
+      u = () => new Uint32Array(N);
+    lent = { N, X: f(), Y: f(), Z: f(), AL: f(), SC: f(), depth: f(), add: f(), wet: f(), order: u(), ks: u(), kd: u(), dst: u(), cnt: new Uint32Array(2049) };
+  }
+  const { X, Y, Z, AL, SC, depth, add, wet } = lent;
+  add.fill(0);
+  wet.fill(0);
   for (let i = 0, q = 0; i < N; i++, q += 16) {
     let x = d[q],
       y = d[q + 1],
@@ -24893,19 +24895,19 @@ function render(world, o) {
   let mn = Infinity;
   for (let i = 0; i < N; i++) if (depth[i] < mn) mn = depth[i];
   if (world.back) for (let j = 0; j < world.back.length; j++) depth[world.back[j]] = mn;
-  const order = new Uint32Array(N);
+  const order = lent.order;
   {
     const bits = new Uint32Array(depth.buffer, depth.byteOffset, N);
-    let ks = new Uint32Array(N),
-      kd = new Uint32Array(N),
+    let ks = lent.ks,
+      kd = lent.kd,
       src = order,
-      dst = new Uint32Array(N);
+      dst = lent.dst;
     for (let i = 0; i < N; i++) {
       const b = bits[i];
       ks[i] = b >>> 31 ? ~b : b | 0x80000000; // a float's bits, made to count upward as the float does
       order[i] = i;
     }
-    const cnt = new Uint32Array(2049);
+    const cnt = lent.cnt;
     for (let shift = 0; shift < 33; shift += 11) {
       cnt.fill(0);
       for (let i = 0; i < N; i++) cnt[((ks[i] >>> shift) & 2047) + 1]++;
@@ -24924,9 +24926,14 @@ function render(world, o) {
     }
     if (src !== order) order.set(src);
   }
-  const col = new Float32Array(W * H * 3),
-    dep = new Float32Array(W * H),
-    gls = new Float32Array(W * H);
+  if (!o.samples && (!lentPic || lentPic.n !== W * H)) lentPic = { n: W * H, col: new Float32Array(W * H * 3), dep: new Float32Array(W * H), gls: new Float32Array(W * H) };
+  const col = o.samples ? new Float32Array(W * H * 3) : lentPic.col,
+    dep = o.samples ? new Float32Array(W * H) : lentPic.dep,
+    gls = o.samples ? new Float32Array(W * H) : lentPic.gls;
+  if (!o.samples) gls.fill(0);
+  // (does anything read the depths afterward: an outline, a contact shade, the clean-up, or whoever asked for samples)
+  const deep = !!(o.samples || o.clean || (world.outline && world.outline.edge) || (world.ao && (world.ao.k === undefined ? 0.5 : world.ao.k) > 0));
+  let glassy = false; // (has any glass been drawn yet: until it has, there is none anywhere to be thinned or bent through)
   for (let i = 0; i < W * H; i++) {
     col[i * 3] = bg[0];
     col[i * 3 + 1] = bg[1];
@@ -24948,14 +24955,26 @@ function render(world, o) {
       cy = V[1] * x + V[5] * y + V[9] * z + V[13],
       cz = V[2] * x + V[6] * y + V[10] * z + V[14];
     if (cz > -near) continue;
+    const s2 = SC[i] * SC[i];
+    {
+      const iz = -1 / cz,
+        j00 = focal * iz,
+        j02 = focal * (clamp(cx * iz, -limx, limx) / iz) * iz * iz,
+        j12 = focal * (clamp(cy * iz, -limy, limy) / iz) * iz * iz,
+        most = (d[q + 4] + d[q + 8] + d[q + 10]) * s2,
+        bx = 3.01 * Math.sqrt((j00 * j00 + j02 * j02) * most + 0.15) + 1,
+        by = 3.01 * Math.sqrt((j00 * j00 + j12 * j12) * most + 0.15) + 1,
+        mx = ((((tp / asp) * cx) / -cz) * 0.5 + 0.5) * W,
+        my = (((tp * cy) / -cz) * 0.5 + 0.5) * H;
+      if (mx + bx < 0 || mx - bx > W || my + by < 0 || my - by > H) continue;
+    }
     const kraw = Math.round(d[q + 11]),
-      kind = kraw % 16,
-      flags = Math.floor(kraw / 16),
-      s2 = SC[i] * SC[i],
+      kind = kraw & 15,
+      flags = kraw >> 4,
       pk = d[q + 7];
-    let r = (pk % 256) / 255 + add[i],
-      g = (Math.floor(pk / 256) % 256) / 255 + add[i],
-      b = Math.floor(pk / 65536) / 255 + add[i];
+    let r = (pk & 255) / 255 + add[i],
+      g = ((pk >> 8) & 255) / 255 + add[i],
+      b = (pk >> 16) / 255 + add[i];
     if (wet[i]) {
       // wet: darker, and a little bluer, as the page does it
       r *= 1 - 0.42 * wet[i];
@@ -25002,8 +25021,13 @@ function render(world, o) {
     const k0 = C / det,
       k1 = -Bq / det,
       k2 = A / det,
-      ex = Math.min(3 * Math.sqrt(A), 2048),
-      ey = Math.min(3 * Math.sqrt(C), 2048);
+      hard = al >= 1 && !o.soft,
+      lo = Math.max(-4.5, Math.log((hard ? 0.388 : 0.00399) / al)), // (how far out, as the points are tried, there is still something)
+      hi = Math.log((hard ? 0.6201 : 0.9901) / al), // (and how far in it is all one strength)
+      ring = Math.sqrt(-2 * lo) + 1e-3,
+      ex = Math.min(ring * Math.sqrt(A), 2048),
+      ey = Math.min(ring * Math.sqrt(C), 2048);
+    if (lo > 0) continue; // (so faint that there is nothing of it anywhere)
     let sx = ((((tp / asp) * cx) / -cz) * 0.5 + 0.5) * W,
       sy = (((tp * cy) / -cz) * 0.5 + 0.5) * H;
     if (kind === 1) {
@@ -25014,6 +25038,7 @@ function render(world, o) {
     const solid = al >= 1,
       wd = solid && !(flags & 1),
       glass = (flags & 16) !== 0,
+      thins = wd && glassy;
       x0 = Math.max(0, Math.floor(sx - ex)),
       x1 = Math.min(W - 1, Math.ceil(sx + ex)),
       y0 = Math.max(0, Math.floor(sy - ey)),
@@ -25022,6 +25047,7 @@ function render(world, o) {
     g = Math.min(g, 1);
     b = Math.min(b, 1);
     drawn++;
+    if (glass) glassy = true;
     /* inked detail: a dab that carries a tile, and is still the colour it was baked, takes each pixel's colour from the tile, at the
        place on the surface the pixel looks at (the two half-axes of the tile, carried to the screen, and that turned inside out) */
     let fi = -1,
@@ -25052,11 +25078,13 @@ function render(world, o) {
       for (let ix = x0; ix <= x1; ix++) {
         const dx = ix + 0.5 - sx,
           pw = -0.5 * (k0 * dx * dx + k2 * dy * dy) - k1 * dx * dy;
-        if (pw > 0 || pw < -4.5) continue;
-        const gg = al * Math.exp(pw);
-        let a = Math.min(0.99, gg);
-        if (!o.soft && solid) a = 0.99 * sstep(0.38, 0.62, gg);
-        if (a < 0.004) continue;
+        if (pw > 0 || pw < lo) continue;
+        let a = 0.99;
+        if (pw < hi) {
+          const gg = al * Math.exp(pw);
+          a = hard ? 0.99 * sstep(0.38, 0.62, gg) : Math.min(0.99, gg);
+          if (a < 0.004) continue;
+        }
         const p = iy * W + ix,
           p3 = p * 3,
           ia = 1 - a;
@@ -25077,8 +25105,8 @@ function render(world, o) {
         col[p3 + 1] = pg * a + col[p3 + 1] * ia;
         col[p3 + 2] = pb * a + col[p3 + 2] * ia;
         if (wd) {
-          dep[p] = dn * a + dep[p] * ia;
-          gls[p] *= ia;
+          if (deep) dep[p] = dn * a + dep[p] * ia;
+          if (thins) gls[p] *= ia;
         } else if (glass) gls[p] = Math.min(1, gls[p] + a * 0.5);
       }
     }
@@ -25121,6 +25149,9 @@ function render(world, o) {
     np = world.pal.length,
     pal = [];
   for (let i = 0; i < np; i++) pal.push(hex(i));
+  const PAL = new Float64Array(np * 3);
+  for (let i = 0; i < np; i++) PAL.set(pal[i], i * 3);
+  let was = 0;
   const edge = world.outline && world.outline.edge ? world.outline.edge / (2 * R) : 0,
     line = hex(world.outline ? world.outline.c : 0),
     dith = (o.dither === undefined ? 0.35 : o.dither) * 0.3 * world.dither,
@@ -25150,7 +25181,7 @@ function render(world, o) {
         b = col[p * 3 + 2];
       const yo = H - 1 - y,
         q = (yo * W + x) * 3;
-      if (!o.raw) {
+      if (!o.raw && glassy) {
         const gx = G(x + 1, y) - G(x - 1, y),
           gy = G(x, y + 1) - G(x, y - 1);
         if (gls[p] + Math.abs(gx) + Math.abs(gy) > 0) {
@@ -25178,9 +25209,8 @@ function render(world, o) {
         out[q + 2] = Math.round(clamp(b, 0, 1) * 255);
         continue;
       }
-      const dc = dep[p],
-        dm = dc - Math.max(2 * dc - D(x - 1, y) - D(x + 1, y), 2 * dc - D(x, y + 1) - D(x, y - 1));
-      if (edge > 0 && dc - dm > edge) {
+      const dc = dep[p];
+      if (edge > 0 && dc - (dc - Math.max(2 * dc - D(x - 1, y) - D(x + 1, y), 2 * dc - D(x, y + 1) - D(x, y - 1))) > edge) {
         r = line[0];
         g = line[1];
         b = line[2];
@@ -25190,19 +25220,27 @@ function render(world, o) {
         g = clamp(g + th * dith, 0, 1);
         b = clamp(b + th * dith, 0, 1);
       }
-      let bd = 1e9,
-        bi = 0;
+      let bi = was,
+        bd = 0;
+      {
+        const dr = r - PAL[bi * 3],
+          dg = g - PAL[bi * 3 + 1],
+          db = b - PAL[bi * 3 + 2];
+        bd = dr * dr * 0.3 + dg * dg * 0.55 + db * db * 0.15;
+      }
       for (let i = 0; i < np; i++) {
-        const e = pal[i],
-          dr = r - e[0],
-          dg = g - e[1],
-          db = b - e[2],
-          dd = dr * dr * 0.3 + dg * dg * 0.55 + db * db * 0.15;
-        if (dd < bd) {
+        const dr = r - PAL[i * 3],
+          d0 = dr * dr * 0.3;
+        if (d0 > bd) continue;
+        const dg = g - PAL[i * 3 + 1],
+          db = b - PAL[i * 3 + 2],
+          dd = d0 + dg * dg * 0.55 + db * db * 0.15;
+        if (dd < bd || (dd === bd && i < bi)) {
           bd = dd;
           bi = i;
         }
       }
+      was = bi;
       use[bi]++;
       const h = world.pal[bi],
         gr = world.anim && world.anim.grade;
