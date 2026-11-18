@@ -193,7 +193,7 @@ const FIRST = 1898,
         'And who made what.',
         'A link to the game is shown with a picture where it is posted, and the tab has the tower and its beams for a mark.',
         'The picture is drawn in half the time it took, and is the same picture to the last point of it.',
-        'The two men stand a little higher: their boots were in the ground.'
+        'The two men stand a little higher: their boots were in the ground. And the dark round each had under him is gone.'
       ]
     }
   ];
