@@ -76,7 +76,7 @@ const html = `<!doctype html>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
 <title>lighthouse</title>
-${head('lighthouse', 'A rock in the sea, a light, two keepers, and something pale out at the east point. A small game in black and white.')}
+${head('lighthouse', 'a rock in the sea, a light, two keepers, and something pale out at the east point. a small game in black and white')}
 <!-- Type: Redaction, copyright 2019 MCKL Inc., used under the SIL Open Font License 1.1 (https://scripts.sil.org/OFL); its text is in licenses.txt, beside this page. -->
 <!--
 This page contains ink-studio (https://github.com/siliconjungle/shapeshift-labs-ink-studio) and a renderer made from its own, used under this licence:
