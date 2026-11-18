@@ -209,6 +209,18 @@ const FIRST = 1898,
         'With the comma: no stalls, 60 a second, 13 to 16 milliseconds a picture, and <b>q</b> at 1.00 for as long as it was watched.',
         'And the one long function that drew a picture is cut into four that it calls: place the points, sort them, draw them, outline and finish. A browser makes less work of four short ones: 11 to 12 milliseconds. Over three hundred pictures compared, each is the same as before to the last bit.'
       ]
+    },
+    {
+      day: '18 Nov 2026',
+      at: '12:25',
+      name: 'An honest count',
+      did: [
+        'The count of his cigarettes is his to make, and nobody’s to set. Nothing of the game can be reached from a browser’s console any more: the whole of it is shut in one function, and the handle that was left out for looking into it is gone.',
+        'And the count is watched while it is played. At every picture it is tried against a mark kept of it apart, which nothing moves on but a cigarette catching. The figures on the screen are tried against the figures that were put there, whenever anything under them is changed. And every couple of seconds the text of what does the counting is tried against what it was when the page opened.',
+        'Whoever puts a hand to any of these is found out, and he dies of it where he stands. What is left on the black is the last count that was honestly his, struck through, and a line under it.',
+        'A thing that only plays the game for him, or plays it fast, is let alone.',
+        'It is a watch kept from inside the page, and no more than that: whoever takes the page apart before it runs can take the watch out with the rest.'
+      ]
     }
   ];
 

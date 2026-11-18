@@ -140,6 +140,11 @@ SOFTWARE.
   #stick i { position: absolute; left: 50%; top: 50%; width: 30px; height: 30px; margin: -15px 0 0 -15px; border-radius: 50%; background: rgba(217, 218, 212, 0.35); }
   /* the end: the count where it stopped, and nothing else */
   #lived { margin: 0; padding-left: 0.16em; font: 5vh/1 'Redaction', Georgia, serif; letter-spacing: 0.16em; color: #e4e5df; }
+  /* or the count was tampered with: it is struck through, and under it whose count stands */
+  #dead.foul #lived { position: relative; display: inline-block; color: #8b8c87; }
+  #dead.foul #lived::after { content: ''; position: absolute; left: 0.04em; right: 0.04em; top: 46%; height: 0.07em; background: #e4e5df; }
+  #sea { display: none; margin: 1.5em 0 0; font: italic 2.3vh/1.4 'Redaction', Georgia, serif; letter-spacing: 0.08em; color: #a3a49f; }
+  #dead.foul #sea { display: block; }
 </style>
 </head>
 <body>
@@ -151,7 +156,7 @@ SOFTWARE.
 <div id="hud"><span class="keys"><span data-h="roam"><b>WASD</b> or arrows roam the rock</span><span data-h="soft"><b>Shift</b> tread soft</span><span data-h="look"><b>Q</b> / <b>E</b> look about ye</span><span data-h="zoom">wheel peer close</span><span data-h="smoke"><b>C</b> have a smoke</span><span data-h="ears"><b>M</b> <span class="snd">stop yer ears</span></span><span data-h="book"><b>Esc</b> the ledger</span></span><span class="thumbs"><span data-h="roam"><b>drag</b> roam the rock</span><span data-h="soft"><b>drag a little</b> tread soft</span><span data-h="look"><img class="bend" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABgAAAAYCAYAAADgdz34AAAApUlEQVR42u2V6wnAIAyE3cMB3MD/DuIiLuIgTuFUlhMCqa2p9gGlNHAUA3dffECV+nyllErOuTwWTmohWJMuhxNA0qXwGGPx3tfvHgz9YcheOGStrRDea3W4m174jLoQHno2nGsDCCFMBzvnxgEEkQKNMTCuzLgX+LgXg4oXTS+Gm9DrDUWQYUA7nbTtdvopAJXWup73YwCpfsA7Abf/NwBQf722FvYbCRRuRVuTAAAAAElFTkSuQmCC" width="24" height="24" alt="" draggable="false"><img class="bend" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABgAAAAYCAYAAADgdz34AAAAqElEQVR42u2T0Q2AIAwF3YMB2IB/BmERFmEQpmAqzDNpUrEileiPNnkxIfUOpC7LZ6uUUnPOdRpCkeCUabgULlBLAEgpiVCshxC2p1pCILwsBRDAnXO7tSHJFbyXIckdcCvhsmGB914tijEeBbQDBA0IvnfTVq21XYEIlwSAnzXTFFEvTVZ3griAn6J3XyennBfgXowxup9LI7hVv2CoHhfwehT+16u1AnwsCRR8lNaoAAAAAElFTkSuQmCC" width="24" height="24" alt="" draggable="false"> look about ye</span><span data-h="zoom"><b>pinch</b> peer close</span><span data-h="smoke"><img class="bend" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABgAAAAYCAYAAADgdz34AAAAvElEQVR42uWU0QnGIAyEu4cDuIHvDuIiLuIgTuFU+bkfroTSopbkqUJeKtxn7tIcxyfPGENQvXdxFWe5QCDcWpNaqz2glHKKs8whAGiIuUUEmNsEQQ2AXS7WuIgTEGOUlNIfEEKQrfme+Yl7vn7Zf7aM2SaIsLsX6nBzzrLlqy4N093BHlq0HdxT6bWArrYCXgEwXFjCHJjFUg4MbQa4fnv1J/NVM4DJLgKM3d3Zab6Lrla6bVNMkpv4t84PakKLLEizLUgAAAAASUVORK5CYII=" width="24" height="24" alt="" draggable="false"> have a smoke</span><span><span class="snd tap">stop yer ears</span></span><span><span class="book tap">the ledger</span></span></span></div>
 <div id="pad"><button id="turnL" aria-label="look about ye, to the left"><img class="bend" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABgAAAAYCAYAAADgdz34AAAApUlEQVR42u2V6wnAIAyE3cMB3MD/DuIiLuIgTuFUlhMCqa2p9gGlNHAUA3dffECV+nyllErOuTwWTmohWJMuhxNA0qXwGGPx3tfvHgz9YcheOGStrRDea3W4m174jLoQHno2nGsDCCFMBzvnxgEEkQKNMTCuzLgX+LgXg4oXTS+Gm9DrDUWQYUA7nbTtdvopAJXWup73YwCpfsA7Abf/NwBQf722FvYbCRRuRVuTAAAAAElFTkSuQmCC" width="24" height="24" alt="" draggable="false"></button><button id="turnR" aria-label="look about ye, to the right"><img class="bend" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABgAAAAYCAYAAADgdz34AAAAqElEQVR42u2T0Q2AIAwF3YMB2IB/BmERFmEQpmAqzDNpUrEileiPNnkxIfUOpC7LZ6uUUnPOdRpCkeCUabgULlBLAEgpiVCshxC2p1pCILwsBRDAnXO7tSHJFbyXIckdcCvhsmGB914tijEeBbQDBA0IvnfTVq21XYEIlwSAnzXTFFEvTVZ3griAn6J3XyennBfgXowxup9LI7hVv2CoHhfwehT+16u1AnwsCRR8lNaoAAAAAElFTkSuQmCC" width="24" height="24" alt="" draggable="false"></button><button id="light" aria-label="have a smoke"><img class="bend" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABgAAAAYCAYAAADgdz34AAAAvElEQVR42uWU0QnGIAyEu4cDuIHvDuIiLuIgTuFU+bkfroTSopbkqUJeKtxn7tIcxyfPGENQvXdxFWe5QCDcWpNaqz2glHKKs8whAGiIuUUEmNsEQQ2AXS7WuIgTEGOUlNIfEEKQrfme+Yl7vn7Zf7aM2SaIsLsX6nBzzrLlqy4N093BHlq0HdxT6bWArrYCXgEwXFjCHJjFUg4MbQa4fnv1J/NVM4DJLgKM3d3Zab6Lrla6bVNMkpv4t84PakKLLEizLUgAAAAASUVORK5CYII=" width="24" height="24" alt="" draggable="false"></button></div>
 <div id="stick"><i></i></div>
-<div id="dead"><div><p id="lived"></p></div></div>
+<div id="dead"><div><p id="lived"></p><p id="sea">the sea keeps its own count</p></div></div>
 <div id="menu" aria-hidden="true" data-step="11"><div class="in">
 <div class="vol" data-v="all"><span class="name">all of it</span><span class="pips"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></span></div>
 <div class="vol" data-v="music"><span class="name">the music</span><span class="pips"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></span></div>
@@ -171,6 +176,7 @@ SOFTWARE.
 </div></div>
 <div id="veil"></div>
 <script>
+(() => {
 /* Fixed-grid, palette-aware resolve using coverage and cluster voting.
    No per-frame palette fitting, camera movement or black ink. */
 const PixelLook = (() => {
@@ -26942,6 +26948,22 @@ module.exports = ({ makeBuilder, makeSculpt, KIT: K }) => ({
           W.data[q.o + 3] = 1.5 * (1 - k * k);
         }
       };
+    // The count of his cigarettes (pl.smoked) is his own to make, and nobody's to set. So a mark is kept of it apart (told),
+    // which nothing moves on but one of them catching, and then by a rule (tell()). Whether the count is an honest one can
+    // be asked at any time (fair()): it is, if the mark worked out again from the first, for as many as the count says, is
+    // the mark that is kept. The page asks at every picture, and he does not outlive the answer no (game.js).
+    // (kept(): what does the counting here, for the page to see that it is not changed under it as it runs)
+    const TOLD = 0x6b656570,
+      tell = h => (Math.imul(h, 1664525) + 1013904223) >>> 0,
+      fair = () => {
+        const n = pl.smoked;
+        if (!Number.isInteger(n) || n < 0 || n > 1e5) return false;
+        let h = TOLD;
+        for (let i = 0; i < n; i++) h = tell(h);
+        return h === told;
+      },
+      kept = () => [tell, fair, fag, smoke];
+    let told = TOLD;
     // a dab of smoke let go at a place (x, y, z), going (vx, vy, vz): it grows from s0 to s1 across and thins from a to nothing
     // over its life. (If all of them are out already, it is not let go)
     const puff = (at, v, s0, s1, a, life) => {
@@ -27136,7 +27158,10 @@ module.exports = ({ makeBuilder, makeSculpt, KIT: K }) => ({
           if (q.dud && on(STRIKE + GUTTER)) puff(from(0.13, 0.9, 0.36), [WIND[0] * 2 + j(), 0.3, WIND[2] * 2 + j()], 0.02, 0.09, 0.34, 1.4);
           burn = sm((b - CATCH) / 0.4);
           if (b >= CATCH) pl.mouth = false; // (lit, it is as any other: left off now, it is dropped)
-          if (on(q.S + CATCH)) pl.smoked++; // (one more of them: it is counted as it catches, whatever he does with it after)
+          if (on(q.S + CATCH)) {
+            pl.smoked++; // (one more of them: it is counted as it catches, whatever he does with it after)
+            told = tell(told);
+          }
           glow = burn * (1 - sm((b - BURNS + 0.1) / 0.5)); // (he draws on it to light it, and it glows as he does)
           if (on(q.OUT + 0.05)) for (let k = 0; k < 2; k++) puff(from(0.02, 1.13, 0.31), [j(), 0.34 + k * 0.1, j()], 0.02, 0.085, 0.32, 1.5);
           // (and once it has caught, the thread off its end, at his lips)
@@ -27372,7 +27397,7 @@ module.exports = ({ makeBuilder, makeSculpt, KIT: K }) => ({
     W.glass = glass.length;
     W.blocks = BLOCKS;
     W.sea = [water.length, white.length];
-    W.game = { pl, spawn: SPAWN, height, blocked, step, turn, npc, inside, spots: SPOTS, stand, home, smoke, night, grade, sea, places: { tower: TOWER, cottage: COT, engine: ENG, well: WELL, landing: [SLIP - 0.3, slipEnd - 1.2], boathouse: BOAT, shed: SHED, old: OLDMAN, mermaid: MER } };
+    W.game = { pl, spawn: SPAWN, height, blocked, step, turn, npc, inside, spots: SPOTS, stand, home, smoke, fair, kept, night, grade, sea, places: { tower: TOWER, cottage: COT, engine: ENG, well: WELL, landing: [SLIP - 0.3, slipEnd - 1.2], boathouse: BOAT, shed: SHED, old: OLDMAN, mermaid: MER } };
     return W;
   }
 });
@@ -27988,6 +28013,10 @@ const Sound = (() => {
   let yaw, yawTo, zoom = 0.5, zoomTo = 1, cam = [0, 0, 0], box = { w: 1, h: 1 }, ptr = null; // it opens far off and comes in
   // 'play': he runs about. 'dead': she has him, and that is the end of it: the count of his cigarettes is all that is left on the screen
   let mode = 'play', deadT = 0, heard = 0, strides = 0;
+  // (or the sea has him, for a count that was tampered with: foul. alone: he died of that where he stood, and not of her.
+  // sure: the last count that was honestly his; ended: what the black at the end has on it, once it is up; first: what
+  // the text of the counting came to when the page opened, and looked: when it was last gone over)
+  let foul = false, alone = false, sure = 0, ended = '', first = 0, looked = 0;
   // the row of hints says a thing until he has done it: then that part of it goes out, and the room it took closes up slowly
   // (from the width it has to none: the page's styles say how long that takes), so the rest of the row draws together.
   // What he has done the browser keeps (KNOWN), so that he is not told it again the next time he comes
@@ -28207,6 +28236,45 @@ const Sound = (() => {
   $('cigs').addEventListener('transitionend', ev => {
     if (ev.propertyName === 'transform') still(ev.target.parentNode);
   });
+  // The count is his to make, and it is watched. Three things are gone over: the count against the mark the level keeps of
+  // it apart (G.fair(): at every picture); the figures on the screen against the figures that were put there (whenever
+  // anything under them is changed: and they are put back as they were); and the text of what does the counting against
+  // what it was when the page opened (every couple of seconds: a browser's tools can change a function as it runs).
+  // Whoever has put a hand to any of them is found out, and dies of it (cheat()).
+  // What is not looked for: a thing that only plays for him, or plays faster. That is his own business.
+  // (It is a watch kept from inside the page, and no more: who takes the page apart before it runs can take this out too)
+  const apply = Reflect.apply,
+    said = Function.prototype.toString,
+    imul = Math.imul,
+    sum = fs => {
+      let h = 2166136261;
+      for (const f of fs) {
+        const s = apply(said, f, []);
+        for (let i = 0; i < s.length; i++) h = imul(h ^ s.charCodeAt(i), 16777619);
+      }
+      return h >>> 0;
+    },
+    counting = () => sum([frame, dying, die, cheat, straight, mend, put, roll, settle, still, sum, counting, ...G.kept()]),
+    // is what the screen says what was put on it
+    straight = () => {
+      const reels = $('cigs').children;
+      if (reels.length !== tally.n.length) return false;
+      for (let k = 0; k < reels.length; k++) if (reels[k].textContent.slice(-1) !== tally.n[k]) return false;
+      return $('lived').textContent === ended && $('dead').classList.contains('foul') === foul;
+    },
+    // and it is made to say it again
+    mend = () => {
+      put(tally.n);
+      $('lived').textContent = ended;
+      $('dead').classList.toggle('foul', foul);
+    },
+    watch = new MutationObserver(() => {
+      if (straight()) return;
+      cheat();
+      mend();
+      watch.takeRecords(); // (the mending is not a thing to be looked into)
+    });
+  for (const id of ['ui', 'dead']) watch.observe($(id), { subtree: true, childList: true, characterData: true, attributes: true, attributeFilter: ['class'] });
   let clock = 0.03, dark = -1;
   // the old man's hours. Before the light begins to go he goes in, every night; and in the morning he comes out: but one
   // morning in seven or so (KEEPS) he does not, and is not seen for the whole of that day.
@@ -28353,6 +28421,19 @@ const Sound = (() => {
 
   // he came too near. She is up off her rock: the picture goes to its negative and shakes, and then there is only the number the
   // count had reached. Nothing follows it: he is not put back
+  // (Or the count was not his own: then it is the same end, wherever he stands, and with nobody but him in the picture; and
+  // the number on the black is the last that was honestly his, struck through, with a line under it to say whose count stands)
+  function cheat() {
+    if (foul) return;
+    foul = true;
+    $('dead').classList.add('foul');
+    if (ended) $('lived').textContent = ended = String(FIRST + sure); // (the black is up already: it is put right there)
+    else if (mode === 'play') {
+      alone = true;
+      if (open) book(false);
+      die();
+    }
+  }
   function die() {
     mode = 'dead';
     G.pl.cig = 0;
@@ -28367,13 +28448,13 @@ const Sound = (() => {
     deadT += dt;
     const at = s => was < s && deadT >= s;
     if (deadT < 1.8) {
-      G.npc.mer.scream = Math.min(1, deadT / 0.2);
+      if (!alone) G.npc.mer.scream = Math.min(1, deadT / 0.2);
       canvas.style.filter = 'invert(1) contrast(1.5)';
       canvas.style.transform = 'translate(' + ((Math.random() * 12 - 6) | 0) + 'px,' + ((Math.random() * 12 - 6) | 0) + 'px)';
     }
     if (at(1.8)) {
       canvas.style.filter = canvas.style.transform = '';
-      $('lived').textContent = FIRST + G.pl.smoked; // the count stopped where it was (and is shown now, if he never lit one)
+      $('lived').textContent = ended = String(FIRST + (foul ? sure : G.pl.smoked)); // the count stopped where it was (and is shown now, if he never lit one)
       $('dead').classList.add('on');
       Sound.set({ song: 0, mutter: 0 }); // she has what she sang for
       Sound.duck(0.2, 0.2);
@@ -28445,6 +28526,16 @@ const Sound = (() => {
       far = id => Math.hypot(pl.x - G.npc[id].x, pl.z - G.npc[id].z);
     let look = [pl.x, pl.y + 1.6, pl.z],
       close = 1;
+    // is the count still his own (and, now and then, is what counts it what it was)
+    if (!foul) {
+      if (G.fair()) sure = pl.smoked;
+      else cheat();
+      if (t - looked > 2) {
+        looked = t;
+        if (counting() !== first) cheat();
+      }
+    }
+    const had = foul ? sure : pl.smoked;
     if (mode === 'play') {
       const [mx, mz] = open ? [0, 0] : wish();
       G.step(dt, mx, mz, keys.has('ShiftLeft') || keys.has('ShiftRight') || soft);
@@ -28460,7 +28551,7 @@ const Sound = (() => {
     } else {
       G.step(dt, 0, 0);
       dying(dt);
-      if (deadT < 1.8) {
+      if (deadT < 1.8 && !alone) {
         // the two of them, and coming in on them
         const o = G.npc.mer;
         G.turn(o.x, o.z, dt);
@@ -28485,13 +28576,13 @@ const Sound = (() => {
     // how many he has smoked: a bare number, and not there until he has lit the first. It does not begin at nothing: he
     // had smoked as many as that before he came
     // It is put up as it stood before this one, and then turned (roll()), so that it is seen what it is a count of
-    if (pl.smoked) {
+    if (had) {
       const now = performance.now();
       if (!tally.on) {
         tally.on = now;
         put(FIRST);
         $('cigs').classList.add('on');
-      } else if (now - tally.on > 900 && tally.n !== String(FIRST + pl.smoked)) roll(FIRST + pl.smoked, now);
+      } else if (now - tally.on > 900 && tally.n !== String(FIRST + had)) roll(FIRST + had, now);
       else if (tally.till && now > tally.till) settle();
     }
     G.sea(t); // the swell comes on
@@ -28703,11 +28794,13 @@ const Sound = (() => {
   Sound.start(); // the weather, at once: or as soon as the browser lets a page be heard
   setTimeout(() => {
     build();
+    first = counting();
     $('veil').classList.add('gone'); // it opens out of black
     requestAnimationFrame(frame);
   }, 60);
 })();
 
+})();
 </script>
 </body>
 </html>
