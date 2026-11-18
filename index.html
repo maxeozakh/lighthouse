@@ -26246,15 +26246,17 @@ module.exports = ({ makeBuilder, makeSculpt, KIT: K }) => ({
     B.iso(...BOX, 0.03, B.P[29], 3, { nd: true });
     B.stick(...LIPS, B.norm([END[0] - LIPS[0], END[1] - LIPS[1], END[2] - LIPS[2]]), 0.028, 0.009, B.P[25], 3, { nd: true });
     B.iso(...END, 0.014, B.P[37], 3, { em: true, nd: true });
-    // and the end of one, as it lies where he has thrown it: kept under the ground until then (BUTT), lying along LAY
+    // and the ends of a few, as they lie where he has thrown them: kept under the ground until then (BUTT), lying along LAY
     const BUTT = [SPAWN[0] + 0.5, SPY + PARK - 0.2, SPAWN[1]],
       LAY = B.norm([0.8, 0, 0.6]),
       COAL = [BUTT[0] + LAY[0] * 0.02, BUTT[1], BUTT[2] + LAY[2] * 0.02];
     // and a few sparks, for when he knocks the ash off it (kept under the ground too, at SPARK)
     const SPARK = [SPAWN[0] - 0.5, SPY + PARK - 0.2, SPAWN[1]];
     for (let k = 0; k < 5; k++) B.iso(...SPARK, 0.011, B.P[37], 0, { em: true, nd: true });
-    B.stick(...BUTT, LAY, 0.02, 0.009, B.P[25], 0, { nd: true });
-    B.iso(...COAL, 0.014, B.P[37], 0, { em: true, nd: true });
+    for (let k = 0; k < 4; k++) {
+      B.stick(...BUTT, LAY, 0.02, 0.009, B.P[25], 0, { nd: true });
+      B.iso(...COAL, 0.014, B.P[37], 0, { em: true, nd: true });
+    }
     // dead brush: bare twigs standing out of the turf all over the rock, moving a little in the wind (he goes through them)
     for (let k = 0, made = 0; k < 1400 && made < 170; k++) {
       const x = east((B.R() * 2 - 1) * IX),
@@ -26602,13 +26604,13 @@ module.exports = ({ makeBuilder, makeSculpt, KIT: K }) => ({
       };
     // his smoke: the dabs of the cigarette (they ride his hand) and of what comes off it, found by where they were put
     const cig = [],
+      butts = [], // (the ones on the ground, and their lit ends)
+      coals = [],
       sparks = [],
       lip = [],
       match = [],
       puffs = [];
     let ember = -1,
-      butt = -1, // (the one on the ground, and its lit end)
-      coal = -1,
       lit = -1, // (the end of the one at his lips)
       box = -1,
       flame = -1,
@@ -26629,59 +26631,63 @@ module.exports = ({ makeBuilder, makeSculpt, KIT: K }) => ({
         else if (is(36)) shine = o;
       } else if (is(29) && put(BOX)) box = i;
       else if (is(37) && put(SPARK)) sparks.push({ o, x: 0, y: 0, z: 0, vx: 0, vy: 0, vz: 0, age: 1, life: 1, gone: true });
-      else if (is(25) && put(BUTT)) butt = o;
-      else if (is(37) && put(COAL)) coal = o;
+      else if (is(25) && put(BUTT)) butts.push(o);
+      else if (is(37) && put(COAL)) coals.push(o);
       else if ((is(25) && put(LIPS)) || (is(37) && put(END))) {
         lip.push(i);
         if (is(37)) lit = i;
       }
     }
     // the end of a cigarette, thrown down: let go at a place, going so (toss()); it falls, hops once where it lands, and
-    // lies. Its end is lit as it goes and for a little after (GLOWS, seconds), a thread of smoke off it for as long; what
-    // is left of it lies there a good while (LIES) and is gone. (There is the one of them: the one before goes as this is
-    // thrown)
+    // lies. Its end is lit as it goes and for a little after (GLOWS, seconds), a thread of smoke off it for as long; and
+    // from the moment it lies it is fading, more and more of the ground seen through it, until there is nothing of it
+    // (FADES). There are a few of them (ends), so that one is not gone because another is thrown: if all of them are
+    // lying, it is the oldest that is taken up for the new one, and that is all but gone by then.
     // (It is so small that the dabs of the ground would be drawn over it where it lay. So it lies a little above the
     // ground (RIDES): in the picture, that is the ground a little further off, and nothing is over it)
     const FALLS = 6, // how fast things fall here
       RIDES = 0.26,
-      GLOWS = 7,
-      LIES = 80,
-      end = { on: false, x: 0, y: 0, z: 0, vx: 0, vy: 0, vz: 0, age: 0, down: 0, hops: 0, wisp: 0 },
-      toss = (at, v) => Object.assign(end, { on: true, x: at[0], y: at[1], z: at[2], vx: v[0], vy: v[1], vz: v[2], age: 0, down: 0, hops: 0, wisp: 0 }),
+      GLOWS = 4.5,
+      FADES = 9,
+      ends = butts.map((o, k) => ({ o, c: coals[k], on: false, x: 0, y: 0, z: 0, vx: 0, vy: 0, vz: 0, age: 0, down: 0, hops: 0, wisp: 0 })),
+      toss = (at, v) => Object.assign(ends.find(e => !e.on) || ends.reduce((a, b) => (b.age > a.age ? b : a)), { on: true, x: at[0], y: at[1], z: at[2], vx: v[0], vy: v[1], vz: v[2], age: 0, down: 0, hops: 0, wisp: 0 }),
       lie = dt => {
-        if (!end.on) return;
-        end.age += dt;
-        if (!end.down) {
-          end.vy -= FALLS * dt;
-          end.x += end.vx * dt;
-          end.y += end.vy * dt;
-          end.z += end.vz * dt;
-          const y = height(end.x, end.z) + RIDES;
-          if (end.y <= y) {
-            end.y = y;
-            if (!end.hops++ && end.vy < -0.8) {
-              end.vy *= -0.26;
-              end.vx *= 0.45;
-              end.vz *= 0.45;
-            } else end.down = end.age;
+        for (const end of ends) {
+          if (!end.on) continue;
+          end.age += dt;
+          if (!end.down) {
+            end.vy -= FALLS * dt;
+            end.x += end.vx * dt;
+            end.y += end.vy * dt;
+            end.z += end.vz * dt;
+            const y = height(end.x, end.z) + RIDES;
+            if (end.y <= y) {
+              end.y = y;
+              if (!end.hops++ && end.vy < -0.8) {
+                end.vy *= -0.26;
+                end.vx *= 0.45;
+                end.vz *= 0.45;
+              } else end.down = end.age;
+            }
           }
+          const since = end.down ? end.age - end.down : 0,
+            hot = Math.max(0, 1 - since / GLOWS),
+            left = Math.max(0, 1 - since / FADES),
+            seen = left * left; // (it is thinner sooner than it is gone)
+          if (left <= 0) end.on = false;
+          if (end.down && hot > 0.25 && (end.wisp += dt) > 0.8) {
+            end.wisp = 0;
+            puff([end.x + LAY[0] * 0.02, end.y + 0.01, end.z + LAY[2] * 0.02], [(Math.random() - 0.5) * 0.06, 0.22, (Math.random() - 0.5) * 0.06], 0.016, 0.055, 0.26 * hot, 2);
+          }
+          W.data[end.o] = end.x;
+          W.data[end.o + 1] = end.y;
+          W.data[end.o + 2] = end.z;
+          W.data[end.o + 3] = 3 * seen;
+          W.data[end.c] = end.x + LAY[0] * 0.02;
+          W.data[end.c + 1] = end.y;
+          W.data[end.c + 2] = end.z + LAY[2] * 0.02;
+          W.data[end.c + 3] = end.on ? (end.down ? 1.6 * hot * hot * seen : 2) : 0;
         }
-        const since = end.down ? end.age - end.down : 0,
-          hot = Math.max(0, 1 - since / GLOWS),
-          seen = 1 - sm((since - LIES) / 4);
-        if (seen <= 0) end.on = false;
-        if (end.down && hot > 0.25 && (end.wisp += dt) > 0.8) {
-          end.wisp = 0;
-          puff([end.x + LAY[0] * 0.02, end.y + 0.01, end.z + LAY[2] * 0.02], [(Math.random() - 0.5) * 0.06, 0.22, (Math.random() - 0.5) * 0.06], 0.016, 0.055, 0.26 * hot, 2);
-        }
-        W.data[butt] = end.x;
-        W.data[butt + 1] = end.y;
-        W.data[butt + 2] = end.z;
-        W.data[butt + 3] = 3 * seen;
-        W.data[coal] = end.x + LAY[0] * 0.02;
-        W.data[coal + 1] = end.y;
-        W.data[coal + 2] = end.z + LAY[2] * 0.02;
-        W.data[coal + 3] = end.on ? (end.down ? 1.6 * hot * hot : 2) : 0;
       };
     // sparks off the end of it: a few of them (n) let go at a place, each its own way and off down the wind, falling a
     // little and out in under a second
