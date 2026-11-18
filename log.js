@@ -194,9 +194,20 @@ const FIRST = 1898,
         'A link to the game is shown with a picture where it is posted, and the tab has the tower and its beams for a mark.',
         'The picture is drawn in half the time it took, and is the same picture to the last point of it.',
         'The two men stand a little higher: their boots were in the ground. And the dark round each has under him is thinner: a little of the ground shows through it.',
-        'The small count of pictures a second, up in the corner, is gone: it is there only for who asks for it.',
-        'The picture is drawn quicker again, by near half, for the sake of a phone: what is nearest is drawn first, and what it hides is not drawn at all.',
-        'On a phone the picture would stall every half minute or so, and come back coarser each time. Four numbers had been left lying where the whole page could get at them, and the drawing was all one long piece of work: the numbers are put away, and the work is cut in four.'
+        'The small count of pictures a second, up in the corner, is gone: it is there only for who asks for it.'
+      ]
+    },
+    {
+      day: '18 Nov 2026',
+      at: '11:55',
+      name: 'A phone keeps up',
+      did: [
+        'With <b>?debug</b> on the end of the address, the corner shows three things: pictures a second, what one picture costs in milliseconds, and how fine it is drawn (<b>q</b>, from 1.00 down to 0.60).',
+        'The picture is drawn near to far, where it was far to near, and a point of it already covered three deep is left alone. What cannot be seen is thrown out before the sort, not after it. The palette is searched in the order of its reds, and the search leaves off as soon as it cannot do better. On an iPhone, 44 pictures a second became 60, and 22 milliseconds a picture became 12. About one point in a picture comes out a step of grey from what it was.',
+        'Then it was found to stall on the phone, in the build before that one as well: at about 12, 37 and 68 seconds in, for some seconds each time, a picture took 130 milliseconds and more. And each stall left it coarser for good: the game draws fewer, bigger points when it is slow, and never goes back to more.',
+        'The cause was a semicolon where a comma belonged, in the first quickening of the renderer. It closed a row of declarations a line early, so four numbers (<b>x0</b>, <b>x1</b>, <b>y0</b>, <b>y1</b>) were no longer the function’s own but the whole page’s, and were written there some 28,000 times a picture. The browser kept losing the quick form it had worked the function up into: the same code, loaded afresh beside it, drew in 14 milliseconds what the page’s own copy was 130 over.',
+        'With the comma: no stalls, 60 a second, 13 to 16 milliseconds a picture, and <b>q</b> at 1.00 for as long as it was watched.',
+        'And the one long function that drew a picture is cut into four that it calls: place the points, sort them, draw them, outline and finish. A browser makes less work of four short ones: 11 to 12 milliseconds. Over three hundred pictures compared, each is the same as before to the last bit.'
       ]
     }
   ];
