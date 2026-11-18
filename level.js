@@ -1444,8 +1444,8 @@ module.exports = ({ makeBuilder, makeSculpt, KIT: K }) => ({
       ASHES = 0.3,
       TAP = 1.3,
       POPS = 0.25, // and in a few of his pulls a spark goes from it as he draws, at his mouth
-      LET = 0.22, // thrown down, it leaves his hand so long after he begins (seconds); and his hand is back so long after
-      FLICK = 0.62,
+      LET = 0.28, // thrown down, it leaves his hand so long after he begins (seconds); and his hand is back so long after
+      FLICK = 0.78,
       // his arm, up at his mouth: the arm from the shoulder, the fore from the elbow, and the cigarette turned in the hand so
       // that it is at his lips and its lit end out ahead of him (degrees; found by trying, with the hand beside his chin)
       ARM = [-60, -65, 25],
@@ -1672,15 +1672,15 @@ module.exports = ({ makeBuilder, makeSculpt, KIT: K }) => ({
               sn = Math.sin(pl.face),
               cs = Math.cos(pl.face),
               // (to his right, up, the way he faces: where it is, and how it goes)
-              at = pl.lips ? [0.001, 1.2, 0.27] : [0.29 + (0.04 - 0.29) * w, 0.5 + (1.2 - 0.5) * w + 0.05 * e, 0.16 + (0.25 - 0.16) * w + 0.13 * e],
-              v = e ? [0.07 + j(), 0.42 + j(), 0.13 + j()] : [0.04 + j(), 0.05, 0.16 + j()];
+              at = pl.lips ? [0.001, 1.2, 0.27] : [0.29 + (0.04 - 0.29) * w, 0.5 + (1.2 - 0.5) * w + 0.04 * e, 0.16 + (0.25 - 0.16) * w + 0.1 * e],
+              v = e ? [0.06 + j(), 0.3 + j(), 0.11 + j()] : [0.04 + j(), 0.05, 0.16 + j()];
             pl.thrown = true;
             pl.lit = 0;
             toss(from(...at), [v[0] * cs + v[2] * sn, v[1], -v[0] * sn + v[2] * cs]);
           }
           held = !pl.thrown;
           if (held) burn = 1;
-          if (pl.flick) swing = sm(s / LET) * (1 - sm((s - LET - 0.04) / 0.34));
+          if (pl.flick) swing = sm(s / LET) * (1 - sm((s - LET - 0.04) / 0.42));
           if (pl.thrown && (!pl.flick || s >= FLICK)) pl.toss = 0;
         }
         const r = pl.raise,
@@ -1688,8 +1688,8 @@ module.exports = ({ makeBuilder, makeSculpt, KIT: K }) => ({
           k = pl.busy,
           a = held ? 1 : pl.lit < 0.02 ? 0 : pl.lit;
         if (swing > 0.002) {
-          p.pose.plarmR = { rot: [p.pose.plarmR.rot[0] - 9 * swing, p.pose.plarmR.rot[1], p.pose.plarmR.rot[2]] };
-          p.pose.plforeR = { rot: [p.pose.plforeR.rot[0] - 32 * swing, p.pose.plforeR.rot[1], p.pose.plforeR.rot[2]] };
+          p.pose.plarmR = { rot: [p.pose.plarmR.rot[0] - 7 * swing, p.pose.plarmR.rot[1], p.pose.plarmR.rot[2]] };
+          p.pose.plforeR = { rot: [p.pose.plforeR.rot[0] - 25 * swing, p.pose.plforeR.rot[1], p.pose.plforeR.rot[2]] };
         }
         if (tap > 0.002) p.pose.plforeR = { rot: [p.pose.plforeR.rot[0] + 7 * tap, p.pose.plforeR.rot[1], p.pose.plforeR.rot[2]] };
         if (r > 0.002) {
