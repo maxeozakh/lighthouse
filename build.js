@@ -116,13 +116,13 @@ ${mit}
   #cigs { position: absolute; left: 3.2%; top: 2.6%; font-size: 0.8em; line-height: 1.4; letter-spacing: 0.14em; white-space: nowrap; color: #e4e5df; filter: drop-shadow(0 0 6px #000) drop-shadow(0 1px 2px #000); opacity: 0; transition: opacity 0.8s ease; }
   #cigs.on { opacity: 1; }
   /* its figures are on reels, one each, as a scoreboard's are: a figure that changes is wound up out of its window as the
-     next comes up from under it, and stops with a little overrun (game.js: roll()). (The shadow is the whole count's, and
+     next comes up from under it, and stops with the least overrun (a fiftieth of its travel) (game.js: roll()). (The shadow is the whole count's, and
      not each figure's, so that the windows do not cut it) */
   #cigs .reel { display: inline-block; height: 1.4em; overflow: hidden; vertical-align: top; }
   #cigs .reel > span { display: block; }
   #cigs .reel i { display: block; width: max-content; height: 1.4em; font-style: normal; }
   #cigs .reel.go { transition: width 0.8s ease-in-out var(--wait, 0s); }
-  #cigs .reel.go > span { transform: translateY(-50%); transition: transform 0.8s cubic-bezier(0.5, 0, 0.25, 1.5) var(--wait, 0s); }
+  #cigs .reel.go > span { transform: translateY(-50%); transition: transform 0.8s cubic-bezier(0.5, 0, 0.25, 1.2) var(--wait, 0s); }
   #dead { position: fixed; inset: 0; display: grid; place-items: center; background: #000; text-align: center; opacity: 0; pointer-events: none; transition: opacity 0.5s; }
   #dead.on { opacity: 1; }
   /* the ledger: laid over everything by Esc. How loud he has it, a line for each thing and ten steps to a line; and who made
