@@ -1012,7 +1012,7 @@ module.exports = ({ makeBuilder, makeSculpt, KIT: K }) => ({
       },
       // (cig: how long he has been at his smoke, in seconds, 0 when he has none; lit: how much of it there is to see; raise: how
       // far his hand is up to his mouth; wisp: how long since the last of its smoke came off it)
-      pl = { x: SPAWN[0], z: SPAWN[1], y: height(SPAWN[0], SPAWN[1]), face: 0.6, go: 0, phase: 0, speed: 0, cig: 0, pull: 0, pulls: 0, was: 0, rest: 0, out: 0, ash: false, ashed: false, sparks: 0, hot: false, toss: 0, flick: false, thrown: false, lit: 0, raise: 0, wisp: 0, strike: 0, cup: 0, busy: 0, plan: null, dud: false, aimL: null, aimR: null, look: [0, 0], lips: 0, mouth: false, jigL: 0, jigR: 0, flare: false, murk: 0, smoked: 0 },
+      pl = { x: SPAWN[0], z: SPAWN[1], y: height(SPAWN[0], SPAWN[1]), face: 0.6, go: 0, phase: 0, speed: 0, cig: 0, pull: 0, pulls: 0, was: 0, rest: 0, out: 0, ash: false, ashed: false, pop: 0, sparks: 0, hot: false, toss: 0, flick: false, thrown: false, lit: 0, raise: 0, wisp: 0, strike: 0, cup: 0, busy: 0, plan: null, dud: false, aimL: null, aimR: null, look: [0, 0], lips: 0, mouth: false, jigL: 0, jigR: 0, flare: false, murk: 0, smoked: 0 },
       SY = pl.y,
       turnTo = (a, b, k) => {
         let d = (b - a) % TAU;
@@ -1367,16 +1367,16 @@ module.exports = ({ makeBuilder, makeSculpt, KIT: K }) => ({
           W.data[end.c + 3] = end.on ? (end.down ? 1.6 * hot * hot * seen : 2) : 0;
         }
       };
-    // sparks off the end of it: a few of them (n) let go at a place, each its own way and off down the wind, falling a
-    // little and out in under a second
+    // sparks off the end of it: one or two (n) let go at a place, each its own way and off down the wind, falling a
+    // little and out in well under a second
     const fling = (at, n) => {
         for (const q of sparks) {
           if (n <= 0) break;
           if (q.age < q.life) continue;
           n--;
           const a = Math.random() * TAU,
-            v = 0.12 + 0.3 * Math.random();
-          Object.assign(q, { x: at[0], y: at[1], z: at[2], vx: Math.cos(a) * v + WIND[0] * 2, vy: -0.1 + 0.5 * Math.random(), vz: Math.sin(a) * v + WIND[2] * 2, age: 0, life: 0.45 + 0.5 * Math.random(), gone: false });
+            v = 0.06 + 0.16 * Math.random();
+          Object.assign(q, { x: at[0], y: at[1], z: at[2], vx: Math.cos(a) * v + WIND[0] * 2, vy: -0.05 + 0.3 * Math.random(), vz: Math.sin(a) * v + WIND[2] * 2, age: 0, life: 0.35 + 0.35 * Math.random(), gone: false });
         }
       },
       fly = dt => {
@@ -1389,12 +1389,12 @@ module.exports = ({ makeBuilder, makeSculpt, KIT: K }) => ({
           q.age += dt;
           q.vy -= 1.6 * dt;
           const k = Math.min(1, q.age / q.life),
-            s = 0.012 - 0.005 * k;
+            s = 0.01 - 0.004 * k;
           W.data[q.o] = q.x += q.vx * dt;
           W.data[q.o + 1] = q.y += q.vy * dt;
           W.data[q.o + 2] = q.z += q.vz * dt;
           W.data[q.o + 4] = W.data[q.o + 8] = W.data[q.o + 10] = s * s;
-          W.data[q.o + 3] = 2.4 * (1 - k * k);
+          W.data[q.o + 3] = 1.5 * (1 - k * k);
         }
       };
     // a dab of smoke let go at a place (x, y, z), going (vx, vy, vz): it grows from s0 to s1 across and thins from a to nothing
@@ -1439,6 +1439,7 @@ module.exports = ({ makeBuilder, makeSculpt, KIT: K }) => ({
       // his hand down again, he knocks the ash off: so long after the hand is down (TAP), and sparks go from the end of it
       ASHES = 0.3,
       TAP = 1.3,
+      POPS = 0.12, // and in a few of his pulls a spark goes from it as he draws, at his mouth
       LET = 0.22, // thrown down, it leaves his hand so long after he begins (seconds); and his hand is back so long after
       FLICK = 0.62,
       // his arm, up at his mouth: the arm from the shoulder, the fore from the elbow, and the cigarette turned in the hand so
@@ -1528,6 +1529,7 @@ module.exports = ({ makeBuilder, makeSculpt, KIT: K }) => ({
       // doing; pl.jigL and pl.jigR the hands' shaking)
       // After a pull, now and then, he knocks the ash off it: a small jerk of the hand, and a few sparks off the end, gone
       // down the wind (pl.ash: he will, after this pull; pl.ashed: he has; pl.sparks: how many times, this cigarette).
+      // And, less often, a spark goes from it while he is drawing on it (pl.pop: when in this pull, or 0).
       // Done with it (it is finished; or C; or he goes somewhere), he throws it down: a small turn of the hand, and it goes
       // a little way ahead of his foot, and lies there, its end going out and a last thread of smoke off it (toss()). Going
       // somewhere, he does not stop for that: it is let fall as he goes.
@@ -1615,19 +1617,24 @@ module.exports = ({ makeBuilder, makeSculpt, KIT: K }) => ({
               pl.rest = REST[0] + (REST[1] - REST[0]) * Math.random(); // (and how long he stands with it after)
               pl.ash = Math.random() < ASHES || (pl.pulls === LASTS - 1 && !pl.sparks); // (the last, if never before)
               pl.ashed = false;
+              pl.pop = Math.random() < POPS ? UP + pl.pull * (0.3 + 0.5 * Math.random()) : 0; // (when in the pull, if at all)
               pl.out = 0;
             }
             u = pl.cig;
             L = pl.pull;
             up = sm(u / UP) * (1 - sm((u - UP - L) / DOWN));
             glow = sm((u - UP) / Math.min(0.7, 0.6 * L)) * (1 - sm((u - UP - L + 0.1) / 0.45));
+            if (pl.pop && u >= pl.pop) {
+              pl.pop = 0;
+              fling(from(0.04, 1.2, 0.27), 1);
+            }
             if (pl.ash) {
               const at = UP + L + DOWN + TAP;
               tap = win(u, at - 0.09, at + 0.05, 0.05);
               if (!pl.ashed && u >= at) {
                 pl.ashed = true;
                 pl.sparks++;
-                fling(from(0.29, 0.5, 0.19), 2 + Math.floor(Math.random() * 3));
+                fling(from(0.29, 0.5, 0.19), Math.random() < 0.4 ? 2 : 1);
               }
             }
           }
