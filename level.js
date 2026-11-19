@@ -1127,8 +1127,15 @@ module.exports = ({ makeBuilder, makeSculpt, KIT: K }) => ({
       WAY = [[OLDMAN[0], OLDMAN[1]], [DOOR[0] + 0.08, DOOR[1] + 0.5], [DOOR[0], DOOR[1] - 0.5]],
       HOPS = WAY.slice(1).map((q, i) => Math.hypot(q[0] - WAY[i][0], q[1] - WAY[i][1])),
       FAR = HOPS[0] + HOPS[1],
-      home = indoors => {
-        npc.old.to = indoors ? FAR : 0;
+      // (now: he is in there already, and is not seen going. It is for a page opened again on an hour he was indoors for)
+      home = (indoors, now) => {
+        const om = npc.old;
+        om.to = indoors ? FAR : 0;
+        if (now && indoors) {
+          om.at = FAR;
+          om.here = false;
+          oldAt[2] = -9;
+        }
       },
       keep = dt => {
         const om = npc.old,

@@ -31,7 +31,7 @@
   let quality = 1, spent = 0, counted = 0;
   let yaw, yawTo, zoom = 0.5, zoomTo = 1, cam = [0, 0, 0], box = { w: 1, h: 1 }, ptr = null; // it opens far off and comes in
   // 'play': he runs about. 'dead': she has him, and that is the end of it: the count of his cigarettes is all that is left on the screen
-  let mode = 'play', deadT = 0, heard = 0, strides = 0;
+  let mode = 'play', deadT = 0, heard = 0, strides = 0, keptAt = 0;
   // the row of hints says a thing until he has done it: then that part of it goes out, and the room it took closes up slowly
   // (from the width it has to none: the page's styles say how long that takes), so the rest of the row draws together.
   // What he has done the browser keeps (KNOWN), so that he is not told it again the next time he comes
@@ -266,6 +266,60 @@
   const sm = s => (s <= 0 ? 0 : s >= 1 ? 1 : s * s * (3 - 2 * s)),
     // how far into night a moment of the day is: light for the first half of it, a dusk, the dark, and a dawn that ends as the day does
     nightAt = f => (f < 0.5 ? 0 : f < 0.62 ? sm((f - 0.5) / 0.12) : f < 0.9 ? 1 : 1 - sm((f - 0.9) / 0.1));
+  // Where he has got to is kept by the browser as well (WHERE), once a second as he goes and as the page is left: so that a
+  // page opened again goes on from where it was, and does not begin again. What is kept: where he stands and the way he
+  // faces, how many quarters round the view is turned, the day and the hour, how many he has smoked, whether the old man
+  // is indoors (and is to stay there: not if he is about to come out), and when he next goes in and comes out.
+  // A cigarette he had going is not kept: he has none. And once she has him nothing is (die()): there is no going on from
+  // that, and the page opened again begins at the beginning.
+  const WHERE = 'wickie.where',
+    QUARTER = Math.PI / 2,
+    keepUp = () => {
+      const pl = G.pl,
+        turns = Math.round((yawTo - W.cam.yaw) / QUARTER);
+      try {
+        localStorage.setItem(WHERE, [pl.x.toFixed(3), pl.z.toFixed(3), pl.face.toFixed(3), ((turns % 4) + 4) % 4, clock.toFixed(5), pl.smoked, indoors && !(comes > 0) ? 1 : 0, duskAt.toFixed(4), dawnAt.toFixed(4)].join(' '));
+      } catch (e) {}
+    },
+    // what was kept is taken up again: if there is any of it, and it is a place a man can stand (the rock may have been
+    // built over since)
+    takeUp = () => {
+      let v;
+      try {
+        v = (localStorage.getItem(WHERE) || '').split(' ').map(Number);
+      } catch (e) {
+        return;
+      }
+      const [x, z, face, turns, day, smoked, inn, dusk, dawn] = v,
+        whole = n => Number.isInteger(n) && n >= 0;
+      if (v.length !== 9 || !v.every(Number.isFinite) || day < 0 || !whole(turns) || !whole(smoked) || G.blocked(x, z)) return;
+      const pl = G.pl,
+        up = pl.y - G.height(pl.x, pl.z); // (how far over the ground he is put to stand)
+      pl.x = x;
+      pl.z = z;
+      pl.y = G.height(x, z) + up;
+      pl.face = face;
+      pl.smoked = smoked;
+      yaw = yawTo = W.cam.yaw + turns * QUARTER;
+      clock = day;
+      duskAt = Math.max(0.42, Math.min(0.45, dusk));
+      dawnAt = Math.max(0.955, Math.min(0.985, dawn));
+      // the old man: in for the night (and the lamp lit, then), or for the day
+      const f = clock % 1;
+      late = f >= duskAt && f < dawnAt;
+      indoors = late || inn === 1;
+      if (indoors) G.home(true, true);
+      if (late) {
+        tends = LIGHTS + 1;
+        lamp = 1;
+      }
+      // and the count is up as it stood, with no turning to it
+      if (smoked) {
+        tally.on = performance.now();
+        put(FIRST + smoked);
+        $('cigs').classList.add('on');
+      }
+    };
 
   function layout() {
     let h = innerHeight,
@@ -329,6 +383,7 @@
     };
     W.anim.update(0, 0);
     yaw = yawTo = W.cam.yaw;
+    takeUp();
     cam = [G.pl.x, G.pl.y + 1.6, G.pl.z];
   }
 
@@ -405,6 +460,9 @@
     deadT = 0;
     mem.deaths++;
     Sound.scream();
+    try {
+      localStorage.removeItem(WHERE); // (nothing is kept of where he was)
+    } catch (e) {}
   }
   function dying(dt) {
     const was = deadT;
@@ -501,6 +559,10 @@
       if (s !== strides && pl.go > 0.5) Sound.step();
       strides = s;
       if (far('mer') < TOO_NEAR) die();
+      else if (t - keptAt > 1) {
+        keptAt = t;
+        keepUp();
+      }
     } else {
       G.step(dt, 0, 0);
       dying(dt);
@@ -598,6 +660,7 @@
     keys.delete(ev.code);
     if (GOES.has(ev.code)) held = null;
   });
+  addEventListener('pagehide', () => G && mode === 'play' && keepUp());
   addEventListener('blur', () => {
     keys.clear();
     ptr = null;
